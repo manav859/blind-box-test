@@ -1,0 +1,13 @@
+{
+  "welcome": "SHOPLINE 应用 模版",
+  "404": "页面不存在",
+  "action": {
+    "tip": "你可以使用：",
+    "home": "重定向至首页",
+    "product": "创建商品"
+  },
+  "message": {
+    "success": "创建商品成功",
+    "failure": "创建商品失败"
+  }
+}

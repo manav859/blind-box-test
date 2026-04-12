@@ -1,0 +1,13 @@
+{
+  "welcome": "Welcome to SHOPLINE app template",
+  "404": "Page Not Found",
+  "action": {
+    "tip": "You can use:",
+    "home": "Redirect to homepage",
+    "product": "create product"
+  },
+  "message": {
+    "success": "create product success",
+    "failure": "create product failure"
+  }
+}

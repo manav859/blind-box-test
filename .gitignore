@@ -1,0 +1,13 @@
+node_modules
+dist/
+.env
+.env.*
+.DS_Store
+logs
+*.log
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+app/database.sqlite
+app/blind-box-domain.sqlite
+app/blind-box-domain.sqlite-*
