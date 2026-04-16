@@ -20,6 +20,10 @@ export class InventoryOperationService {
     return this.inventoryOperationRepository.listByShop(shop);
   }
 
+  async getInventoryOperation(shop: string, operationId: string): Promise<InventoryOperation | null> {
+    return this.inventoryOperationRepository.findById(shop, operationId);
+  }
+
   async listInventoryOperationsForAssignment(shop: string, assignmentId: string): Promise<InventoryOperation[]> {
     return this.inventoryOperationRepository.findByAssignmentId(shop, assignmentId);
   }

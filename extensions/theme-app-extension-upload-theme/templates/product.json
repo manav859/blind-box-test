@@ -1,0 +1,26 @@
+{
+  "sections": {
+    "main-product": {
+      "type": "main-product",
+      "settings": {
+        "eyebrow": "Product template",
+        "product_heading": "Blind Box product page",
+        "show_badge": true,
+        "show_icon": true,
+        "badge_text": "Blind Box",
+        "title": "Blind Box collectible",
+        "description": "Purchase this product as a sealed blind box collectible. The final item is assigned after purchase.",
+        "display_variant": "standard",
+        "detail_level": "expanded",
+        "show_how_it_works": true,
+        "show_rarity_note": true,
+        "rarity_note": "Assortment may include standard, rare, or limited collectible variants.",
+        "show_disclaimer": true,
+        "disclaimer": "Sold through native SHOPLINE cart and checkout. Final blind-box assignment remains a backend process after order payment."
+      }
+    }
+  },
+  "order": [
+    "main-product"
+  ]
+}

@@ -8,6 +8,7 @@ export const BLIND_BOX_ASSIGNMENT_STATUSES = [
   'pending',
   'assigned',
   'inventory_pending',
+  'inventory_processing',
   'inventory_committed',
   'inventory_failed',
 ] as const;
@@ -19,5 +20,11 @@ export type WebhookEventStatus = (typeof WEBHOOK_EVENT_STATUSES)[number];
 export const INVENTORY_OPERATION_TYPES = ['reserve', 'commit', 'release', 'adjustment'] as const;
 export type InventoryOperationType = (typeof INVENTORY_OPERATION_TYPES)[number];
 
-export const INVENTORY_OPERATION_STATUSES = ['pending', 'completed', 'failed', 'cancelled'] as const;
+export const INVENTORY_OPERATION_STATUSES = [
+  'pending',
+  'processing',
+  'succeeded',
+  'failed',
+  'cancelled',
+] as const;
 export type InventoryOperationStatus = (typeof INVENTORY_OPERATION_STATUSES)[number];

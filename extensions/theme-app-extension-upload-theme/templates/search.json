@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "Search",
+        "title": "Search template placeholder",
+        "lead": "Starter search results page for the storefront shell.",
+        "kicker": "Search results",
+        "body": "Replace this section with a full search experience if you continue developing this theme.",
+        "note": "Use the theme editor to shape the search experience around your store's product catalog."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

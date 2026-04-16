@@ -1,13 +1,14 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://shops-journals-toolbox-diverse.trycloudflare.com"
+appUrl = "https://install-afterwards-seeds-dictionary.trycloudflare.com"
+appSecret = "e4ecdf060c05e73e9c3e26acf921a6230f5186ca"
 appCallbackUrlList = [
-  "https://shops-journals-toolbox-diverse.trycloudflare.com/api/auth/callback"
+  "https://install-afterwards-seeds-dictionary.trycloudflare.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"
 proxyUrl = ""
 
 [access_scopes]
-scopes = "write_products"
+scopes = "write_products,read_products,read_inventory,read_location,write_inventory"

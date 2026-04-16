@@ -128,6 +128,19 @@ export class PaidOrderWebhookService {
     }
 
     await this.dependencies.webhookEventService.markProcessed(shop, eventId);
+    this.dependencies.logger.info('Blind-box assignments completed from paid-order webhook', {
+      shop,
+      eventId,
+      assignmentCount: processingSummary.assignments.length,
+      assignments: processingSummary.assignments.map((assignment) => ({
+        blindBoxId: assignment.blindBoxId,
+        orderId: assignment.orderId,
+        lineItemId: assignment.lineItemId,
+        assignmentId: assignment.assignmentId,
+        selectedPoolItemId: assignment.selectedPoolItemId,
+        inventoryStatus: assignment.inventoryStatus,
+      })),
+    });
 
     return {
       eventId,

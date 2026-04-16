@@ -5,12 +5,16 @@ export interface RuntimeConfig {
   blindBoxDatabaseBusyTimeoutMs: number;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   blindBoxInventoryExecutionMode: 'deferred' | 'execute';
+  shoplineAdminApiVersion: string;
+  shoplineConfiguredScopes: string[];
+  blindBoxShoplineLocationId: string | null;
 }
 
 const DEFAULT_BLIND_BOX_DATABASE_PATH = `${process.cwd()}/blind-box-domain.sqlite`;
 const DEFAULT_SQLITE_BUSY_TIMEOUT_MS = 5_000;
 const DEFAULT_LOG_LEVEL: RuntimeConfig['logLevel'] = 'info';
 const VALID_LOG_LEVELS: RuntimeConfig['logLevel'][] = ['debug', 'info', 'warn', 'error'];
+const DEFAULT_SHOPLINE_ADMIN_API_VERSION = 'v20230901';
 
 let cachedConfig: RuntimeConfig | null = null;
 
@@ -33,6 +37,13 @@ function readLogLevelEnv(): RuntimeConfig['logLevel'] {
   return VALID_LOG_LEVELS.includes(rawValue) ? rawValue : DEFAULT_LOG_LEVEL;
 }
 
+function readScopeListEnv(): string[] {
+  return (process.env.SCOPES || '')
+    .split(',')
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+}
+
 export function getRuntimeConfig(): RuntimeConfig {
   if (cachedConfig) {
     return cachedConfig;
@@ -47,6 +58,9 @@ export function getRuntimeConfig(): RuntimeConfig {
     logLevel: readLogLevelEnv(),
     blindBoxInventoryExecutionMode:
       process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE === 'execute' ? 'execute' : 'deferred',
+    shoplineAdminApiVersion: process.env.SHOPLINE_ADMIN_API_VERSION || DEFAULT_SHOPLINE_ADMIN_API_VERSION,
+    shoplineConfiguredScopes: readScopeListEnv(),
+    blindBoxShoplineLocationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID || null,
   };
 
   return cachedConfig;

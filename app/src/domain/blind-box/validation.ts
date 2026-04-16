@@ -167,6 +167,8 @@ export function validateCreateInventoryOperationInput(
     blindBoxId: normalizeOptionalString(input.blindBoxId),
     assignmentId: normalizeOptionalString(input.assignmentId),
     poolItemId: normalizeOptionalString(input.poolItemId),
+    idempotencyKey: requireNonEmptyString(input.idempotencyKey, 'idempotencyKey'),
+    quantity: requirePositiveInteger(input.quantity ?? 1, 'quantity'),
     operationType: requireIncludedValue(input.operationType, 'operationType', INVENTORY_OPERATION_TYPES),
     status: requireIncludedValue(input.status, 'status', INVENTORY_OPERATION_STATUSES, 'pending'),
     externalReference: normalizeOptionalString(input.externalReference),

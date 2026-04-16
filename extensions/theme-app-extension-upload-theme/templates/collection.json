@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "Collection",
+        "title": "Collection page placeholder",
+        "lead": "This starter collection template exists so the uploaded theme has a complete OS 3.0 structure.",
+        "kicker": "Collection template",
+        "body": "You can replace this section with your store's real collection layout after import.",
+        "note": "The blind-box shell is implemented on the product template."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

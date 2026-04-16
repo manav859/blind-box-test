@@ -35,6 +35,7 @@ function mapBlindBoxProductMappingRow(row: BlindBoxProductMappingRow): BlindBoxP
 export interface BlindBoxProductMappingRepository {
   upsert(shop: string, input: NormalizedUpsertBlindBoxProductMappingInput): Promise<BlindBoxProductMapping>;
   listByShop(shop: string): Promise<BlindBoxProductMapping[]>;
+  listEnabledByProduct(shop: string, productId: string): Promise<BlindBoxProductMapping[]>;
   findById(shop: string, mappingId: string): Promise<BlindBoxProductMapping | null>;
 }
 
@@ -129,6 +130,28 @@ export class SqliteBlindBoxProductMappingRepository implements BlindBoxProductMa
         ORDER BY created_at DESC
       `,
       [shop],
+    );
+
+    return rows.map(mapBlindBoxProductMappingRow);
+  }
+
+  async listEnabledByProduct(shop: string, productId: string): Promise<BlindBoxProductMapping[]> {
+    const rows = await this.db.all<BlindBoxProductMappingRow>(
+      `
+        SELECT
+          id,
+          shop,
+          blind_box_id,
+          product_id,
+          product_variant_id,
+          enabled,
+          created_at,
+          updated_at
+        FROM blind_box_product_mappings
+        WHERE shop = ? AND product_id = ? AND enabled = 1
+        ORDER BY created_at DESC
+      `,
+      [shop, productId],
     );
 
     return rows.map(mapBlindBoxProductMappingRow);

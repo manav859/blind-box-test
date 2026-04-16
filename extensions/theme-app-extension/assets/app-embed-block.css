@@ -1,0 +1,51 @@
+.app-embed-block__container {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 9999;
+}
+
+.app-embed-block__container > p {
+  margin: 0;
+  padding: 10px;
+  color: #fff;
+  font-family: "Poppins", sans-serif;
+  background-color: rgba(16 18 27 / 40%);
+  border-radius: 14px 14px 0 0;
+  backdrop-filter: blur(20px);
+}
+
+.app-embed-block__container .app-embed-block__wrapper {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+
+.app-embed-block__container .app-embed-block__button {
+  color: #fff;
+  font-weight: bold;
+  font-size: 16px;
+  padding: 10px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 0.1em solid #f1f1f1;
+  cursor: pointer;
+  transition: transform .3s ease;
+}
+
+.app-embed-block__container .app-embed-block__button:hover {
+  transform: scale(1.05);
+  transform-origin: center center;
+  animation: rotate-ani 3s infinite linear;
+}
+
+@keyframes rotate-ani {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}

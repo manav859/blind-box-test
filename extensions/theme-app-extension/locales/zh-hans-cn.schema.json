@@ -1,0 +1,64 @@
+{
+  "blind_box_product_shell": {
+    "name": "盲盒购买（仅商品详情页）",
+    "settings": {
+      "show_badge": {
+        "label": "显示盲盒标签",
+        "info": "请仅在盲盒商品模板上使用此区块。该标签仅用于商品页展示，不会触发分配逻辑。"
+      },
+      "show_icon": {
+        "label": "显示标签图标",
+        "info": "在盲盒标签旁显示装饰图标。"
+      },
+      "badge_text": {
+        "label": "标签文案",
+        "info": "用于盲盒商品页的简短标签文本。"
+      },
+      "title": {
+        "label": "标题",
+        "info": "盲盒说明卡片的主标题。"
+      },
+      "description": {
+        "label": "说明文案",
+        "info": "用来清晰说明盲盒购买方式，不要写成揭晓结果或结账流程。"
+      },
+      "display_variant": {
+        "label": "展示布局",
+        "info": "选择最适合当前商品页的展示样式，默认推荐 Standard。",
+        "options": {
+          "compact": "紧凑",
+          "standard": "标准",
+          "highlighted": "强调"
+        }
+      },
+      "detail_level": {
+        "label": "信息密度",
+        "info": "紧凑模式只保留更短的说明，展开模式会显示完整的补充说明。",
+        "options": {
+          "compact": "紧凑详情",
+          "expanded": "展开详情"
+        }
+      },
+      "show_how_it_works": {
+        "label": "显示购买流程说明",
+        "info": "显示一张说明卡，提示客户最终款式将在付款后分配。"
+      },
+      "show_rarity_note": {
+        "label": "显示收藏提示",
+        "info": "如果当前模板不需要提到稀有度或款式组合，可以关闭。"
+      },
+      "rarity_note": {
+        "label": "收藏提示",
+        "info": "可选，用于说明稀有度、组合或收藏属性。"
+      },
+      "show_disclaimer": {
+        "label": "显示店铺说明",
+        "info": "如果当前模板希望更简洁，可以关闭此说明卡。"
+      },
+      "disclaimer": {
+        "label": "店铺说明",
+        "info": "可选，用于向客户补充购买预期。履约逻辑仍由后端处理。"
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "Article",
+        "title": "Article template placeholder",
+        "lead": "Starter article template for OS 3.0 theme uploads.",
+        "kicker": "Article page",
+        "body": "Edit this template after import if your store needs a blog/article experience.",
+        "note": "The core blind-box section is attached to the product template."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

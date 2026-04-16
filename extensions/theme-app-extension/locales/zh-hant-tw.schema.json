@@ -1,0 +1,64 @@
+{
+  "blind_box_product_shell": {
+    "name": "盲盒購買（僅商品詳情頁）",
+    "settings": {
+      "show_badge": {
+        "label": "顯示盲盒標籤",
+        "info": "請僅在盲盒商品模板上使用此區塊。該標籤僅用於商品頁展示，不會觸發分配邏輯。"
+      },
+      "show_icon": {
+        "label": "顯示標籤圖示",
+        "info": "在盲盒標籤旁顯示裝飾圖示。"
+      },
+      "badge_text": {
+        "label": "標籤文案",
+        "info": "用於盲盒商品頁的簡短標籤文字。"
+      },
+      "title": {
+        "label": "標題",
+        "info": "盲盒說明卡片的主標題。"
+      },
+      "description": {
+        "label": "說明文案",
+        "info": "用來清楚說明盲盒購買方式，不要寫成揭曉結果或結帳流程。"
+      },
+      "display_variant": {
+        "label": "展示版型",
+        "info": "選擇最適合目前商品頁的展示樣式，預設推薦 Standard。",
+        "options": {
+          "compact": "緊湊",
+          "standard": "標準",
+          "highlighted": "強調"
+        }
+      },
+      "detail_level": {
+        "label": "資訊密度",
+        "info": "緊湊模式只保留較短的說明，展開模式會顯示完整的補充說明。",
+        "options": {
+          "compact": "緊湊詳情",
+          "expanded": "展開詳情"
+        }
+      },
+      "show_how_it_works": {
+        "label": "顯示購買流程說明",
+        "info": "顯示一張說明卡，提示顧客最終款式將在付款後分配。"
+      },
+      "show_rarity_note": {
+        "label": "顯示收藏提示",
+        "info": "如果目前模板不需要提到稀有度或款式組合，可以關閉。"
+      },
+      "rarity_note": {
+        "label": "收藏提示",
+        "info": "可選，用於說明稀有度、組合或收藏屬性。"
+      },
+      "show_disclaimer": {
+        "label": "顯示店鋪說明",
+        "info": "如果目前模板希望更簡潔，可以關閉此說明卡。"
+      },
+      "disclaimer": {
+        "label": "店鋪說明",
+        "info": "可選，用於向顧客補充購買預期。履約邏輯仍由後端處理。"
+      }
+    }
+  }
+}

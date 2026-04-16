@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "Page template",
+        "title": "General page",
+        "lead": "This basic page template provides a clean placeholder for informational storefront pages.",
+        "kicker": "Reusable section",
+        "body": "Replace these defaults in the theme editor after import.",
+        "note": "Use this page for brand notes, FAQs, policies, or launch details."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "404",
+        "title": "Page not found",
+        "lead": "The page you requested could not be found.",
+        "kicker": "Missing page",
+        "body": "Use the navigation or theme editor to point customers back to active storefront content.",
+        "note": "This is a starter 404 page included for import completeness."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

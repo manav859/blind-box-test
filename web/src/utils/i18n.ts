@@ -2,6 +2,7 @@ import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
 import { match } from "@formatjs/intl-localematcher";
+import { getEmbeddedSearchParams } from "./embeddedUrl";
 
 const DEFAULT_APP_LOCALE = "en";
 
@@ -25,7 +26,7 @@ export function getQueryLang() {
   if (_userLocale) {
     return _userLocale;
   }
-  const query = new URLSearchParams(window.location.search);
+  const query = getEmbeddedSearchParams();
   const locale = query.get("lang") || DEFAULT_APP_LOCALE;
   _userLocale = match([locale], SUPPORTED_APP_LOCALES, DEFAULT_APP_LOCALE);
   return _userLocale;

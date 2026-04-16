@@ -19,6 +19,10 @@ export class BlindBoxProductMappingService {
   async listProductMappings(shop: string): Promise<BlindBoxProductMapping[]> {
     return this.productMappingRepository.listByShop(shop);
   }
+
+  async listEnabledProductMappingsForProduct(shop: string, productId: string): Promise<BlindBoxProductMapping[]> {
+    return this.productMappingRepository.listEnabledByProduct(shop, productId);
+  }
 }
 
 export async function getBlindBoxProductMappingService(): Promise<BlindBoxProductMappingService> {

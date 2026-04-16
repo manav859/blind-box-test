@@ -1,0 +1,33 @@
+{
+  "theme_name": "Blind Box Upload Theme",
+  "theme_version": "1.0.0",
+  "theme_author": "Codex",
+  "theme_documentation_url": "https://developer.shopline.com/docs/online-store-3-0-themes/theme-structure/overview/",
+  "theme_support_url": "https://help.shopline.com/",
+  "theme_type_version": "OS_3.0",
+  "schemas": [
+    {
+      "name": "Colors",
+      "settings": [
+        {
+          "type": "color",
+          "id": "color_page_background",
+          "label": "Page background",
+          "default": "#f5efe6"
+        },
+        {
+          "type": "color",
+          "id": "color_text",
+          "label": "Text color",
+          "default": "#17202a"
+        },
+        {
+          "type": "color",
+          "id": "color_accent",
+          "label": "Accent color",
+          "default": "#b97819"
+        }
+      ]
+    }
+  ]
+}

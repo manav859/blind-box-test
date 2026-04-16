@@ -34,6 +34,13 @@ function mapWebhookEventRow(row: WebhookEventRow): WebhookEvent {
 
 export interface WebhookEventRepository {
   create(input: Required<RecordWebhookEventInput>): Promise<WebhookEvent>;
+  listByShop(
+    shop: string,
+    filters?: {
+      status?: WebhookEvent['status'];
+      topic?: string;
+    },
+  ): Promise<WebhookEvent[]>;
   findByShopAndEventId(shop: string, eventId: string): Promise<WebhookEvent | null>;
   updateStatus(
     shop: string,
@@ -108,6 +115,49 @@ export class SqliteWebhookEventRepository implements WebhookEventRepository {
     );
 
     return row ? mapWebhookEventRow(row) : null;
+  }
+
+  async listByShop(
+    shop: string,
+    filters: {
+      status?: WebhookEvent['status'];
+      topic?: string;
+    } = {},
+  ): Promise<WebhookEvent[]> {
+    const whereClauses = ['shop = ?'];
+    const params: Array<string> = [shop];
+
+    if (filters.status) {
+      whereClauses.push('status = ?');
+      params.push(filters.status);
+    }
+
+    if (filters.topic) {
+      whereClauses.push('topic = ?');
+      params.push(filters.topic);
+    }
+
+    const rows = await this.db.all<WebhookEventRow>(
+      `
+        SELECT
+          id,
+          shop,
+          topic,
+          event_id,
+          status,
+          payload,
+          error_message,
+          processed_at,
+          created_at,
+          updated_at
+        FROM webhook_events
+        WHERE ${whereClauses.join(' AND ')}
+        ORDER BY created_at DESC
+      `,
+      params,
+    );
+
+    return rows.map(mapWebhookEventRow);
   }
 
   async updateStatus(

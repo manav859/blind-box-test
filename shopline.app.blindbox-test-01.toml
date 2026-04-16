@@ -1,13 +1,13 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://shops-journals-toolbox-diverse.trycloudflare.com"
+appUrl = "https://partial-montreal-copyrighted-matching.trycloudflare.com"
 appCallbackUrlList = [
-  "https://shops-journals-toolbox-diverse.trycloudflare.com/api/auth/callback"
+  "https://partial-montreal-copyrighted-matching.trycloudflare.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"
 proxyUrl = ""
 
 [access_scopes]
-scopes = "write_products"
+scopes = "write_products,read_products,read_inventory,read_location,write_inventory"

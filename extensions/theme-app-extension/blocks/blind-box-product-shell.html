@@ -1,0 +1,342 @@
+{{#if request.design_mode}}
+  <div
+    data-blind-box-product-page
+    data-design-mode="true"
+    data-blind-box-diagnostics="true"
+    data-blind-box-page-state="{{#if product.id}}pending{{else}}not_product_page{{/if}}"
+    data-product-id="{{ product.id }}"
+    data-product-tags="{{ product.tags }}"
+    data-supported-tags="blind-box,blind-box-active"
+  >
+{{else}}
+  <div
+    data-blind-box-product-page
+    data-design-mode="false"
+    data-blind-box-diagnostics="false"
+    data-blind-box-page-state="{{#if product.id}}pending{{else}}not_product_page{{/if}}"
+    data-product-id="{{ product.id }}"
+    data-product-tags="{{ product.tags }}"
+    data-supported-tags="blind-box,blind-box-active"
+  >
+{{/if}}
+  <script src="{{`blind-box-product-shell.js` | asset_url()}}" defer></script>
+
+  <div data-blind-box-live-content>
+    <div
+      class="blind-box-product-shell blind-box-product-shell--{{ block.settings.display_variant }} blind-box-product-shell--details-{{ block.settings.detail_level }}"
+      aria-labelledby="blind-box-shell-title-{{ block.id }}"
+      data-blind-box-product-shell
+      data-product-id="{{ product.id }}"
+      data-initial-variant-id="{{ product.selected_or_first_available_variant.id }}"
+      data-initial-variant-available="{{#if product.selected_or_first_available_variant.available}}true{{else}}false{{/if}}"
+      data-button-default-label="Buy Blind Box"
+      data-button-loading-label="Adding..."
+      data-missing-variant-message="Select an available variant before continuing."
+      data-unavailable-message="The selected blind-box variant is currently unavailable."
+    >
+      <div class="blind-box-product-shell__backdrop" aria-hidden="true"></div>
+
+      {{#if block.settings.show_how_it_works}}
+        <div class="blind-box-product-shell__layout">
+      {{else}}
+        <div class="blind-box-product-shell__layout blind-box-product-shell__layout--single">
+      {{/if}}
+        <div class="blind-box-product-shell__content">
+          <div class="blind-box-product-shell__badge-row">
+            {{#if block.settings.show_badge}}
+              {{#if block.settings.show_icon}}
+                <span class="blind-box-badge-icon" aria-hidden="true">
+                  <span class="blind-box-badge-icon__spark blind-box-badge-icon__spark--left"></span>
+                  <span class="blind-box-badge-icon__spark blind-box-badge-icon__spark--right"></span>
+                  <span class="blind-box-badge-icon__lid"></span>
+                  <span class="blind-box-badge-icon__box"></span>
+                </span>
+              {{/if}}
+              <span class="blind-box-product-shell__badge">
+                {{#if block.settings.badge_text}}
+                  {{ block.settings.badge_text }}
+                {{else}}
+                  Blind Box
+                {{/if}}
+              </span>
+            {{/if}}
+            <span class="blind-box-product-shell__status-badge">
+              Blind Box Enabled
+            </span>
+          </div>
+
+          <div class="blind-box-product-shell__copy">
+            <h3
+              class="blind-box-product-shell__title"
+              id="blind-box-shell-title-{{ block.id }}"
+            >
+              {{#if block.settings.title}}
+                {{ block.settings.title }}
+              {{else}}
+                Blind Box collectible
+              {{/if}}
+            </h3>
+
+            <p class="blind-box-product-shell__description">
+              {{#if block.settings.description}}
+                {{ block.settings.description }}
+              {{else}}
+                Purchase this product as a sealed blind box collectible. The final item is assigned after purchase.
+              {{/if}}
+            </p>
+          </div>
+
+          <div class="blind-box-product-shell__commerce">
+            <div class="blind-box-product-shell__commerce-copy">
+              <strong>You will receive a random item.</strong>
+              <span>Reveal happens after purchase through the normal SHOPLINE checkout flow.</span>
+            </div>
+
+            <form
+              class="blind-box-product-shell__purchase-form"
+              method="post"
+              action="/cart/add"
+              data-blind-box-purchase-form
+            >
+              <input
+                type="hidden"
+                name="id"
+                value="{{ product.selected_or_first_available_variant.id }}"
+                data-blind-box-variant-input
+              >
+              <input type="hidden" name="quantity" value="1" data-blind-box-quantity-input>
+
+              <button
+                class="blind-box-product-shell__buy-button"
+                type="submit"
+                data-blind-box-submit
+              >
+                Buy Blind Box
+              </button>
+
+              <p class="blind-box-product-shell__variant-note" data-blind-box-variant-note>
+                Quantity is fixed at 1 per add-to-cart action for this blind-box purchase.
+              </p>
+              <p
+                class="blind-box-product-shell__error"
+                data-blind-box-error
+                role="status"
+                aria-live="polite"
+                hidden
+              ></p>
+              <div
+                class="blind-box-product-shell__diagnostic"
+                data-blind-box-form-diagnostic
+                role="status"
+                aria-live="polite"
+                hidden
+              >
+                <strong>Unable to locate product form — theme incompatibility</strong>
+                <p>
+                  This template does not expose a compatible native product form near the Blind Box block.
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {{#if block.settings.show_how_it_works}}
+          <aside class="blind-box-product-shell__promise">
+            <span class="blind-box-product-shell__eyebrow">
+              Purchase flow
+            </span>
+            <p class="blind-box-product-shell__promise-text">
+              Final item assigned after purchase.
+            </p>
+            <p class="blind-box-product-shell__promise-subtext">
+              Customers buy a normal SHOPLINE product. Random assignment and inventory execution stay in the app backend after the paid-order webhook arrives.
+            </p>
+          </aside>
+        {{/if}}
+      </div>
+
+      {{#if block.settings.show_rarity_note}}
+        {{#if block.settings.rarity_note}}
+          <div class="blind-box-product-shell__notes-grid">
+            <div class="blind-box-product-shell__note blind-box-product-shell__note--rarity">
+              <span class="blind-box-product-shell__note-label">
+                Collectible note
+              </span>
+              <p>{{ block.settings.rarity_note }}</p>
+            </div>
+
+            {{#if block.settings.show_disclaimer}}
+              {{#if block.settings.disclaimer}}
+                <div class="blind-box-product-shell__note blind-box-product-shell__note--disclaimer">
+                  <span class="blind-box-product-shell__note-label">
+                    Store note
+                  </span>
+                  <p>{{ block.settings.disclaimer }}</p>
+                </div>
+              {{/if}}
+            {{/if}}
+          </div>
+        {{else}}
+          {{#if block.settings.show_disclaimer}}
+            {{#if block.settings.disclaimer}}
+              <div class="blind-box-product-shell__notes-grid">
+                <div class="blind-box-product-shell__note blind-box-product-shell__note--disclaimer">
+                  <span class="blind-box-product-shell__note-label">
+                    Store note
+                  </span>
+                  <p>{{ block.settings.disclaimer }}</p>
+                </div>
+              </div>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+      {{else}}
+        {{#if block.settings.show_disclaimer}}
+          {{#if block.settings.disclaimer}}
+            <div class="blind-box-product-shell__notes-grid">
+              <div class="blind-box-product-shell__note blind-box-product-shell__note--disclaimer">
+                <span class="blind-box-product-shell__note-label">
+                  Store note
+                </span>
+                <p>{{ block.settings.disclaimer }}</p>
+              </div>
+            </div>
+          {{/if}}
+        {{/if}}
+      {{/if}}
+    </div>
+  </div>
+
+  <div data-blind-box-setup-content>
+    <div class="blind-box-product-shell blind-box-product-shell--setup" aria-live="polite">
+      <div class="blind-box-product-shell__setup-note">
+        <strong data-blind-box-setup-title>Blind Box block only works on product pages</strong>
+        <p data-blind-box-setup-message>
+          This block only works on product detail pages. Requires product tag <code>blind-box</code> or <code>blind-box-active</code>.
+        </p>
+        <p class="blind-box-product-shell__setup-meta" data-blind-box-setup-meta hidden></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{#schema}}
+{
+  "name": "t:blind_box_product_shell.name",
+  "target": "section",
+  "templates": ["products/detail"],
+  "stylesheet": ["blind-box-product-shell.css"],
+  "class": "blind-box-product-shell-host",
+  "limit": 1,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_badge",
+      "label": "t:blind_box_product_shell.settings.show_badge.label",
+      "default": true,
+      "info": "t:blind_box_product_shell.settings.show_badge.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icon",
+      "label": "t:blind_box_product_shell.settings.show_icon.label",
+      "default": true,
+      "info": "t:blind_box_product_shell.settings.show_icon.info"
+    },
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "t:blind_box_product_shell.settings.badge_text.label",
+      "default": "Blind Box",
+      "info": "t:blind_box_product_shell.settings.badge_text.info"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "t:blind_box_product_shell.settings.title.label",
+      "default": "Blind Box collectible",
+      "info": "t:blind_box_product_shell.settings.title.info"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "t:blind_box_product_shell.settings.description.label",
+      "info": "t:blind_box_product_shell.settings.description.info",
+      "default": "Purchase this product as a sealed blind box collectible. The final item is assigned after purchase."
+    },
+    {
+      "type": "select",
+      "id": "display_variant",
+      "label": "t:blind_box_product_shell.settings.display_variant.label",
+      "info": "t:blind_box_product_shell.settings.display_variant.info",
+      "default": "standard",
+      "options": [
+        {
+          "value": "compact",
+          "label": "t:blind_box_product_shell.settings.display_variant.options.compact"
+        },
+        {
+          "value": "standard",
+          "label": "t:blind_box_product_shell.settings.display_variant.options.standard"
+        },
+        {
+          "value": "highlighted",
+          "label": "t:blind_box_product_shell.settings.display_variant.options.highlighted"
+        }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "detail_level",
+      "label": "t:blind_box_product_shell.settings.detail_level.label",
+      "info": "t:blind_box_product_shell.settings.detail_level.info",
+      "default": "expanded",
+      "options": [
+        {
+          "value": "compact",
+          "label": "t:blind_box_product_shell.settings.detail_level.options.compact"
+        },
+        {
+          "value": "expanded",
+          "label": "t:blind_box_product_shell.settings.detail_level.options.expanded"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "show_how_it_works",
+      "label": "t:blind_box_product_shell.settings.show_how_it_works.label",
+      "default": true,
+      "info": "t:blind_box_product_shell.settings.show_how_it_works.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rarity_note",
+      "label": "t:blind_box_product_shell.settings.show_rarity_note.label",
+      "default": true,
+      "info": "t:blind_box_product_shell.settings.show_rarity_note.info"
+    },
+    {
+      "type": "text",
+      "id": "rarity_note",
+      "label": "t:blind_box_product_shell.settings.rarity_note.label",
+      "info": "t:blind_box_product_shell.settings.rarity_note.info",
+      "default": "Assortment may include standard, rare, or limited collectible variants."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_disclaimer",
+      "label": "t:blind_box_product_shell.settings.show_disclaimer.label",
+      "default": true,
+      "info": "t:blind_box_product_shell.settings.show_disclaimer.info"
+    },
+    {
+      "type": "textarea",
+      "id": "disclaimer",
+      "label": "t:blind_box_product_shell.settings.disclaimer.label",
+      "info": "t:blind_box_product_shell.settings.disclaimer.info",
+      "default": "Sold through native SHOPLINE cart and checkout. Final blind-box assignment remains a backend process after order payment."
+    }
+  ]
+}
+{{/schema}}

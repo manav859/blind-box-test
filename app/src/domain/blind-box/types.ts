@@ -162,8 +162,14 @@ export interface InventoryOperation {
   blindBoxId: string | null;
   assignmentId: string | null;
   poolItemId: string | null;
+  idempotencyKey: string;
+  quantity: number;
   operationType: InventoryOperationType;
   status: InventoryOperationStatus;
+  attemptCount: number;
+  lastAttemptedAt: string | null;
+  processingStartedAt: string | null;
+  completedAt: string | null;
   externalReference: string | null;
   reason: string | null;
   metadata: string | null;
@@ -175,6 +181,8 @@ export interface CreateInventoryOperationInput {
   blindBoxId?: string | null;
   assignmentId?: string | null;
   poolItemId?: string | null;
+  idempotencyKey: string;
+  quantity?: number;
   operationType: InventoryOperationType;
   status?: InventoryOperationStatus;
   externalReference?: string | null;
@@ -186,6 +194,8 @@ export interface NormalizedCreateInventoryOperationInput {
   blindBoxId: string | null;
   assignmentId: string | null;
   poolItemId: string | null;
+  idempotencyKey: string;
+  quantity: number;
   operationType: InventoryOperationType;
   status: InventoryOperationStatus;
   externalReference: string | null;

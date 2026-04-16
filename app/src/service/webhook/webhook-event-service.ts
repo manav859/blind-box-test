@@ -60,6 +60,16 @@ export class WebhookEventService {
   async markFailed(shop: string, eventId: string, errorMessage: string): Promise<WebhookEvent> {
     return this.webhookEventRepository.updateStatus(shop, eventId, 'failed', errorMessage);
   }
+
+  async listWebhookEvents(
+    shop: string,
+    filters: {
+      status?: WebhookEvent['status'];
+      topic?: string;
+    } = {},
+  ): Promise<WebhookEvent[]> {
+    return this.webhookEventRepository.listByShop(shop, filters);
+  }
 }
 
 export async function getWebhookEventService(): Promise<WebhookEventService> {

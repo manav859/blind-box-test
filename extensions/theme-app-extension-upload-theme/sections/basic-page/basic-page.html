@@ -1,0 +1,105 @@
+<section class="blind-box-theme-page">
+  <div class="blind-box-theme-page__header">
+    <span class="blind-box-theme-page__eyebrow">
+      {{#if section.settings.eyebrow}}
+        {{ section.settings.eyebrow }}
+      {{else}}
+        Editorial page
+      {{/if}}
+    </span>
+    <h1 class="blind-box-theme-page__title">
+      {{#if section.settings.title}}
+        {{ section.settings.title }}
+      {{else}}
+        A cleaner page template for your storefront
+      {{/if}}
+    </h1>
+    <p class="blind-box-theme-page__lead">
+      {{#if section.settings.lead}}
+        {{ section.settings.lead }}
+      {{else}}
+        Use this section for brand stories, launch notes, shipping details, or collector FAQs without showing raw placeholder scaffolding.
+      {{/if}}
+    </p>
+  </div>
+
+  <div class="blind-box-theme-page__panel">
+    <div class="blind-box-theme-page__panel-inner">
+      <div class="blind-box-theme-page__stack">
+        <span class="blind-box-theme-page__kicker">
+          {{#if section.settings.kicker}}
+            {{ section.settings.kicker }}
+          {{else}}
+            Brand note
+          {{/if}}
+        </span>
+        <div class="blind-box-theme-page__body">
+          <p>
+            {{#if section.settings.body}}
+              {{ section.settings.body }}
+            {{else}}
+              Build a simple editorial page here with a short introduction, store policy summary, or launch calendar update. This keeps the storefront reading like a shop instead of a test package.
+            {{/if}}
+          </p>
+          <p class="blind-box-theme-page__footer-note">
+            {{#if section.settings.note}}
+              {{ section.settings.note }}
+            {{else}}
+              Replace these defaults in the theme editor with your own brand copy once the theme is imported.
+            {{/if}}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{{#schema}}
+{
+  "name": "Blind Box basic page",
+  "class": "blind-box-basic-page",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Editorial page"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "A cleaner page template for your storefront"
+    },
+    {
+      "type": "textarea",
+      "id": "lead",
+      "label": "Lead copy",
+      "default": "Use this section for brand stories, launch notes, shipping details, or collector FAQs without showing raw placeholder scaffolding."
+    },
+    {
+      "type": "text",
+      "id": "kicker",
+      "label": "Panel label",
+      "default": "Brand note"
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body copy",
+      "default": "Build a simple editorial page here with a short introduction, store policy summary, or launch calendar update. This keeps the storefront reading like a shop instead of a test package."
+    },
+    {
+      "type": "textarea",
+      "id": "note",
+      "label": "Supporting note",
+      "default": "Replace these defaults in the theme editor with your own brand copy once the theme is imported."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Blind Box basic page"
+    }
+  ]
+}
+{{/schema}}

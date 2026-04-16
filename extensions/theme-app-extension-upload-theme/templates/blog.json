@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "main": {
+      "type": "basic-page",
+      "settings": {
+        "eyebrow": "Blog",
+        "title": "Blog template placeholder",
+        "lead": "Starter content for the blog listing page.",
+        "kicker": "Blog page",
+        "body": "Swap this section for your store's blog implementation after the theme import succeeds.",
+        "note": "Use this area for drop stories, creator notes, or launch recaps."
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

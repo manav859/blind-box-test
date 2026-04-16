@@ -1,0 +1,13 @@
+{
+  "current": "Default",
+  "presets": {
+    "Default": {
+      "theme": {
+        "color_page_background": "#f5efe6",
+        "color_text": "#17202a",
+        "color_accent": "#b97819"
+      },
+      "sections": {}
+    }
+  }
+}

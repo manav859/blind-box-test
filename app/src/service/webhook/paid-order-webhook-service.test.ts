@@ -18,6 +18,21 @@ function buildPaidOrderPayload(): OrderPaidWebhookPayload {
   };
 }
 
+function buildMultiQuantityPaidOrderPayload(): OrderPaidWebhookPayload {
+  return {
+    id: 'order-1002',
+    line_items: [
+      {
+        id: 'line-2',
+        product_id: 'product-1',
+        variant_id: 'variant-1',
+        quantity: 2,
+        title: 'Blind Box Product',
+      },
+    ],
+  };
+}
+
 function buildHeaders(eventId: string): Record<string, string> {
   return {
     'x-shopline-shop-domain': 'blind-box.myshopline.com',
@@ -130,12 +145,25 @@ test('paid-order processing fails clearly when no eligible item exists', async (
   assert.equal(result.failures[0].reason, 'NO_ELIGIBLE_ITEMS');
 });
 
+test('paid-order processing rejects blind-box order lines with quantity greater than one', async () => {
+  const { context } = await seedActiveBlindBoxContext(() => 0.25);
+
+  const result = await context.paidOrderAssignmentService.processPaidOrder(
+    'blind-box',
+    buildMultiQuantityPaidOrderPayload(),
+  );
+
+  assert.equal(result.assignments.length, 0);
+  assert.equal(result.failures.length, 1);
+  assert.equal(result.failures[0].reason, 'UNSUPPORTED_QUANTITY');
+});
+
 test('paid-order webhook processing records inventory workflow failures without rerolling assignment', async () => {
   const { context } = await seedActiveBlindBoxContext(
     () => 0.9,
     'execute',
     new TestInventoryGateway({
-      commit: true,
+      commit: 'definitive',
     }),
   );
 
@@ -149,4 +177,68 @@ test('paid-order webhook processing records inventory workflow failures without 
   assert.equal(result.status, 'failed');
   assert.equal(assignments.length, 1);
   assert.equal(assignments[0].status, 'inventory_failed');
+});
+
+test('paid-order webhook retries do not convert an existing inventory failure into a processed event', async () => {
+  const { context } = await seedActiveBlindBoxContext(
+    () => 0.9,
+    'execute',
+    new TestInventoryGateway({
+      commit: 'definitive',
+    }),
+  );
+
+  const firstResult = await context.paidOrderWebhookService.processPaidOrderWebhook(
+    buildHeaders('webhook-retry-after-failure'),
+    buildPaidOrderPayload(),
+  );
+  const secondResult = await context.paidOrderWebhookService.processPaidOrderWebhook(
+    buildHeaders('webhook-retry-after-failure'),
+    buildPaidOrderPayload(),
+  );
+
+  const assignments = await context.blindBoxAssignmentService.listAssignments('blind-box');
+  const inventoryOperations = await context.inventoryOperationService.listInventoryOperations('blind-box');
+
+  assert.equal(firstResult.status, 'failed');
+  assert.equal(secondResult.status, 'failed');
+  assert.equal(assignments.length, 1);
+  assert.equal(assignments[0].status, 'inventory_failed');
+  assert.equal(inventoryOperations.length, 1);
+  assert.equal(inventoryOperations[0].status, 'failed');
+});
+
+test('paid-order webhook replay marks the event processed after inventory recovery succeeds', async () => {
+  const gateway = new TestInventoryGateway({
+    commit: 'definitive',
+  });
+  const { context } = await seedActiveBlindBoxContext(() => 0.9, 'execute', gateway);
+
+  const firstResult = await context.paidOrderWebhookService.processPaidOrderWebhook(
+    buildHeaders('webhook-retry-after-recovery'),
+    buildPaidOrderPayload(),
+  );
+
+  const inventoryOperations = await context.inventoryOperationService.listInventoryOperations('blind-box');
+  assert.equal(firstResult.status, 'failed');
+  assert.equal(inventoryOperations.length, 1);
+
+  gateway.setFailureMode({});
+
+  const retryResult = await context.inventoryExecutionService.retryInventoryOperation(
+    'blind-box',
+    inventoryOperations[0].id,
+  );
+  const replayResult = await context.paidOrderWebhookService.processPaidOrderWebhook(
+    buildHeaders('webhook-retry-after-recovery'),
+    buildPaidOrderPayload(),
+  );
+  const webhookEvents = await context.webhookEventService.listWebhookEvents('blind-box', {
+    topic: 'orders/paid',
+  });
+
+  assert.equal(retryResult.outcome, 'succeeded');
+  assert.equal(replayResult.status, 'processed');
+  assert.equal(webhookEvents.length, 1);
+  assert.equal(webhookEvents[0].status, 'processed');
 });

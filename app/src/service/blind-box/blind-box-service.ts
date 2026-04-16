@@ -10,6 +10,11 @@ export class BlindBoxService {
     return this.blindBoxRepository.create(shop, normalizedInput);
   }
 
+  async updateBlindBox(shop: string, blindBoxId: string, input: CreateBlindBoxInput): Promise<BlindBox> {
+    const normalizedInput = validateCreateBlindBoxInput(input);
+    return this.blindBoxRepository.update(shop, blindBoxId, normalizedInput);
+  }
+
   async listBlindBoxes(shop: string): Promise<BlindBox[]> {
     return this.blindBoxRepository.listByShop(shop);
   }

@@ -20,17 +20,25 @@ import {
   BlindBoxAssignmentRepository,
   getBlindBoxAssignmentRepository,
 } from '../../repository/blind-box-assignment-repository';
-import { InventoryOperationService, getInventoryOperationService } from '../inventory/inventory-operation-service';
-import { BlindBoxAssignmentService } from './assignment-service';
-import { UnimplementedInventoryGateway, InventoryGateway } from '../../integration/shopline/inventory-gateway';
+import {
+  getInventoryExecutionService,
+  InventoryExecutionResult,
+  InventoryExecutionService,
+} from '../inventory/inventory-execution-service';
+import {
+  AssignmentInventoryBoundaryService,
+  getAssignmentInventoryBoundaryService,
+} from '../inventory/assignment-inventory-boundary-service';
 import { getRuntimeConfig } from '../../lib/config';
 
 export type AssignmentFailureReason =
   | 'BLIND_BOX_NOT_ACTIVE'
   | 'EMPTY_POOL'
   | 'NO_ELIGIBLE_ITEMS'
+  | 'UNSUPPORTED_QUANTITY'
   | 'INVALID_WEIGHTING'
-  | 'INVENTORY_WORKFLOW_FAILURE';
+  | 'INVENTORY_WORKFLOW_FAILURE'
+  | 'INVENTORY_REQUIRES_RECONCILIATION';
 
 export interface AssignmentProcessingFailure {
   blindBoxId: string;
@@ -65,9 +73,8 @@ export interface PaidOrderAssignmentServiceDependencies {
   blindBoxPoolItemRepository: BlindBoxPoolItemRepository;
   blindBoxProductMappingRepository: BlindBoxProductMappingRepository;
   blindBoxAssignmentRepository: BlindBoxAssignmentRepository;
-  blindBoxAssignmentService: BlindBoxAssignmentService;
-  inventoryOperationService: InventoryOperationService;
-  inventoryGateway: InventoryGateway;
+  assignmentInventoryBoundaryService: AssignmentInventoryBoundaryService;
+  inventoryExecutionService: InventoryExecutionService;
   logger: Logger;
   random: () => number;
   inventoryExecutionMode: 'deferred' | 'execute';
@@ -100,6 +107,32 @@ function toAssignmentFailure(
     orderId,
     reason,
     message,
+  };
+}
+
+function toAssignedBlindBoxOrderLine(
+  executionResult: {
+    assignmentId: string;
+    blindBoxId: string;
+    selectedPoolItemId: string;
+    selectionStrategy: BlindBox['selectionStrategy'];
+    inventoryOperationId: string;
+    inventoryStatus: InventoryOperation['status'];
+    lineItemId: string;
+    orderId: string;
+    wasExistingAssignment: boolean;
+  },
+): AssignedBlindBoxOrderLine {
+  return {
+    blindBoxId: executionResult.blindBoxId,
+    lineItemId: executionResult.lineItemId,
+    orderId: executionResult.orderId,
+    assignmentId: executionResult.assignmentId,
+    selectedPoolItemId: executionResult.selectedPoolItemId,
+    selectionStrategy: executionResult.selectionStrategy,
+    inventoryOperationId: executionResult.inventoryOperationId,
+    inventoryStatus: executionResult.inventoryStatus,
+    wasExistingAssignment: executionResult.wasExistingAssignment,
   };
 }
 
@@ -141,32 +174,17 @@ export class PaidOrderAssignmentService {
     mapping: BlindBoxProductMapping,
     lineItem: OrderPaidLineItem,
   ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
-    const existingAssignment = await this.dependencies.blindBoxAssignmentRepository.findByOrderLine(
+    const assignmentIdempotencyKey = createIdempotencyKey(shop, orderId, lineItem.id);
+    let existingAssignment = await this.dependencies.blindBoxAssignmentRepository.findByOrderLine(
       shop,
       orderId,
       lineItem.id,
     );
 
-    if (existingAssignment?.selectedPoolItemId) {
-      const existingInventoryOperations = await this.dependencies.inventoryOperationService.listInventoryOperationsForAssignment(
-        shop,
-        existingAssignment.id,
-      );
+    let blindBox = existingAssignment
+      ? await this.dependencies.blindBoxRepository.findById(shop, existingAssignment.blindBoxId)
+      : await this.dependencies.blindBoxRepository.findById(shop, mapping.blindBoxId);
 
-      return {
-        blindBoxId: existingAssignment.blindBoxId,
-        lineItemId: lineItem.id,
-        orderId,
-        assignmentId: existingAssignment.id,
-        selectedPoolItemId: existingAssignment.selectedPoolItemId,
-        selectionStrategy: existingAssignment.selectionStrategy || 'uniform',
-        inventoryOperationId: existingInventoryOperations[0]?.id || '',
-        inventoryStatus: existingInventoryOperations[0]?.status || 'pending',
-        wasExistingAssignment: true,
-      };
-    }
-
-    const blindBox = await this.dependencies.blindBoxRepository.findById(shop, mapping.blindBoxId);
     if (!blindBox || blindBox.status !== 'active') {
       return toAssignmentFailure(
         mapping.blindBoxId,
@@ -177,213 +195,284 @@ export class PaidOrderAssignmentService {
       );
     }
 
-    const poolItems = await this.dependencies.blindBoxPoolItemRepository.listByBlindBoxId(shop, blindBox.id);
-    if (!poolItems.length) {
+    if ((lineItem.quantity || 1) > 1) {
       return toAssignmentFailure(
         blindBox.id,
         lineItem.id,
         orderId,
-        'EMPTY_POOL',
-        'Blind box has no configured pool items',
+        'UNSUPPORTED_QUANTITY',
+        'Blind-box purchases only support quantity 1 per order line. Reduce quantity before checkout and retry the order.',
       );
     }
 
-    const { eligibleItems } = evaluateEligiblePoolItems(poolItems);
-    if (!eligibleItems.length) {
-      return toAssignmentFailure(
-        blindBox.id,
-        lineItem.id,
-        orderId,
-        'NO_ELIGIBLE_ITEMS',
-        'Blind box has no enabled in-stock pool items',
-      );
-    }
+    let selectedPoolItemId = existingAssignment?.selectedPoolItemId || null;
+    const wasExistingAssignment = Boolean(existingAssignment?.selectedPoolItemId);
 
-    let selectedPoolItem: BlindBoxPoolItem;
-    try {
-      selectedPoolItem = selectPoolItemForBlindBox(blindBox, poolItems, {
-        random: this.dependencies.random,
-      });
-    } catch (error) {
-      if (error instanceof ValidationError) {
+    if (!selectedPoolItemId) {
+      const poolItems = await this.dependencies.blindBoxPoolItemRepository.listByBlindBoxId(shop, blindBox.id);
+      if (!poolItems.length) {
         return toAssignmentFailure(
           blindBox.id,
           lineItem.id,
           orderId,
-          'INVALID_WEIGHTING',
-          error.message,
+          'EMPTY_POOL',
+          'Blind box has no configured pool items',
         );
       }
 
-      throw error;
-    }
-
-    const assignmentMetadata = JSON.stringify({
-      orderLine: summarizeLineItem(lineItem),
-      selection: {
-        eligibleItemCount: eligibleItems.length,
-        selectedPoolItemId: selectedPoolItem.id,
-        strategy: blindBox.selectionStrategy,
-      },
-    });
-
-    let assignment = existingAssignment;
-    if (!assignment) {
-      try {
-        assignment = await this.dependencies.blindBoxAssignmentService.createAssignment(shop, {
-          blindBoxId: blindBox.id,
+      const { eligibleItems } = evaluateEligiblePoolItems(poolItems);
+      if (!eligibleItems.length) {
+        return toAssignmentFailure(
+          blindBox.id,
+          lineItem.id,
           orderId,
-          orderLineId: lineItem.id,
-          selectedPoolItemId: selectedPoolItem.id,
-          status: 'inventory_pending',
-          selectionStrategy: blindBox.selectionStrategy,
-          idempotencyKey: createIdempotencyKey(shop, orderId, lineItem.id),
-          metadata: assignmentMetadata,
+          'NO_ELIGIBLE_ITEMS',
+          'Blind box has no enabled in-stock pool items',
+        );
+      }
+
+      let selectedPoolItem: BlindBoxPoolItem;
+      try {
+        selectedPoolItem = selectPoolItemForBlindBox(blindBox, poolItems, {
+          random: this.dependencies.random,
         });
       } catch (error) {
         if (error instanceof ValidationError) {
-          return toAssignmentFailure(blindBox.id, lineItem.id, orderId, 'INVALID_WEIGHTING', error.message);
-        }
-
-        const concurrentAssignment = await this.dependencies.blindBoxAssignmentRepository.findByOrderLine(
-          shop,
-          orderId,
-          lineItem.id,
-        );
-
-        if (concurrentAssignment?.selectedPoolItemId) {
-          const concurrentInventoryOperations =
-            await this.dependencies.inventoryOperationService.listInventoryOperationsForAssignment(
-              shop,
-              concurrentAssignment.id,
-            );
-
-          return {
-            blindBoxId: concurrentAssignment.blindBoxId,
-            lineItemId: lineItem.id,
+          return toAssignmentFailure(
+            blindBox.id,
+            lineItem.id,
             orderId,
-            assignmentId: concurrentAssignment.id,
-            selectedPoolItemId: concurrentAssignment.selectedPoolItemId,
-            selectionStrategy: concurrentAssignment.selectionStrategy || blindBox.selectionStrategy,
-            inventoryOperationId: concurrentInventoryOperations[0]?.id || '',
-            inventoryStatus: concurrentInventoryOperations[0]?.status || 'pending',
-            wasExistingAssignment: true,
-          };
+            'INVALID_WEIGHTING',
+            error.message,
+          );
         }
 
         throw error;
       }
-    }
 
-    const inventoryOperation = await this.dependencies.inventoryOperationService.createInventoryOperation(shop, {
-      blindBoxId: blindBox.id,
-      assignmentId: assignment.id,
-      poolItemId: selectedPoolItem.id,
-      operationType: 'commit',
-      status: 'pending',
-      externalReference: createIdempotencyKey(shop, orderId, lineItem.id),
-      reason: 'Blind-box assignment committed for paid order line',
-      metadata: JSON.stringify({
-        orderId,
-        orderLineId: lineItem.id,
-        selectedPoolItemId: selectedPoolItem.id,
-      }),
-    });
-
-    if (this.dependencies.inventoryExecutionMode === 'execute') {
-      try {
-        await this.dependencies.inventoryGateway.commit({
-          shop,
-          poolItemId: selectedPoolItem.id,
-          quantity: 1,
-          reason: 'blind_box_assignment',
-          idempotencyKey: createIdempotencyKey(shop, orderId, lineItem.id),
-        });
-
-        assignment = await this.dependencies.blindBoxAssignmentService.updateAssignmentStatus(
-          shop,
-          assignment.id,
-          'inventory_committed',
-        );
-
-        await this.dependencies.inventoryOperationService.updateInventoryOperationStatus(
-          shop,
-          inventoryOperation.id,
-          'completed',
-        );
-
-        return {
-          blindBoxId: blindBox.id,
-          lineItemId: lineItem.id,
-          orderId,
-          assignmentId: assignment.id,
+      const assignmentMetadata = JSON.stringify({
+        orderLine: summarizeLineItem(lineItem),
+        selection: {
+          eligibleItemCount: eligibleItems.length,
           selectedPoolItemId: selectedPoolItem.id,
-          selectionStrategy: blindBox.selectionStrategy,
-          inventoryOperationId: inventoryOperation.id,
-          inventoryStatus: 'completed',
-          wasExistingAssignment: false,
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown inventory workflow failure';
-        await this.dependencies.blindBoxAssignmentService.updateAssignmentStatus(
-          shop,
-          assignment.id,
-          'inventory_failed',
-          JSON.stringify({
-            orderLine: summarizeLineItem(lineItem),
-            inventoryError: errorMessage,
-          }),
-        );
+          strategy: blindBox.selectionStrategy,
+        },
+      });
 
-        await this.dependencies.inventoryOperationService.updateInventoryOperationStatus(
+      const persistedBoundary =
+        await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
           shop,
-          inventoryOperation.id,
-          'failed',
           {
-            reason: errorMessage,
+            blindBoxId: blindBox.id,
+            orderId,
+            orderLineId: lineItem.id,
+            selectedPoolItemId: selectedPoolItem.id,
+            selectionStrategy: blindBox.selectionStrategy,
+            idempotencyKey: assignmentIdempotencyKey,
+            assignmentMetadata,
           },
         );
 
-        this.dependencies.logger.error('Inventory workflow failed for blind-box assignment', {
-          shop,
-          blindBoxId: blindBox.id,
-          orderId,
-          orderLineId: lineItem.id,
-          assignmentId: assignment.id,
-          inventoryOperationId: inventoryOperation.id,
-          errorMessage,
-        });
+      existingAssignment = persistedBoundary.assignment;
+      selectedPoolItemId = persistedBoundary.assignment.selectedPoolItemId;
 
+      if (!selectedPoolItemId) {
         return toAssignmentFailure(
           blindBox.id,
           lineItem.id,
           orderId,
           'INVENTORY_WORKFLOW_FAILURE',
-          errorMessage,
+          'Blind-box assignment did not persist a selected pool item before inventory execution',
         );
       }
+
+      return this.handlePersistedBoundary(
+        shop,
+        blindBox,
+        lineItem,
+        orderId,
+        persistedBoundary.assignment,
+        persistedBoundary.inventoryOperation,
+        persistedBoundary.wasExistingAssignment,
+      );
     }
 
-    this.dependencies.logger.info('Deferred inventory workflow for blind-box assignment', {
-      shop,
-      blindBoxId: blindBox.id,
-      orderId,
-      orderLineId: lineItem.id,
-      assignmentId: assignment.id,
-      inventoryOperationId: inventoryOperation.id,
-    });
+    if (!existingAssignment || !selectedPoolItemId) {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
+        orderId,
+        'INVENTORY_WORKFLOW_FAILURE',
+        'Blind-box assignment could not be finalized for inventory execution',
+      );
+    }
 
-    return {
-      blindBoxId: blindBox.id,
-      lineItemId: lineItem.id,
+    const persistedBoundary =
+      await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
+        shop,
+        {
+          blindBoxId: existingAssignment.blindBoxId,
+          orderId,
+          orderLineId: lineItem.id,
+          selectedPoolItemId,
+          selectionStrategy:
+            (existingAssignment.selectionStrategy || blindBox.selectionStrategy) as NonNullable<
+              BlindBox['selectionStrategy']
+            >,
+          idempotencyKey: assignmentIdempotencyKey,
+          assignmentMetadata: existingAssignment.metadata,
+        },
+      );
+
+    return this.handlePersistedBoundary(
+      shop,
+      blindBox,
+      lineItem,
       orderId,
-      assignmentId: assignment.id,
-      selectedPoolItemId: selectedPoolItem.id,
-      selectionStrategy: blindBox.selectionStrategy,
-      inventoryOperationId: inventoryOperation.id,
-      inventoryStatus: 'pending',
-      wasExistingAssignment: false,
-    };
+      persistedBoundary.assignment,
+      persistedBoundary.inventoryOperation,
+      persistedBoundary.wasExistingAssignment || wasExistingAssignment,
+    );
+  }
+
+  private async handlePersistedBoundary(
+    shop: string,
+    blindBox: BlindBox,
+    lineItem: OrderPaidLineItem,
+    orderId: string,
+    assignment: {
+      id: string;
+      blindBoxId: string;
+      selectedPoolItemId: string | null;
+      selectionStrategy: BlindBox['selectionStrategy'] | null;
+    },
+    inventoryOperation: InventoryOperation,
+    wasExistingAssignment: boolean,
+  ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
+    const selectedPoolItemId = assignment.selectedPoolItemId || inventoryOperation.poolItemId;
+    if (!selectedPoolItemId) {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
+        orderId,
+        'INVENTORY_WORKFLOW_FAILURE',
+        'Inventory operation is missing the selected pool item for this assignment',
+      );
+    }
+
+    if (inventoryOperation.status === 'succeeded') {
+      return toAssignedBlindBoxOrderLine({
+        blindBoxId: assignment.blindBoxId,
+        lineItemId: lineItem.id,
+        orderId,
+        assignmentId: assignment.id,
+        selectedPoolItemId,
+        selectionStrategy: assignment.selectionStrategy || blindBox.selectionStrategy,
+        inventoryOperationId: inventoryOperation.id,
+        inventoryStatus: inventoryOperation.status,
+        wasExistingAssignment,
+      });
+    }
+
+    if (inventoryOperation.status === 'processing') {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
+        orderId,
+        'INVENTORY_REQUIRES_RECONCILIATION',
+        inventoryOperation.reason ||
+          'Inventory execution is already processing and requires reconciliation before retry',
+      );
+    }
+
+    if (wasExistingAssignment && inventoryOperation.status === 'failed') {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
+        orderId,
+        'INVENTORY_WORKFLOW_FAILURE',
+        inventoryOperation.reason || 'Existing inventory workflow is still failed for this assignment',
+      );
+    }
+
+    if (this.dependencies.inventoryExecutionMode !== 'execute') {
+      this.dependencies.logger.info('Deferred inventory workflow for blind-box assignment', {
+        shop,
+        blindBoxId: blindBox.id,
+        orderId,
+        orderLineId: lineItem.id,
+        assignmentId: assignment.id,
+        inventoryOperationId: inventoryOperation.id,
+      });
+
+      return toAssignedBlindBoxOrderLine({
+        blindBoxId: assignment.blindBoxId,
+        lineItemId: lineItem.id,
+        orderId,
+        assignmentId: assignment.id,
+        selectedPoolItemId,
+        selectionStrategy: assignment.selectionStrategy || blindBox.selectionStrategy,
+        inventoryOperationId: inventoryOperation.id,
+        inventoryStatus: inventoryOperation.status,
+        wasExistingAssignment,
+      });
+    }
+
+    const executionResult = await this.dependencies.inventoryExecutionService.executeInventoryOperation(
+      shop,
+      inventoryOperation.id,
+      {
+        trigger: 'webhook',
+      },
+    );
+
+    return this.mapExecutionResultToOutcome(
+      blindBox,
+      lineItem,
+      orderId,
+      executionResult,
+      wasExistingAssignment,
+    );
+  }
+
+  private mapExecutionResultToOutcome(
+    blindBox: BlindBox,
+    lineItem: OrderPaidLineItem,
+    orderId: string,
+    executionResult: InventoryExecutionResult,
+    wasExistingAssignment: boolean,
+  ): AssignedBlindBoxOrderLine | AssignmentProcessingFailure {
+    if (executionResult.outcome === 'succeeded' || executionResult.outcome === 'noop') {
+      return toAssignedBlindBoxOrderLine({
+        blindBoxId: executionResult.assignment.blindBoxId,
+        lineItemId: lineItem.id,
+        orderId,
+        assignmentId: executionResult.assignment.id,
+        selectedPoolItemId: executionResult.assignment.selectedPoolItemId || executionResult.poolItem.id,
+        selectionStrategy: executionResult.assignment.selectionStrategy || blindBox.selectionStrategy,
+        inventoryOperationId: executionResult.operation.id,
+        inventoryStatus: executionResult.operation.status,
+        wasExistingAssignment,
+      });
+    }
+
+    if (executionResult.outcome === 'processing') {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
+        orderId,
+        'INVENTORY_REQUIRES_RECONCILIATION',
+        executionResult.message || 'Inventory execution requires reconciliation before retry',
+      );
+    }
+
+    return toAssignmentFailure(
+      blindBox.id,
+      lineItem.id,
+      orderId,
+      'INVENTORY_WORKFLOW_FAILURE',
+      executionResult.message || 'Inventory execution failed',
+    );
   }
 }
 
@@ -392,8 +481,8 @@ export async function getPaidOrderAssignmentService(): Promise<PaidOrderAssignme
   const blindBoxPoolItemRepository = await getBlindBoxPoolItemRepository();
   const blindBoxProductMappingRepository = await getBlindBoxProductMappingRepository();
   const blindBoxAssignmentRepository = await getBlindBoxAssignmentRepository();
-  const blindBoxAssignmentService = new BlindBoxAssignmentService(blindBoxAssignmentRepository);
-  const inventoryOperationService = await getInventoryOperationService();
+  const assignmentInventoryBoundaryService = await getAssignmentInventoryBoundaryService();
+  const inventoryExecutionService = await getInventoryExecutionService();
   const runtimeConfig = getRuntimeConfig();
 
   return new PaidOrderAssignmentService({
@@ -401,9 +490,8 @@ export async function getPaidOrderAssignmentService(): Promise<PaidOrderAssignme
     blindBoxPoolItemRepository,
     blindBoxProductMappingRepository,
     blindBoxAssignmentRepository,
-    blindBoxAssignmentService,
-    inventoryOperationService,
-    inventoryGateway: new UnimplementedInventoryGateway(),
+    assignmentInventoryBoundaryService,
+    inventoryExecutionService,
     logger,
     random: Math.random,
     inventoryExecutionMode: runtimeConfig.blindBoxInventoryExecutionMode,

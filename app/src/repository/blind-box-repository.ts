@@ -30,6 +30,7 @@ function mapBlindBoxRow(row: BlindBoxRow): BlindBox {
 
 export interface BlindBoxRepository {
   create(shop: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
+  update(shop: string, blindBoxId: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
   listByShop(shop: string): Promise<BlindBox[]>;
   findById(shop: string, blindBoxId: string): Promise<BlindBox | null>;
 }
@@ -77,6 +78,39 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
     const blindBox = await this.findById(shop, id);
     if (!blindBox) {
       throw new NotFoundError('Failed to load the newly created blind box');
+    }
+
+    return blindBox;
+  }
+
+  async update(shop: string, blindBoxId: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox> {
+    const timestamp = nowIsoString();
+
+    await this.db.run(
+      `
+        UPDATE blind_boxes
+        SET
+          name = ?,
+          description = ?,
+          status = ?,
+          selection_strategy = ?,
+          updated_at = ?
+        WHERE shop = ? AND id = ?
+      `,
+      [
+        input.name,
+        input.description,
+        input.status,
+        input.selectionStrategy,
+        timestamp,
+        shop,
+        blindBoxId,
+      ],
+    );
+
+    const blindBox = await this.findById(shop, blindBoxId);
+    if (!blindBox) {
+      throw new NotFoundError('Blind box not found');
     }
 
     return blindBox;

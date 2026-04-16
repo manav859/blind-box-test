@@ -1,0 +1,64 @@
+{
+  "blind_box_product_shell": {
+    "name": "Blind Box Purchase (Product Page Only)",
+    "settings": {
+      "show_badge": {
+        "label": "Show blind box badge",
+        "info": "Use this block on product detail templates only. Requires product tag blind-box or blind-box-active."
+      },
+      "show_icon": {
+        "label": "Show icon next to badge",
+        "info": "Decorative icon for the blind-box badge row."
+      },
+      "badge_text": {
+        "label": "Badge label",
+        "info": "Short badge text for blind-box product pages."
+      },
+      "title": {
+        "label": "Headline",
+        "info": "Main heading for the blind-box explanation card."
+      },
+      "description": {
+        "label": "Supporting description",
+        "info": "Use this to explain the blind-box format clearly. Keep it focused on product expectations, not reveal or checkout behavior."
+      },
+      "display_variant": {
+        "label": "Display layout",
+        "info": "Choose the overall layout style for the product page. Standard fits most blind-box templates.",
+        "options": {
+          "compact": "Compact",
+          "standard": "Standard",
+          "highlighted": "Highlighted"
+        }
+      },
+      "detail_level": {
+        "label": "Information density",
+        "info": "Compact keeps the message shorter. Expanded shows the full supporting explainer.",
+        "options": {
+          "compact": "Compact details",
+          "expanded": "Expanded details"
+        }
+      },
+      "show_how_it_works": {
+        "label": "Show purchase-flow explainer",
+        "info": "Displays the explanatory card that tells shoppers the final item is assigned after purchase."
+      },
+      "show_rarity_note": {
+        "label": "Show collectible note",
+        "info": "Turn off if you do not want to mention rarity or assortment on this product template."
+      },
+      "rarity_note": {
+        "label": "Collectible note",
+        "info": "Optional note for rarity, assortment, or collectible framing."
+      },
+      "show_disclaimer": {
+        "label": "Show store disclaimer",
+        "info": "Turn off if the template should stay lighter and the store note is not needed."
+      },
+      "disclaimer": {
+        "label": "Store disclaimer",
+        "info": "Optional presentation disclaimer for storefront expectation setting. Fulfillment logic still stays in the backend."
+      }
+    }
+  }
+}
