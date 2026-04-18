@@ -58,6 +58,72 @@ button {
   min-height: 100vh;
 }
 
+.ops-page {
+  width: min(960px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.ops-page__panel,
+.ops-page__card {
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.ops-page__panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ops-page__eyebrow {
+  display: inline-flex;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.ops-page__panel h1,
+.ops-page__card h2 {
+  margin: 0;
+}
+
+.ops-page__panel p,
+.ops-page__card p {
+  margin: 0;
+  color: var(--text-subtle);
+  line-height: 1.7;
+}
+
+.ops-page__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ops-page__card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ops-page__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-subtle);
+  line-height: 1.7;
+}
+
+.ops-page__list code {
+  color: #132238;
+}
+
 .admin-shell {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -859,6 +925,10 @@ button {
   .pool-item-readiness-top {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ops-page__grid {
+    grid-template-columns: 1fr;
   }
 }
 

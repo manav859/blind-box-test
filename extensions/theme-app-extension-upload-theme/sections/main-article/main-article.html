@@ -1,0 +1,111 @@
+<section class="theme-page article-page">
+  <div class="theme-page__hero">
+    <div class="theme-page__panel">
+      <span class="theme-page__eyebrow">Article</span>
+      <h1 class="theme-page__title">
+        {{#if article.title}}
+          {{ article.title }}
+        {{else}}
+          Story page
+        {{/if}}
+      </h1>
+      <p class="theme-page__lead">
+        {{#if article.author}}
+          By {{ article.author }} - {{ article.published_at }}
+        {{else}}
+          Editorial content stays readable out of the box with a proper article template.
+        {{/if}}
+      </p>
+      <div class="theme-page__actions">
+        {{#if article.blog}}
+          <a class="theme-page__link-button" href="{{ article.blog.url }}">Back to journal</a>
+        {{/if}}
+        <a class="theme-page__link-button" href="/collections/all">Shop catalog</a>
+      </div>
+    </div>
+
+    {{#if article.image}}
+      <div class="theme-page__panel collection-page__hero-media">
+        <img src="{{ article.image | image_url(width=1400) }}" alt="{{ article.title }}">
+      </div>
+    {{else}}
+      <aside class="theme-page__sidebar">
+        <span class="theme-page__kicker">Editorial routing</span>
+        <h3>Article templates no longer fall back to generic placeholder pages.</h3>
+        <p>Use the content area for long-form copy, launch notes, founder letters, or collector education.</p>
+      </aside>
+    {{/if}}
+  </div>
+
+  <div class="article-page__layout">
+    <article class="theme-page__panel">
+      <div class="article-page__body">
+        {{#if article.content}}
+          {{{ article.content }}}
+        {{else}}
+          <p>Add article content in SHOPLINE admin to replace this starter note.</p>
+        {{/if}}
+      </div>
+    </article>
+
+    <aside class="theme-page__sidebar">
+      <span class="theme-page__kicker">Reader context</span>
+      <h3>Use the sidebar for campaign links, support notes, or related routes.</h3>
+      <p>Article pages now include a secondary column by default instead of rendering as plain placeholder content.</p>
+    </aside>
+  </div>
+
+  {{#if article.comments_enabled}}
+    <div class="article-page__layout">
+      <div class="article-page__comments">
+        <article class="theme-page__panel">
+          <span class="theme-page__kicker">Comments</span>
+          {{#if article.comments.length > 0}}
+            <div class="theme-page__list">
+              {{#each article.comments as |comment|}}
+                <div class="theme-page__card">
+                  <strong>{{ comment.author }}</strong>
+                  <p class="theme-page__body">{{ comment.content }}</p>
+                </div>
+              {{/each}}
+            </div>
+          {{else}}
+            <p class="theme-page__body">No comments yet.</p>
+          {{/if}}
+        </article>
+      </div>
+
+      <aside class="theme-page__panel">
+        <span class="theme-page__kicker">Leave a comment</span>
+        <form class="theme-page__form" method="post" action="{{ article.url }}">
+          <div class="theme-page__field">
+            <label class="theme-page__label" for="CommentAuthor">Name</label>
+            <input class="theme-page__input" id="CommentAuthor" type="text" name="comment[author]">
+          </div>
+          <div class="theme-page__field">
+            <label class="theme-page__label" for="CommentEmail">Email</label>
+            <input class="theme-page__input" id="CommentEmail" type="email" name="comment[email]">
+          </div>
+          <div class="theme-page__field">
+            <label class="theme-page__label" for="CommentBody">Comment</label>
+            <textarea class="theme-page__textarea" id="CommentBody" name="comment[body]"></textarea>
+          </div>
+          <button class="theme-page__button" type="submit">Post comment</button>
+        </form>
+      </aside>
+    </div>
+  {{/if}}
+</section>
+
+{{#schema}}
+{
+  "name": "Main article",
+  "class": "theme-main-article",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main article"
+    }
+  ]
+}
+{{/schema}}

@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminLayout } from "../../../components/admin/AdminLayout";
 import { PageHeader } from "../../../components/admin/PageHeader";
 import { SectionCard } from "../../../components/admin/SectionCard";
@@ -8,31 +8,31 @@ import {
   BlindBoxForm,
   getBlindBoxFormValues,
 } from "../../../components/blind-box/BlindBoxForm";
-import { PoolItemForm } from "../../../components/blind-box/PoolItemForm";
-import { PoolItemReadinessPanel } from "../../../components/blind-box/PoolItemReadinessPanel";
-import { PoolItemsTable } from "../../../components/blind-box/PoolItemsTable";
-import { ProductMappingForm } from "../../../components/blind-box/ProductMappingForm";
-import { ProductMappingsTable } from "../../../components/blind-box/ProductMappingsTable";
+import { RewardGroupForm } from "../../../components/blind-box/RewardGroupForm";
 import { useBlindBoxAdminApi } from "../../../hooks/useBlindBoxAdminApi";
 import { useEmbeddedPath } from "../../../hooks/useEmbeddedRouting";
 import { useResource } from "../../../hooks/useResource";
 import { useToast } from "../../../hooks/useToast";
-import { formatTokenLabel } from "../../../utils/format";
 import type {
   BlindBox,
-  InventoryExecutionReadinessReport,
-  BlindBoxPoolItem,
-  BlindBoxProductMapping,
+  BlindBoxActivationReadinessReport,
+  BlindBoxAssignment,
+  InventoryOperation,
+  RewardGroup,
   CreateBlindBoxInput,
-  UpsertBlindBoxPoolItemInput,
-  UpsertBlindBoxProductMappingInput,
+  UpsertRewardGroupInput,
 } from "../../../types/blindBox";
 import { StatusBadge } from "../../../components/admin/StatusBadge";
+import { formatDateTime, formatOptionalValue } from "../../../utils/format";
 
 interface EditBlindBoxData {
   blindBox: BlindBox | null;
-  poolItems: BlindBoxPoolItem[];
-  productMappings: BlindBoxProductMapping[];
+  rewardGroups: RewardGroup[];
+  linkedRewardGroup: RewardGroup | null;
+  readiness: BlindBoxActivationReadinessReport | null;
+  readinessError: string | null;
+  recentAssignments: BlindBoxAssignment[];
+  recentOperations: InventoryOperation[];
 }
 
 export default function EditBlindBoxPage() {
@@ -41,48 +41,86 @@ export default function EditBlindBoxPage() {
   const embeddedPath = useEmbeddedPath();
   const { blindBoxId = "" } = useParams();
   const [isSavingBlindBox, setIsSavingBlindBox] = useState(false);
-  const [isSavingItem, setIsSavingItem] = useState(false);
-  const [isSavingMapping, setIsSavingMapping] = useState(false);
-  const [editingItem, setEditingItem] = useState<BlindBoxPoolItem | undefined>();
-  const [editingMapping, setEditingMapping] = useState<
-    BlindBoxProductMapping | undefined
-  >();
-  const [checkingPoolItemId, setCheckingPoolItemId] = useState<string | null>(null);
-  const [poolItemReadinessById, setPoolItemReadinessById] = useState<
-    Record<string, InventoryExecutionReadinessReport>
-  >({});
-  const [poolItemReadinessErrorsById, setPoolItemReadinessErrorsById] = useState<
-    Record<string, string>
-  >({});
+  const [isSavingRewardGroup, setIsSavingRewardGroup] = useState(false);
   const [pageMessage, setPageMessage] = useState<string | null>(null);
 
-  const blindBoxResource = useResource<EditBlindBoxData>(async () => {
-    const [blindBoxes, poolItems, productMappings] = await Promise.all([
-      api.listBlindBoxes(),
-      api.listPoolItems(blindBoxId),
-      api.listProductMappings(),
-    ]);
+  const blindBoxResource = useResource<EditBlindBoxData>(
+    async () => {
+      const [blindBoxes, rewardGroups, rewardGroupLinks, assignments, inventoryOperations] = await Promise.all([
+        api.listBlindBoxes(),
+        api.listRewardGroups(),
+        api.listRewardGroupLinks(),
+        api.listAssignments(),
+        api.listInventoryOperations(),
+      ]);
 
-    return {
-      blindBox: blindBoxes.find((blindBox) => blindBox.id === blindBoxId) || null,
-      poolItems,
-      productMappings: productMappings.filter(
-        (mapping) => mapping.blindBoxId === blindBoxId
-      ),
-    };
-  }, [blindBoxId], {
-    enabled: api.isReady,
-  });
-  const enabledMappings = blindBoxResource.data?.productMappings.filter(
-    (mapping) => mapping.enabled
-  ) || [];
-  const variantScopedMappings = enabledMappings.filter((mapping) =>
-    Boolean(mapping.productVariantId)
+      const blindBox = blindBoxes.find((item) => item.id === blindBoxId) || null;
+      const linkedRewardGroupId = rewardGroupLinks.find(
+        (link) => link.blindBoxId === blindBoxId
+      )?.rewardGroupId;
+      const linkedRewardGroup =
+        rewardGroups.find((group) => group.id === linkedRewardGroupId) || null;
+
+      let readiness: BlindBoxActivationReadinessReport | null = null;
+      let readinessError: string | null = null;
+      if (blindBox) {
+        try {
+          readiness = await api.getBlindBoxReadiness(blindBox.id);
+        } catch (error) {
+          readiness = null;
+          readinessError =
+            error instanceof Error ? error.message : "Unable to load the latest readiness report.";
+        }
+      }
+
+      return {
+        blindBox,
+        rewardGroups,
+        linkedRewardGroup,
+        readiness,
+        readinessError,
+        recentAssignments: assignments
+          .filter((assignment) => assignment.blindBoxId === blindBoxId)
+          .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+          .slice(0, 5),
+        recentOperations: inventoryOperations
+          .filter((operation) => operation.blindBoxId === blindBoxId)
+          .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+          .slice(0, 5),
+      };
+    },
+    [blindBoxId],
+    {
+      enabled: api.isReady,
+    }
   );
-  const merchantReadyPoolItems =
-    blindBoxResource.data?.poolItems.filter(
-      (item) => item.enabled && item.inventoryQuantity > 0
-    ) || [];
+
+  const readiness = blindBoxResource.data?.readiness || null;
+  const readinessBadge =
+    readiness?.status === "ready" ? "ready" : readiness ? "action_required" : "needs_review";
+  const eligibleCandidates = readiness?.eligibleCandidates || [];
+  const excludedCandidates = readiness?.excludedCandidates || [];
+  const readinessError = blindBoxResource.data?.readinessError || null;
+  const linkedRewardGroup = blindBoxResource.data?.linkedRewardGroup || null;
+  const resolvedCollection = readiness?.collection || null;
+  const collectionResolutionSource = readiness?.resolutionSource || null;
+
+  const collectionResolutionHint = useMemo(() => {
+    if (resolvedCollection && collectionResolutionSource === "product_tag") {
+      const handle = resolvedCollection.handle || "unknown-handle";
+      return `Auto-resolved from SHOPLINE tag blind-box-collection:${handle}. No admin link is required.`;
+    }
+
+    if (resolvedCollection && collectionResolutionSource === "reward_group_link") {
+      return `Resolved through the legacy fallback mapping for collection ${resolvedCollection.id}.`;
+    }
+
+    if (linkedRewardGroup) {
+      return `Legacy fallback is linked to collection ${linkedRewardGroup.shoplineCollectionId}.`;
+    }
+
+    return "No reward collection is resolved yet. Add a blind-box-collection:<handle> tag in SHOPLINE, or use the legacy fallback below if needed.";
+  }, [collectionResolutionSource, linkedRewardGroup, resolvedCollection]);
 
   async function handleBlindBoxSubmit(values: CreateBlindBoxInput) {
     setIsSavingBlindBox(true);
@@ -90,11 +128,11 @@ export default function EditBlindBoxPage() {
 
     try {
       await api.updateBlindBox(blindBoxId, values);
-      toast.success("Blind box updated.");
+      toast.success("Blind-box product reference updated.");
       blindBoxResource.reload();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to update blind box.";
+        error instanceof Error ? error.message : "Failed to update blind-box product reference.";
       setPageMessage(message);
       toast.error(message);
     } finally {
@@ -102,81 +140,28 @@ export default function EditBlindBoxPage() {
     }
   }
 
-  async function handlePoolItemSubmit(values: UpsertBlindBoxPoolItemInput) {
-    setIsSavingItem(true);
+  async function handleRewardGroupSubmit(values: UpsertRewardGroupInput) {
+    setIsSavingRewardGroup(true);
     setPageMessage(null);
 
     try {
-      const savedItem = await api.upsertPoolItem(blindBoxId, values);
-      toast.success(values.id ? "Pool item updated." : "Pool item added.");
-      setEditingItem(savedItem);
-      setPoolItemReadinessById((currentValue) => {
-        const nextValue = { ...currentValue };
-        delete nextValue[savedItem.id];
-        return nextValue;
+      const rewardGroup = await api.upsertRewardGroup({
+        ...values,
+        id: linkedRewardGroup?.id,
       });
-      setPoolItemReadinessErrorsById((currentValue) => {
-        const nextValue = { ...currentValue };
-        delete nextValue[savedItem.id];
-        return nextValue;
+      await api.upsertRewardGroupLink({
+        blindBoxId,
+        rewardGroupId: rewardGroup.id,
       });
+      toast.success("Reward collection saved and linked.");
       blindBoxResource.reload();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to save pool item.";
+        error instanceof Error ? error.message : "Failed to save the reward collection link.";
       setPageMessage(message);
       toast.error(message);
     } finally {
-      setIsSavingItem(false);
-    }
-  }
-
-  async function handleCheckPoolItemReadiness(item: BlindBoxPoolItem) {
-    setEditingItem(item);
-    setCheckingPoolItemId(item.id);
-    setPoolItemReadinessErrorsById((currentValue) => {
-      const nextValue = { ...currentValue };
-      delete nextValue[item.id];
-      return nextValue;
-    });
-
-    try {
-      const report = await api.getPoolItemExecutionReadiness(item.id);
-      setPoolItemReadinessById((currentValue) => ({
-        ...currentValue,
-        [item.id]: report,
-      }));
-    } catch (error) {
-      setPoolItemReadinessErrorsById((currentValue) => ({
-        ...currentValue,
-        [item.id]:
-          error instanceof Error
-            ? error.message
-            : "Failed to validate execute-mode readiness.",
-      }));
-    } finally {
-      setCheckingPoolItemId(null);
-    }
-  }
-
-  async function handleMappingSubmit(
-    values: UpsertBlindBoxProductMappingInput
-  ) {
-    setIsSavingMapping(true);
-    setPageMessage(null);
-
-    try {
-      await api.upsertProductMapping(values);
-      toast.success(values.id ? "Product mapping updated." : "Product mapping added.");
-      setEditingMapping(undefined);
-      blindBoxResource.reload();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to save product mapping.";
-      setPageMessage(message);
-      toast.error(message);
-    } finally {
-      setIsSavingMapping(false);
+      setIsSavingRewardGroup(false);
     }
   }
 
@@ -184,9 +169,9 @@ export default function EditBlindBoxPage() {
     <AdminLayout>
       <div className="admin-content-area stack-xl">
         <PageHeader
-          eyebrow="Edit"
-          title="Blind Box Setup"
-          description="Update merchant-managed configuration for the selected blind box."
+          eyebrow="Configure"
+          title="Detected Blind Box"
+          description="SHOPLINE owns the product identity. This page only stores local operational settings, collection linkage, and assignment readiness."
           actions={
             <Link className="button button-secondary" to={embeddedPath("/blind-box/pools")}>
               Back To List
@@ -199,14 +184,14 @@ export default function EditBlindBoxPage() {
         ) : null}
 
         {blindBoxResource.isLoading ? (
-          <SectionCard title="Loading blind box" description="Fetching pool, item, and mapping details.">
+          <SectionCard title="Loading configuration" description="Fetching blind-box reference and reward-group data.">
             <StatePanel
-              title={api.isReady ? "Loading configuration" : "Preparing admin session"}
+              title={api.isReady ? "Loading blind-box product" : "Preparing admin session"}
               description={
                 api.initializationError?.message ||
                 (api.isReady
-                  ? "Pulling the latest blind-box state from the admin API."
-                  : "Waiting for the embedded SHOPLINE session token before loading blind-box configuration.")
+                  ? "Pulling the latest blind-box configuration from the admin API."
+                  : "Waiting for the embedded SHOPLINE session token before loading blind-box data.")
               }
               action={
                 api.initializationError ? (
@@ -222,7 +207,7 @@ export default function EditBlindBoxPage() {
             />
           </SectionCard>
         ) : blindBoxResource.error ? (
-          <SectionCard title="Unable to load blind box" description="The requested blind-box data could not be retrieved.">
+          <SectionCard title="Unable to load blind-box product" description="The requested configuration could not be retrieved.">
             <StatePanel
               title="Request failed"
               description={blindBoxResource.error.message}
@@ -238,213 +223,261 @@ export default function EditBlindBoxPage() {
             />
           </SectionCard>
         ) : !blindBoxResource.data?.blindBox ? (
-          <SectionCard title="Blind box not found" description="The requested blind box does not exist for this shop.">
+          <SectionCard title="Blind-box product not found" description="The requested blind-box reference does not exist for this shop.">
             <StatePanel
-              title="Missing blind box"
-              description="Return to the list and select an existing blind box."
+              title="Missing blind-box product"
+              description="Return to the list and select an auto-detected blind-box product."
               action={
-                <Link
-                  className="button button-secondary"
-                  to={embeddedPath("/blind-box/pools")}
-                >
-                  Back To Blind Boxes
+                <Link className="button button-secondary" to={embeddedPath("/blind-box/pools")}>
+                  Back To Blind Box Products
                 </Link>
               }
             />
           </SectionCard>
         ) : (
           <>
-            <SectionCard
-              title="Commerce readiness"
-              description="Review whether this blind box is actually connected to a sellable storefront product before activation and storefront QA."
-            >
-              <div className="readiness-grid">
-                <div className="info-list-item">
-                  <strong>Storefront blind-box mapping</strong>
-                  <div className="pool-item-readiness-badges">
-                    <StatusBadge
-                      value={enabledMappings.length > 0 ? "ready" : "action_required"}
-                    />
-                    <span className="section-meta">
-                      {enabledMappings.length} enabled mapping
-                      {enabledMappings.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <span>
-                    Paid-order webhook detection uses the sold product id and optional sold
-                    variant id from product mappings, not the prize-side
-                    <code className="inline-code">sourceVariantId</code>.
-                  </span>
-                </div>
-
-                <div className="info-list-item">
-                  <strong>Variant mapping coverage</strong>
-                  <div className="pool-item-readiness-badges">
-                    <StatusBadge
-                      value={
-                        variantScopedMappings.length > 0 ? "enabled" : "needs_review"
-                      }
-                    />
-                    <span className="section-meta">
-                      {variantScopedMappings.length} variant-specific mapping
-                      {variantScopedMappings.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <span>
-                    Variant-specific sold mappings are strongly recommended and become
-                    mandatory when the storefront blind-box product has multiple sellable
-                    variants.
-                  </span>
-                </div>
-
-                <div className="info-list-item">
-                  <strong>Prize pool coverage</strong>
-                  <div className="pool-item-readiness-badges">
-                    <StatusBadge
-                      value={
-                        merchantReadyPoolItems.length > 0 ? "ready" : "action_required"
-                      }
-                    />
-                    <span className="section-meta">
-                      {merchantReadyPoolItems.length} enabled in-stock pool item
-                      {merchantReadyPoolItems.length === 1 ? "" : "s"}
-                    </span>
-                  </div>
-                  <span>
-                    Activation still runs server-side validation. At least one enabled sold
-                    mapping and one ready pool item must exist before the blind box can move
-                    to <code className="inline-code">active</code>.
-                  </span>
-                </div>
-              </div>
-            </SectionCard>
-
             <div className="status-row">
               <StatusBadge value={blindBoxResource.data.blindBox.status} />
               <StatusBadge value={blindBoxResource.data.blindBox.selectionStrategy} />
+              <StatusBadge value={readinessBadge} />
               <span className="section-meta">
                 {blindBoxResource.isRefreshing ? "Refreshing..." : "Configuration loaded"}
               </span>
             </div>
 
             <SectionCard
-              title={blindBoxResource.data.blindBox.name}
-              description={
-                blindBoxResource.data.blindBox.description ||
-                "No internal description has been added for this blind box."
-              }
+              title="Blind-box settings"
+              description="The product itself stays in SHOPLINE admin. This backend record only stores local settings for the detected product."
             >
               <BlindBoxForm
                 key={blindBoxResource.data.blindBox.id}
                 initialValues={getBlindBoxFormValues(blindBoxResource.data.blindBox)}
-                submitLabel="Update Blind Box"
+                submitLabel="Save Blind Box Settings"
                 isSubmitting={isSavingBlindBox}
                 onSubmit={handleBlindBoxSubmit}
               />
             </SectionCard>
 
-            <div className="dashboard-grid pool-items-workspace">
+            <div className="dashboard-grid dashboard-grid--split">
               <SectionCard
-                title="Pool items"
-                description="Manage prize candidates, scan source ids clearly, and trigger execute-mode checks without leaving the setup screen."
+                title="Reward collection"
+                description="Primary path: define the reward collection with the SHOPLINE product tag blind-box-collection:<handle>. The admin mapping below remains available only as a backward-compatible fallback."
               >
-                <PoolItemsTable
-                  items={blindBoxResource.data.poolItems}
-                  readinessByPoolItemId={poolItemReadinessById}
-                  readinessErrorsByPoolItemId={poolItemReadinessErrorsById}
-                  checkingPoolItemId={checkingPoolItemId}
-                  onEdit={(item) => setEditingItem(item)}
-                  onCheckReadiness={handleCheckPoolItemReadiness}
-                />
+                <div className="stack-md">
+                  <div className="info-list-item">
+                    <strong>Current resolution</strong>
+                    <span>{collectionResolutionHint}</span>
+                    {resolvedCollection ? (
+                      <>
+                        <span>
+                          Collection <code className="inline-code">{resolvedCollection.id}</code>
+                        </span>
+                        <span>
+                          Handle{" "}
+                          <code className="inline-code">
+                            {resolvedCollection.handle || "unknown-handle"}
+                          </code>
+                        </span>
+                      </>
+                    ) : null}
+                    {linkedRewardGroup ? (
+                      <span>Legacy fallback updated {formatDateTime(linkedRewardGroup.updatedAt)}</span>
+                    ) : null}
+                  </div>
+                  <div className="info-list-item">
+                    <strong>Legacy fallback</strong>
+                    <span>
+                      Use this only for older products that do not yet define
+                      {" "}
+                      <code className="inline-code">blind-box-collection:&lt;handle&gt;</code>
+                      {" "}
+                      in SHOPLINE.
+                    </span>
+                  </div>
+                  <RewardGroupForm
+                    key={linkedRewardGroup?.id || "new-reward-group"}
+                    initialValues={linkedRewardGroup || undefined}
+                    isSubmitting={isSavingRewardGroup}
+                    onSubmit={handleRewardGroupSubmit}
+                  />
+                </div>
               </SectionCard>
 
               <SectionCard
-                title={editingItem ? "Edit pool item" : "Add pool item"}
-                description={
-                  editingItem
-                    ? `Updating ${editingItem.label}. Save here, then use the readiness section below for the full connected-store validation result.`
-                    : `The current strategy is ${formatTokenLabel(
-                        blindBoxResource.data.blindBox.selectionStrategy
-                      )}. New items can be added here, then validated against the connected store.`
-                }
+                title="Migration note"
+                description="Manual blind-box registration is deprecated. Detected SHOPLINE products are now the primary source of truth."
               >
-                <div className="pool-item-editor stack-xl">
-                  <div className="pool-item-editor-intro">
-                    <div className="info-list-item">
-                      <strong>Operator workflow</strong>
-                      <span>
-                        1. Inspect the live product and variant on the Debug page.
-                      </span>
-                      <span>
-                        2. Paste <code className="inline-code">sourceProductId</code> and{" "}
-                        <code className="inline-code">sourceVariantId</code> here.
-                      </span>
-                      <span>
-                        3. Save the pool item and run the readiness check to confirm
-                        execute-mode eligibility.
-                      </span>
-                    </div>
+                <div className="stack-md">
+                  <div className="info-list-item">
+                    <strong>Source of truth</strong>
+                    <span>SHOPLINE admin owns the blind-box product and reward collection membership.</span>
                   </div>
-
-                  <PoolItemForm
-                    key={editingItem?.id || "new-pool-item"}
-                    blindBoxId={blindBoxId}
-                    initialValues={editingItem}
-                    isSubmitting={isSavingItem}
-                    onSubmit={handlePoolItemSubmit}
-                    onCancel={
-                      editingItem ? () => setEditingItem(undefined) : undefined
-                    }
-                  />
-
-                  <PoolItemReadinessPanel
-                    item={editingItem}
-                    report={
-                      editingItem ? poolItemReadinessById[editingItem.id] : null
-                    }
-                    error={
-                      editingItem
-                        ? poolItemReadinessErrorsById[editingItem.id] || null
-                        : null
-                    }
-                    isLoading={Boolean(editingItem && checkingPoolItemId === editingItem.id)}
-                    onCheck={() => {
-                      if (editingItem) {
-                        void handleCheckPoolItemReadiness(editingItem);
-                      }
-                    }}
-                  />
+                  <div className="info-list-item">
+                    <strong>Backend ownership</strong>
+                    <span>The backend now owns only linking, assignment persistence, inventory execution, and diagnostics.</span>
+                  </div>
+                  <div className="info-list-item">
+                    <strong>Legacy compatibility</strong>
+                    <span>
+                      Existing manual pool and sold-mapping records remain readable during migration, but they are deprecated.
+                    </span>
+                  </div>
                 </div>
               </SectionCard>
             </div>
 
-            <div className="dashboard-grid dashboard-grid--split">
-              <SectionCard
-                title="Product mappings"
-                description="Map the sellable SHOPLINE product or variant customers buy as the blind box. The paid-order webhook uses these identifiers to recognize blind-box order lines."
-              >
-                <ProductMappingsTable
-                  mappings={blindBoxResource.data.productMappings}
-                  onEdit={(mapping) => setEditingMapping(mapping)}
-                />
-              </SectionCard>
+            <SectionCard
+              title="Readiness & Candidate Health"
+              description="Use this to confirm the linked collection resolves to eligible reward candidates for the detected blind-box product."
+              actions={
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={blindBoxResource.reload}
+                >
+                  Refresh
+                </button>
+              }
+            >
+              {!readiness ? (
+                readinessError ? (
+                  <StatePanel
+                    title="Readiness request failed"
+                    description={readinessError}
+                  />
+                ) : (
+                  <StatePanel
+                    title="Readiness not available yet"
+                    description="Refresh after the blind-box product is tagged in SHOPLINE with blind-box and blind-box-collection:<handle>, or keep the legacy fallback link if the product is still unmigrated."
+                  />
+                )
+              ) : (
+                <div className="stack-lg">
+                  <div className="readiness-grid">
+                    <div className="info-list-item">
+                      <strong>Mode</strong>
+                      <span>{formatOptionalValue(readiness.mode)}</span>
+                    </div>
+                    <div className="info-list-item">
+                      <strong>Collection size</strong>
+                      <span>{readiness.rawCollectionSize} products returned from SHOPLINE</span>
+                    </div>
+                    <div className="info-list-item">
+                      <strong>Eligible candidates</strong>
+                      <span>{eligibleCandidates.length}</span>
+                    </div>
+                    <div className="info-list-item">
+                      <strong>Excluded candidates</strong>
+                      <span>{excludedCandidates.length}</span>
+                    </div>
+                  </div>
 
-              <SectionCard
-                title={editingMapping ? "Edit mapping" : "Add mapping"}
-                description="Use the sold storefront product or variant here. Prize-side execution identifiers stay on pool items."
-              >
-                <ProductMappingForm
-                  key={editingMapping?.id || "new-product-mapping"}
-                  blindBoxId={blindBoxId}
-                  initialValues={editingMapping}
-                  isSubmitting={isSavingMapping}
-                  onSubmit={handleMappingSubmit}
-                  onCancel={
-                    editingMapping ? () => setEditingMapping(undefined) : undefined
-                  }
-                />
-              </SectionCard>
-            </div>
+                  <div className="info-list-item">
+                    <strong>Summary</strong>
+                    <span>{readiness.summary}</span>
+                  </div>
+
+                  {readiness.issues.length > 0 ? (
+                    <div className="stack-sm">
+                      {readiness.issues.map((issue) => (
+                        <div className="info-list-item" key={issue.code}>
+                          <strong>{issue.code}</strong>
+                          <span>{issue.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="dashboard-grid dashboard-grid--split">
+                    <div className="stack-sm">
+                      <strong>Eligible rewards</strong>
+                      {eligibleCandidates.length > 0 ? (
+                        eligibleCandidates.map((candidate) => (
+                          <div className="info-list-item" key={`${candidate.productId}:${candidate.variantId || "product"}`}>
+                            <strong>{candidate.productTitle || candidate.productId}</strong>
+                            <span>
+                              Product <code className="inline-code">{candidate.productId}</code>
+                            </span>
+                            <span>
+                              Variant <code className="inline-code">{candidate.variantId || "product-level"}</code>
+                            </span>
+                            <span>Inventory snapshot {formatOptionalValue(candidate.inventoryQuantity)}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="section-meta">No eligible rewards currently resolved.</span>
+                      )}
+                    </div>
+
+                    <div className="stack-sm">
+                      <strong>Excluded rewards</strong>
+                      {excludedCandidates.length > 0 ? (
+                        excludedCandidates.map((candidate, index) => (
+                          <div className="info-list-item" key={`${candidate.reason}-${candidate.productId || index}`}>
+                            <strong>{candidate.productTitle || candidate.productId || "Unknown product"}</strong>
+                            <span>{candidate.reason}</span>
+                            <span>{candidate.message}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="section-meta">No exclusions. Candidate health is clean.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard
+              title="Recent Activity"
+              description="Most recent assignments and inventory operations for this blind-box product reference."
+            >
+              <div className="dashboard-grid dashboard-grid--split">
+                <div className="stack-sm">
+                  <strong>Recent assignments</strong>
+                  {blindBoxResource.data.recentAssignments.length > 0 ? (
+                    blindBoxResource.data.recentAssignments.map((assignment) => (
+                      <div className="info-list-item" key={assignment.id}>
+                        <strong>{assignment.orderId}</strong>
+                        <span>Line {assignment.orderLineId}</span>
+                        <span>
+                          Reward{" "}
+                          {assignment.selectedRewardTitleSnapshot ||
+                            assignment.selectedRewardProductId ||
+                            assignment.selectedPoolItemId ||
+                            "Unknown"}
+                        </span>
+                        <span>Status {assignment.status}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="section-meta">No assignments recorded yet.</span>
+                  )}
+                </div>
+
+                <div className="stack-sm">
+                  <strong>Recent inventory operations</strong>
+                  {blindBoxResource.data.recentOperations.length > 0 ? (
+                    blindBoxResource.data.recentOperations.map((operation) => (
+                      <div className="info-list-item" key={operation.id}>
+                        <strong>{operation.operationType}</strong>
+                        <span>Status {operation.status}</span>
+                        <span>
+                          Reward{" "}
+                          {operation.rewardTitleSnapshot ||
+                            operation.rewardProductId ||
+                            operation.poolItemId ||
+                            "Unknown"}
+                        </span>
+                        <span>Updated {formatDateTime(operation.updatedAt)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="section-meta">No inventory operations recorded yet.</span>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
           </>
         )}
       </div>

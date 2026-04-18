@@ -1,0 +1,116 @@
+<section class="theme-page cart-page">
+  <div class="theme-page__hero">
+    <div class="theme-page__panel">
+      <span class="theme-page__eyebrow">Cart</span>
+      <h1 class="theme-page__title">Review your cart before checkout.</h1>
+      <p class="theme-page__lead">
+        Keep the final review simple: product, quantity, subtotal, and a clear path to checkout.
+      </p>
+      <div class="theme-page__actions">
+        <a class="theme-page__link-button" href="/collections/all">Continue shopping</a>
+        <a class="theme-page__link-button" href="/search">Search store</a>
+      </div>
+    </div>
+
+    <aside class="theme-page__sidebar">
+      <span class="theme-page__kicker">Checkout clarity</span>
+      <h3>Everything stays inside the native SHOPLINE purchase flow.</h3>
+      <p>Blind box products stay undisclosed in cart. Customers only see a short expectation-setting note before checkout.</p>
+    </aside>
+  </div>
+
+  {{#if cart.items.length > 0}}
+    <form class="cart-page__layout" method="post" action="{{ routes.cart_url }}">
+      <div class="theme-page__list">
+        {{#each cart.items as |item|}}
+          <article
+            class="theme-page__cart-line"
+            data-cart-line
+            data-blind-box-cart-line
+            data-blind-box-mode="pending"
+            data-product-tags="{{ item.product.tags }}"
+          >
+            <div class="cart-page__line-grid">
+              <div class="cart-page__line-media">
+                {{#if item.image}}
+                  <img class="cart-page__line-image" src="{{ item.image }}" alt="{{ item.title }}">
+                {{/if}}
+              </div>
+
+              <div class="theme-page__grid">
+                <h3>
+                  <a class="theme-page__subtle-link" href="{{ item.url }}">
+                    {{ item.title }}
+                  </a>
+                </h3>
+
+                <p class="theme-page__body cart-page__line-note-standard">
+                  Quantity and subtotal update from this page.
+                </p>
+
+                <div class="cart-page__line-note-blind">
+                  {{#component "cart-blind-box-note/cart-blind-box-note" /}}
+                </div>
+
+                <div class="cart-page__line-controls">
+                  <div class="cart-page__quantity">
+                    <button type="button" data-cart-quantity-trigger data-direction="decrease">-</button>
+                    <input
+                      type="number"
+                      min="1"
+                      value="{{ item.quantity }}"
+                      data-cart-quantity-input
+                      data-key="{{#if item.key}}{{ item.key }}{{else}}{{ item.id }}{{/if}}"
+                    >
+                    <button type="button" data-cart-quantity-trigger data-direction="increase">+</button>
+                  </div>
+                  <span class="theme-page__price">{{ item.final_line_price | money() }}</span>
+                  {{#if item.url_to_remove}}
+                    <a class="theme-page__subtle-link" href="{{ item.url_to_remove }}">Remove</a>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+          </article>
+        {{/each}}
+      </div>
+
+      <aside class="theme-page__sidebar">
+        <span class="theme-page__kicker">Summary</span>
+        <h3>Ready for checkout</h3>
+        <p class="theme-page__price">{{ cart.total_price | money() }}</p>
+        <p class="theme-page__body">{{ cart.item_count }} item(s) currently in cart.</p>
+        <div class="theme-page__field">
+          <label class="theme-page__label" for="CartNote">Order note</label>
+          <textarea class="theme-page__textarea" id="CartNote" name="note" placeholder="Optional note for the store team">{{ cart.note }}</textarea>
+        </div>
+        <div class="theme-page__actions">
+          <button class="theme-page__button" type="submit" name="checkout">Checkout</button>
+          <a class="theme-page__link-button" href="/collections/all">Add more items</a>
+        </div>
+      </aside>
+    </form>
+  {{else}}
+    <div class="theme-page__empty">
+      <h3>Your cart is empty.</h3>
+      <p>Use the catalog or collection pages to discover products, then return here when you are ready to check out.</p>
+      <div class="theme-page__actions">
+        <a class="theme-page__button" href="/collections/all">Browse products</a>
+        <a class="theme-page__link-button" href="/collections-all">Browse collections</a>
+      </div>
+    </div>
+  {{/if}}
+</section>
+
+{{#schema}}
+{
+  "name": "Main cart",
+  "class": "theme-main-cart",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main cart"
+    }
+  ]
+}
+{{/schema}}

@@ -112,10 +112,12 @@ Before execute mode is treated as ready, the gateway now validates:
 
 - the inventory item is tracked
 - the inventory item is linked to the target location through an inventory level
+- the target location reports at least the quantity required for the blind-box execution attempt
 
 Failure codes include:
 
 - `SHOPLINE_INVENTORY_NOT_TRACKED`
+- `SHOPLINE_INVENTORY_INSUFFICIENT`
 - `SHOPLINE_INVENTORY_LEVEL_MISSING`
 
 ## Identifier Model

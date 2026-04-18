@@ -16,15 +16,21 @@ export function BlindBoxesTable({ blindBoxes }: BlindBoxesTableProps) {
     <DataTable
       rows={blindBoxes}
       rowKey={(blindBox) => blindBox.id}
-      emptyMessage="No blind boxes have been created yet."
+      emptyMessage="No detected blind-box products are cached yet."
       columns={[
         {
           key: "name",
-          header: "Blind Box",
+          header: "Detected Blind Box",
           cell: (blindBox) => (
             <div className="table-primary">
               <strong>{blindBox.name}</strong>
-              <span>{blindBox.description || "No description"}</span>
+              <span>
+                Product{" "}
+                <code className="inline-code">
+                  {blindBox.shoplineProductId || "Legacy configuration"}
+                </code>
+              </span>
+              <span>{blindBox.productTitleSnapshot || blindBox.description || "No product title snapshot yet"}</span>
             </div>
           ),
         },
@@ -51,7 +57,7 @@ export function BlindBoxesTable({ blindBoxes }: BlindBoxesTableProps) {
               className="button button-secondary button-inline"
               to={embeddedPath(`/blind-box/pools/${blindBox.id}`)}
             >
-              Edit
+              Configure
             </Link>
           ),
           className: "table-actions",

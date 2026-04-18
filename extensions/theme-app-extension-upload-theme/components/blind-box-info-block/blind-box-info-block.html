@@ -1,0 +1,42 @@
+<section class="blind-box-info-block" aria-label="Blind box information">
+  <div class="blind-box-info-block__header">
+    <strong>
+      {{#if section.settings.info_block_title}}
+        {{ section.settings.info_block_title }}
+      {{else}}
+        What to expect
+      {{/if}}
+    </strong>
+    <p>
+      {{#if section.settings.blind_box_short_text}}
+        {{ section.settings.blind_box_short_text }}
+      {{else}}
+        This is a blind box. One surprise item will be assigned after payment.
+      {{/if}}
+    </p>
+  </div>
+
+  <ul class="blind-box-info-block__list">
+    <li>
+      {{#if section.settings.info_message_one}}
+        {{ section.settings.info_message_one }}
+      {{else}}
+        No manual selection
+      {{/if}}
+    </li>
+    <li>
+      {{#if section.settings.info_message_two}}
+        {{ section.settings.info_message_two }}
+      {{else}}
+        Assigned based on availability
+      {{/if}}
+    </li>
+    <li>
+      {{#if section.settings.info_message_three}}
+        {{ section.settings.info_message_three }}
+      {{else}}
+        Every purchase is a surprise
+      {{/if}}
+    </li>
+  </ul>
+</section>

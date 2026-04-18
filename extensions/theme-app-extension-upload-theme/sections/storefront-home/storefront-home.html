@@ -1,120 +1,123 @@
-<section class="storefront-home">
-  <div class="storefront-home__hero">
-    <div class="storefront-home__copy">
-      <span class="storefront-home__eyebrow">
+<section class="theme-page storefront-home editorial-home">
+  <div class="editorial-home__hero">
+    <div class="theme-page__panel editorial-home__intro">
+      <span class="theme-page__eyebrow">
         {{#if section.settings.eyebrow}}
           {{ section.settings.eyebrow }}
         {{else}}
-          Curated surprise drops
+          Native SHOPLINE storefront
         {{/if}}
       </span>
-      <h1 class="storefront-home__title">
+
+      <h1 class="theme-page__title editorial-home__title">
         {{#if section.settings.title}}
           {{ section.settings.title }}
         {{else}}
-          Collect the drop before you know the reveal.
+          Browse real products and collections from your live catalog.
         {{/if}}
       </h1>
-      <p class="storefront-home__lead">
+
+      <p class="theme-page__lead editorial-home__lead">
         {{#if section.settings.lead}}
           {{ section.settings.lead }}
         {{else}}
-          Blind Box Atelier blends store-style merchandising with surprise-product energy: sealed picks, limited capsules, and backend-managed blind-box fulfillment.
+          Products and collections come directly from SHOPLINE. Blind-box products use the same native product, cart, and checkout flow as every other product.
         {{/if}}
       </p>
-      <div class="storefront-home__actions">
-        <a class="storefront-home__action storefront-home__action--primary" href="/collections/all">
-          Shop all drops
-        </a>
-        <a class="storefront-home__action storefront-home__action--secondary" href="/search">
-          Explore products
-        </a>
-      </div>
-      <div class="storefront-home__stats">
-        <div class="storefront-home__stat">
-          <strong>Weekly</strong>
-          <span>New mystery drops</span>
-        </div>
-        <div class="storefront-home__stat">
-          <strong>Collector</strong>
-          <span>Retail presentation</span>
-        </div>
-        <div class="storefront-home__stat">
-          <strong>Backend</strong>
-          <span>Blind-box assignment</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="storefront-home__visual">
-      <div class="storefront-home__poster">
-        <img src="{{`sheep.jpg` | asset_url()}}" alt="Featured blind box collectible">
-        <div class="storefront-home__poster-overlay">
-          <span>Featured capsule</span>
-          <strong>Midnight Sheep Edition</strong>
-          <p>Limited collectible styling for the storefront hero.</p>
-        </div>
+      <div class="theme-page__actions">
+        <a class="theme-page__button" href="/collections/all">Shop all products</a>
+        <a class="theme-page__link-button" href="/collections-all">Browse collections</a>
       </div>
-      <div class="storefront-home__mini-grid">
-        <article class="storefront-home__mini-card">
-          <span>Streetwear Picks</span>
-          <strong>Sealed outfit capsules</strong>
+
+      <div class="editorial-home__benefits">
+        <article class="theme-page__stat">
+          <strong>Products</strong>
+          <span>Managed in SHOPLINE admin and rendered from the live catalog.</span>
         </article>
-        <article class="storefront-home__mini-card">
-          <span>Desk Toys</span>
-          <strong>Designer minis and lucky pulls</strong>
+        <article class="theme-page__stat">
+          <strong>Blind-box rules</strong>
+          <span>Tagged products show simple mystery-product messaging before purchase.</span>
+        </article>
+        <article class="theme-page__stat">
+          <strong>Checkout</strong>
+          <span>Cart and checkout stay in the standard SHOPLINE flow.</span>
         </article>
       </div>
     </div>
+
+    <aside class="theme-page__panel editorial-home__feature-panel">
+      <span class="theme-page__kicker">Live collection spotlight</span>
+
+      {{#if collections.length > 0}}
+        {{#each collections as |collection_item|}}
+          {{#if @first}}
+            <a class="editorial-home__feature-media" href="{{ collection_item.url }}">
+              {{#if collection_item.image}}
+                <img
+                  src="{{ collection_item.image | image_url(width=1400, height=900) }}"
+                  alt="{{ collection_item.title }}"
+                >
+              {{else}}
+                <div class="editorial-home__feature-placeholder">
+                  <span>Collection spotlight</span>
+                  <strong>{{ collection_item.title }}</strong>
+                </div>
+              {{/if}}
+            </a>
+            <div class="editorial-home__feature-copy">
+              <h2>{{ collection_item.title }}</h2>
+              <p>
+                {{#if collection_item.description}}
+                  {{ collection_item.description }}
+                {{else}}
+                  Open this collection to browse its live products.
+                {{/if}}
+              </p>
+              <a class="editorial-home__inline-link" href="{{ collection_item.url }}">Open collection</a>
+            </div>
+          {{/if}}
+        {{/each}}
+      {{else}}
+        <div class="theme-page__empty">
+          <h3>No collections are published yet.</h3>
+          <p>Publish collections in SHOPLINE admin and this homepage spotlight will populate automatically.</p>
+        </div>
+      {{/if}}
+    </aside>
   </div>
 
-  <div class="storefront-home__section-heading">
-    <span>Featured shelves</span>
-    <h2>Shop pages that feel like a retail storefront</h2>
+  <div class="editorial-home__section-heading">
+    <span class="theme-page__kicker">Collection-led browsing</span>
+    <h2>Browse the collections already published in your store</h2>
+    <p>These cards come from the live collection objects in SHOPLINE.</p>
   </div>
 
-  <div class="storefront-home__card-grid">
-    <article class="storefront-home__card">
-      <div class="storefront-home__card-media storefront-home__card-media--amber"></div>
-      <div class="storefront-home__card-body">
-        <span class="storefront-home__card-tag">Drop 01</span>
-        <h3>Starter blind boxes</h3>
-        <p>Entry-point mystery products with clean retail presentation for first-time shoppers.</p>
-      </div>
-    </article>
-    <article class="storefront-home__card">
-      <div class="storefront-home__card-media storefront-home__card-media--ink"></div>
-      <div class="storefront-home__card-body">
-        <span class="storefront-home__card-tag">Drop 02</span>
-        <h3>Collector capsules</h3>
-        <p>Sharper editorial styling for rare or limited blind-box collections.</p>
-      </div>
-    </article>
-    <article class="storefront-home__card">
-      <div class="storefront-home__card-media storefront-home__card-media--rose"></div>
-      <div class="storefront-home__card-body">
-        <span class="storefront-home__card-tag">Drop 03</span>
-        <h3>Gift-ready surprises</h3>
-        <p>Store-style merchandising for seasonal launches, gifting, and event-based drops.</p>
-      </div>
-    </article>
-  </div>
+  {{#if collections.length > 0}}
+    <div class="editorial-home__collection-grid collections-page__grid">
+      {{#each collections as |collection_item|}}
+        {{#component "collection-card/collection-card" collection_item=collection_item meta_label="Live collection" /}}
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="theme-page__empty">
+      <h3>Your collection grid is ready.</h3>
+      <p>As soon as collections are published in admin, the homepage will show them here automatically.</p>
+    </div>
+  {{/if}}
 
-  <div class="storefront-home__feature-grid">
-    <article class="storefront-home__feature">
-      <span>01</span>
-      <h3>Looks like a shop</h3>
-      <p>The homepage uses a proper retail shell with hero, merchandising cards, and navigation.</p>
+  <div class="editorial-home__catalog-band">
+    <article class="theme-page__panel">
+      <span class="theme-page__kicker">Catalog</span>
+      <h3>Open the full product catalog</h3>
+      <p>Use the catalog route to browse every live product with the same collection-backed rendering used across the storefront.</p>
+      <a class="theme-page__button" href="/collections/all">Browse catalog</a>
     </article>
-    <article class="storefront-home__feature">
-      <span>02</span>
-      <h3>Blind box stays conditional</h3>
-      <p>The real blind-box panel appears on tagged blind-box product pages and uses native SHOPLINE cart and checkout.</p>
-    </article>
-    <article class="storefront-home__feature">
-      <span>03</span>
-      <h3>Editable after import</h3>
-      <p>You can replace this starter shell with your own content in the SHOPLINE editor after the theme is uploaded.</p>
+
+    <article class="theme-page__panel">
+      <span class="theme-page__kicker">Blind box UX</span>
+      <h3>Minimal and tag-driven</h3>
+      <p>Blind-box messaging only appears when the product carries the <code>blind-box</code> tag, preserving the existing backend contract.</p>
     </article>
   </div>
 </section>
@@ -128,19 +131,19 @@
       "type": "text",
       "id": "eyebrow",
       "label": "Eyebrow",
-      "default": "Curated surprise drops"
+      "default": "Native SHOPLINE storefront"
     },
     {
       "type": "text",
       "id": "title",
       "label": "Hero title",
-      "default": "Collect the drop before you know the reveal."
+      "default": "Browse real products and collections from your live catalog."
     },
     {
       "type": "textarea",
       "id": "lead",
       "label": "Hero lead",
-      "default": "Blind Box Atelier blends store-style merchandising with surprise-product energy: sealed picks, limited capsules, and backend-managed blind-box fulfillment."
+      "default": "Products and collections come directly from SHOPLINE. Blind-box products use the same native product, cart, and checkout flow as every other product."
     }
   ],
   "presets": [

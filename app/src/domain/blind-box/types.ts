@@ -7,6 +7,8 @@ import {
   WebhookEventStatus,
 } from './status';
 
+export type RewardGroupSourceType = 'shopline_collection';
+
 export interface BlindBox {
   id: string;
   shop: string;
@@ -14,6 +16,10 @@ export interface BlindBox {
   description: string | null;
   status: BlindBoxStatus;
   selectionStrategy: BlindBoxSelectionStrategy;
+  shoplineProductId: string | null;
+  shoplineVariantId: string | null;
+  productTitleSnapshot: string | null;
+  configJson: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +29,10 @@ export interface CreateBlindBoxInput {
   description?: string | null;
   status?: BlindBoxStatus;
   selectionStrategy?: BlindBoxSelectionStrategy;
+  shoplineProductId?: string | null;
+  shoplineVariantId?: string | null;
+  productTitleSnapshot?: string | null;
+  configJson?: string | null;
 }
 
 export interface NormalizedCreateBlindBoxInput {
@@ -30,6 +40,10 @@ export interface NormalizedCreateBlindBoxInput {
   description: string | null;
   status: BlindBoxStatus;
   selectionStrategy: BlindBoxSelectionStrategy;
+  shoplineProductId: string | null;
+  shoplineVariantId: string | null;
+  productTitleSnapshot: string | null;
+  configJson: string | null;
 }
 
 export interface BlindBoxPoolItem {
@@ -98,13 +112,69 @@ export interface NormalizedUpsertBlindBoxProductMappingInput {
   enabled: boolean;
 }
 
+export interface RewardGroup {
+  id: string;
+  shop: string;
+  sourceType: RewardGroupSourceType;
+  shoplineCollectionId: string;
+  collectionTitleSnapshot: string | null;
+  status: BlindBoxStatus;
+  configJson: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertRewardGroupInput {
+  id?: string;
+  shoplineCollectionId: string;
+  collectionTitleSnapshot?: string | null;
+  status?: BlindBoxStatus;
+  configJson?: string | null;
+}
+
+export interface NormalizedUpsertRewardGroupInput {
+  id: string | null;
+  sourceType: RewardGroupSourceType;
+  shoplineCollectionId: string;
+  collectionTitleSnapshot: string | null;
+  status: BlindBoxStatus;
+  configJson: string | null;
+}
+
+export interface BlindBoxRewardGroupLink {
+  id: string;
+  shop: string;
+  blindBoxId: string;
+  rewardGroupId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertBlindBoxRewardGroupLinkInput {
+  id?: string;
+  blindBoxId: string;
+  rewardGroupId: string;
+}
+
+export interface NormalizedUpsertBlindBoxRewardGroupLinkInput {
+  id: string | null;
+  blindBoxId: string;
+  rewardGroupId: string;
+}
+
 export interface BlindBoxAssignment {
   id: string;
   shop: string;
   blindBoxId: string;
   orderId: string;
   orderLineId: string;
+  rewardGroupId: string | null;
   selectedPoolItemId: string | null;
+  selectedRewardProductId: string | null;
+  selectedRewardVariantId: string | null;
+  selectedRewardTitleSnapshot: string | null;
+  selectedRewardVariantTitleSnapshot: string | null;
+  selectedRewardPayloadJson: string | null;
   status: BlindBoxAssignmentStatus;
   selectionStrategy: BlindBoxSelectionStrategy | null;
   idempotencyKey: string;
@@ -117,7 +187,13 @@ export interface CreateBlindBoxAssignmentInput {
   blindBoxId: string;
   orderId: string;
   orderLineId: string;
+  rewardGroupId?: string | null;
   selectedPoolItemId?: string | null;
+  selectedRewardProductId?: string | null;
+  selectedRewardVariantId?: string | null;
+  selectedRewardTitleSnapshot?: string | null;
+  selectedRewardVariantTitleSnapshot?: string | null;
+  selectedRewardPayloadJson?: string | null;
   status: BlindBoxAssignmentStatus;
   selectionStrategy?: BlindBoxSelectionStrategy | null;
   idempotencyKey: string;
@@ -128,7 +204,13 @@ export interface NormalizedCreateBlindBoxAssignmentInput {
   blindBoxId: string;
   orderId: string;
   orderLineId: string;
+  rewardGroupId: string | null;
   selectedPoolItemId: string | null;
+  selectedRewardProductId: string | null;
+  selectedRewardVariantId: string | null;
+  selectedRewardTitleSnapshot: string | null;
+  selectedRewardVariantTitleSnapshot: string | null;
+  selectedRewardPayloadJson: string | null;
   status: BlindBoxAssignmentStatus;
   selectionStrategy: BlindBoxSelectionStrategy | null;
   idempotencyKey: string;
@@ -162,6 +244,11 @@ export interface InventoryOperation {
   blindBoxId: string | null;
   assignmentId: string | null;
   poolItemId: string | null;
+  rewardGroupId: string | null;
+  rewardProductId: string | null;
+  rewardVariantId: string | null;
+  rewardTitleSnapshot: string | null;
+  rewardVariantTitleSnapshot: string | null;
   idempotencyKey: string;
   quantity: number;
   operationType: InventoryOperationType;
@@ -181,6 +268,11 @@ export interface CreateInventoryOperationInput {
   blindBoxId?: string | null;
   assignmentId?: string | null;
   poolItemId?: string | null;
+  rewardGroupId?: string | null;
+  rewardProductId?: string | null;
+  rewardVariantId?: string | null;
+  rewardTitleSnapshot?: string | null;
+  rewardVariantTitleSnapshot?: string | null;
   idempotencyKey: string;
   quantity?: number;
   operationType: InventoryOperationType;
@@ -194,6 +286,11 @@ export interface NormalizedCreateInventoryOperationInput {
   blindBoxId: string | null;
   assignmentId: string | null;
   poolItemId: string | null;
+  rewardGroupId: string | null;
+  rewardProductId: string | null;
+  rewardVariantId: string | null;
+  rewardTitleSnapshot: string | null;
+  rewardVariantTitleSnapshot: string | null;
   idempotencyKey: string;
   quantity: number;
   operationType: InventoryOperationType;
@@ -201,4 +298,23 @@ export interface NormalizedCreateInventoryOperationInput {
   externalReference: string | null;
   reason: string | null;
   metadata: string | null;
+}
+
+export interface RewardCandidate {
+  productId: string;
+  variantId: string | null;
+  productTitle: string | null;
+  variantTitle: string | null;
+  inventoryQuantity: number | null;
+  selectionWeight: number;
+  payloadJson: string | null;
+}
+
+export interface ExcludedRewardCandidate {
+  productId: string | null;
+  variantId: string | null;
+  productTitle: string | null;
+  variantTitle: string | null;
+  reason: string;
+  message: string;
 }

@@ -1,0 +1,54 @@
+<section class="theme-page not-found-page">
+  <div class="theme-page__hero">
+    <div class="theme-page__panel">
+      <span class="theme-page__eyebrow">404</span>
+      <h1 class="theme-page__title">This page slipped out of the drop.</h1>
+      <p class="theme-page__lead">
+        The page you requested could not be found. Use search or jump back into the live catalog from the links below.
+      </p>
+      <form class="theme-page__search-form" method="get" action="{{ routes.search_url }}">
+        <div class="theme-page__field">
+          <label class="theme-page__label" for="NotFoundSearch">Search the store</label>
+          <input class="theme-page__input" id="NotFoundSearch" type="search" name="keyword" placeholder="Search products, collections, or stories">
+        </div>
+        <button class="theme-page__button" type="submit">Search now</button>
+      </form>
+    </div>
+
+    <aside class="theme-page__sidebar">
+      <span class="theme-page__kicker">Quick routes</span>
+      <h3>Keep the customer journey moving.</h3>
+      <p>These core storefront pages are wired by default, so recovery links are already available.</p>
+      <div class="theme-page__card-grid">
+        <a class="theme-page__card theme-page__subtle-link" href="/">
+          <span class="theme-page__kicker">Home</span>
+          <h3>Back to storefront</h3>
+          <p>Return to the landing page and current campaign presentation.</p>
+        </a>
+        <a class="theme-page__card theme-page__subtle-link" href="/collections/all">
+          <span class="theme-page__kicker">Catalog</span>
+          <h3>Browse all products</h3>
+          <p>Open the all-products collection and keep shopping.</p>
+        </a>
+        <a class="theme-page__card theme-page__subtle-link" href="/cart">
+          <span class="theme-page__kicker">Cart</span>
+          <h3>Check active cart</h3>
+          <p>Return to items already selected for checkout.</p>
+        </a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+{{#schema}}
+{
+  "name": "Main 404",
+  "class": "theme-main-404",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main 404"
+    }
+  ]
+}
+{{/schema}}

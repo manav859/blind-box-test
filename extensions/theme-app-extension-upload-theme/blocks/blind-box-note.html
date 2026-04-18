@@ -1,16 +1,16 @@
-<div class="blind-box-product-shell__note blind-box-product-shell__note--disclaimer">
-  <span class="blind-box-product-shell__note-label">
+<div class="cart-blind-box-note" role="note" aria-label="Blind box note">
+  <span class="cart-blind-box-note__label">
     {{#if block.settings.label}}
       {{ block.settings.label }}
     {{else}}
-      Store note
+      Blind box item
     {{/if}}
   </span>
   <p>
     {{#if block.settings.text}}
       {{ block.settings.text }}
     {{else}}
-      Sold through native SHOPLINE cart and checkout. Final blind-box assignment remains a backend process after order payment.
+      Reward assigned after payment.
     {{/if}}
   </p>
 </div>
@@ -23,13 +23,13 @@
       "type": "text",
       "id": "label",
       "label": "Label",
-      "default": "Store note"
+      "default": "Blind box item"
     },
     {
       "type": "textarea",
       "id": "text",
       "label": "Text",
-      "default": "Sold through native SHOPLINE cart and checkout. Final blind-box assignment remains a backend process after order payment."
+      "default": "Reward assigned after payment."
     }
   ]
 }

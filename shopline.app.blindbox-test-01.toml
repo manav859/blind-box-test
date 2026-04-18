@@ -1,9 +1,9 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://partial-montreal-copyrighted-matching.trycloudflare.com"
+appUrl = "https://from-whom-adds-das.trycloudflare.com"
 appCallbackUrlList = [
-  "https://partial-montreal-copyrighted-matching.trycloudflare.com/api/auth/callback"
+  "https://from-whom-adds-das.trycloudflare.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"

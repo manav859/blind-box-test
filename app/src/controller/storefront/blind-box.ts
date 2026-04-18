@@ -1,10 +1,13 @@
 import express from 'express';
-import { BlindBoxProductMapping } from '../../domain/blind-box/types';
+import { BlindBox, BlindBoxProductMapping } from '../../domain/blind-box/types';
+import { isBlindBoxProduct } from '../../domain/blind-box/product-detection';
 import { ValidationError } from '../../lib/errors';
 import { sendErrorResponse } from '../../lib/http';
 import { createRequestContext, getRequestIdFromHeaders } from '../../lib/request-context';
 import { getBlindBoxService } from '../../service/blind-box/blind-box-service';
+import { getBlindBoxDiscoveryService } from '../../service/blind-box/blind-box-discovery-service';
 import { getBlindBoxProductMappingService } from '../../service/blind-box/product-mapping-service';
+import { getShoplineCatalogService } from '../../service/shopline/catalog-service';
 
 function setStorefrontHeaders(res: express.Response): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -54,6 +57,25 @@ function selectPreferredMapping(
   return productLevelMapping || mappings[0] || null;
 }
 
+function toSyntheticBlindBoxReferenceMapping(
+  blindBox: BlindBox,
+): BlindBoxProductMapping | null {
+  if (!blindBox?.shoplineProductId) {
+    return null;
+  }
+
+  return {
+    id: `blind-box-reference:${blindBox.id}`,
+    shop: blindBox.shop,
+    blindBoxId: blindBox.id,
+    productId: blindBox.shoplineProductId,
+    productVariantId: blindBox.shoplineVariantId,
+    enabled: true,
+    createdAt: blindBox.createdAt,
+    updatedAt: blindBox.updatedAt,
+  };
+}
+
 export function createBlindBoxStorefrontRouter(): express.Router {
   const router = express.Router();
 
@@ -85,8 +107,36 @@ export function createBlindBoxStorefrontRouter(): express.Router {
 
       const productMappingService = await getBlindBoxProductMappingService();
       const blindBoxService = await getBlindBoxService();
-      const mappings = await productMappingService.listEnabledProductMappingsForProduct(shop, productId);
-      const selectedMapping = selectPreferredMapping(mappings, productVariantId);
+      const blindBoxDiscoveryService = await getBlindBoxDiscoveryService();
+      const catalogService = await getShoplineCatalogService();
+      let selectedMapping: BlindBoxProductMapping | null = null;
+      let blindBox = null;
+
+      try {
+        const product = await catalogService.getProduct(shop, productId);
+        if (isBlindBoxProduct(product)) {
+          blindBox = await blindBoxDiscoveryService.ensureBlindBoxForDetectedProduct(shop, product, {
+            productVariantId,
+          });
+          selectedMapping = blindBox ? toSyntheticBlindBoxReferenceMapping(blindBox) : null;
+        }
+      } catch {
+        selectedMapping = null;
+      }
+
+      if (!selectedMapping) {
+        const blindBoxes = await blindBoxService.listBlindBoxes(shop);
+        const directReferenceMappings = blindBoxes
+          .map((currentBlindBox) => toSyntheticBlindBoxReferenceMapping(currentBlindBox))
+          .filter((mapping): mapping is BlindBoxProductMapping => Boolean(mapping));
+        const legacyMappings = await productMappingService.listEnabledProductMappingsForProduct(shop, productId);
+        const legacyBlindBoxIds = new Set(directReferenceMappings.map((mapping) => mapping.blindBoxId));
+        const mappings = [
+          ...directReferenceMappings.filter((mapping) => mapping.productId === productId),
+          ...legacyMappings.filter((mapping) => !legacyBlindBoxIds.has(mapping.blindBoxId)),
+        ];
+        selectedMapping = selectPreferredMapping(mappings, productVariantId);
+      }
 
       if (!selectedMapping) {
         res.status(200).send({
@@ -103,7 +153,7 @@ export function createBlindBoxStorefrontRouter(): express.Router {
         return;
       }
 
-      const blindBox = await blindBoxService.getBlindBox(shop, selectedMapping.blindBoxId);
+      blindBox = blindBox || (await blindBoxService.getBlindBox(shop, selectedMapping.blindBoxId));
       const isBlindBox = blindBox?.status === 'active';
 
       res.status(200).send({

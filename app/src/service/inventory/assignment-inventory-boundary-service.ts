@@ -20,7 +20,13 @@ export interface PersistAssignmentInventoryBoundaryServiceInput {
   blindBoxId: string;
   orderId: string;
   orderLineId: string;
-  selectedPoolItemId: string;
+  rewardGroupId?: string | null;
+  selectedPoolItemId?: string | null;
+  selectedRewardProductId?: string | null;
+  selectedRewardVariantId?: string | null;
+  selectedRewardTitleSnapshot?: string | null;
+  selectedRewardVariantTitleSnapshot?: string | null;
+  selectedRewardPayloadJson?: string | null;
   selectionStrategy: NonNullable<BlindBoxAssignment['selectionStrategy']>;
   idempotencyKey: string;
   assignmentMetadata: string | null;
@@ -56,6 +62,9 @@ export class AssignmentInventoryBoundaryService {
         assignmentId: 'pending-assignment-id',
         blindBoxId: input.blindBoxId,
         poolItemId: input.selectedPoolItemId,
+        rewardGroupId: input.rewardGroupId,
+        rewardProductId: input.selectedRewardProductId,
+        rewardVariantId: input.selectedRewardVariantId,
         createdBy: 'paid_order_assignment',
       }),
     } satisfies PersistAssignmentInventoryBoundaryInput);
@@ -83,6 +92,9 @@ export class AssignmentInventoryBoundaryService {
         assignmentId: assignment.id,
         blindBoxId: assignment.blindBoxId,
         poolItemId: assignment.selectedPoolItemId || input.selectedPoolItemId,
+        rewardGroupId: assignment.rewardGroupId || input.rewardGroupId,
+        rewardProductId: assignment.selectedRewardProductId || input.selectedRewardProductId,
+        rewardVariantId: assignment.selectedRewardVariantId || input.selectedRewardVariantId,
         createdBy: persistedBoundary.recoveredMissingInventoryOperation
           ? 'boundary_recovery'
           : persistedBoundary.wasExistingAssignment

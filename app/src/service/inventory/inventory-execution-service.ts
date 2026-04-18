@@ -40,17 +40,30 @@ import {
 export interface EnsureCommitOperationInput {
   blindBoxId: string;
   assignmentId: string;
-  poolItemId: string;
+  poolItemId?: string | null;
+  rewardGroupId?: string | null;
+  rewardProductId?: string | null;
+  rewardVariantId?: string | null;
+  rewardTitleSnapshot?: string | null;
+  rewardVariantTitleSnapshot?: string | null;
   orderId: string;
   orderLineId: string;
   idempotencyKey: string;
   metadata?: string | null;
 }
 
+export interface InventoryExecutionRewardTarget {
+  productId: string | null;
+  variantId: string | null;
+  titleSnapshot: string | null;
+  variantTitleSnapshot: string | null;
+}
+
 export interface InventoryExecutionContext {
   operation: InventoryOperation;
   assignment: BlindBoxAssignment;
-  poolItem: BlindBoxPoolItem;
+  poolItem: BlindBoxPoolItem | null;
+  rewardTarget: InventoryExecutionRewardTarget;
 }
 
 export interface InventoryExecutionResult extends InventoryExecutionContext {
@@ -108,6 +121,11 @@ export class InventoryExecutionService {
       blindBoxId: input.blindBoxId,
       assignmentId: input.assignmentId,
       poolItemId: input.poolItemId,
+      rewardGroupId: input.rewardGroupId,
+      rewardProductId: input.rewardProductId,
+      rewardVariantId: input.rewardVariantId,
+      rewardTitleSnapshot: input.rewardTitleSnapshot,
+      rewardVariantTitleSnapshot: input.rewardVariantTitleSnapshot,
       idempotencyKey: input.idempotencyKey,
       quantity: 1,
       operationType: 'commit',
@@ -120,6 +138,9 @@ export class InventoryExecutionService {
         assignmentId: input.assignmentId,
         blindBoxId: input.blindBoxId,
         poolItemId: input.poolItemId,
+        rewardGroupId: input.rewardGroupId,
+        rewardProductId: input.rewardProductId,
+        rewardVariantId: input.rewardVariantId,
         createdBy: 'ensure_commit_operation',
         metadata: input.metadata,
       }),
@@ -277,9 +298,11 @@ export class InventoryExecutionService {
       const gatewayResult = await this.dependencies.inventoryGateway.commit({
         shop,
         accessToken,
-        poolItemId: startedContext.poolItem.id,
-        sourceProductId: startedContext.poolItem.sourceProductId,
-        sourceVariantId: startedContext.poolItem.sourceVariantId,
+        poolItemId:
+          startedContext.poolItem?.id ||
+          `reward:${startedContext.rewardTarget.productId}:${startedContext.rewardTarget.variantId || 'product'}`,
+        sourceProductId: startedContext.rewardTarget.productId,
+        sourceVariantId: startedContext.rewardTarget.variantId,
         quantity: startedContext.operation.quantity,
         reason: 'blind_box_assignment',
         idempotencyKey: startedContext.operation.idempotencyKey,
@@ -353,7 +376,8 @@ export class InventoryExecutionService {
           shop,
           operationId,
           assignmentId: indeterminateContext.assignment.id,
-          poolItemId: indeterminateContext.poolItem.id,
+          poolItemId: indeterminateContext.poolItem?.id || null,
+          rewardProductId: indeterminateContext.rewardTarget.productId,
           message,
         });
 
@@ -393,7 +417,8 @@ export class InventoryExecutionService {
         shop,
         operationId,
         assignmentId: failedContext.assignment.id,
-        poolItemId: failedContext.poolItem.id,
+        poolItemId: failedContext.poolItem?.id || null,
+        rewardProductId: failedContext.rewardTarget.productId,
         message,
       });
 
@@ -450,7 +475,8 @@ export class InventoryExecutionService {
       shop,
       operationId: failedContext.operation.id,
       assignmentId: failedContext.assignment.id,
-      poolItemId: failedContext.poolItem.id,
+      poolItemId: failedContext.poolItem?.id || null,
+      rewardProductId: failedContext.rewardTarget.productId,
       readinessSummary: readinessReport.summary,
       readinessIssues: readinessReport.issues,
     });
@@ -473,24 +499,49 @@ export class InventoryExecutionService {
       throw new ValidationError('Inventory operation is missing an assignment id');
     }
 
-    if (!operation.poolItemId) {
-      throw new ValidationError('Inventory operation is missing a pool item id');
-    }
-
     const assignment = await this.dependencies.blindBoxAssignmentRepository.findById(shop, operation.assignmentId);
     if (!assignment) {
       throw new NotFoundError('Blind-box assignment not found for inventory operation');
     }
 
-    const poolItem = await this.dependencies.blindBoxPoolItemRepository.findById(shop, operation.poolItemId);
-    if (!poolItem) {
+    const poolItem = operation.poolItemId
+      ? await this.dependencies.blindBoxPoolItemRepository.findById(shop, operation.poolItemId)
+      : null;
+    if (operation.poolItemId && !poolItem) {
       throw new NotFoundError('Blind-box pool item not found for inventory operation');
+    }
+
+    const rewardTarget: InventoryExecutionRewardTarget = {
+      productId:
+        operation.rewardProductId ||
+        assignment.selectedRewardProductId ||
+        poolItem?.sourceProductId ||
+        null,
+      variantId:
+        operation.rewardVariantId ||
+        assignment.selectedRewardVariantId ||
+        poolItem?.sourceVariantId ||
+        null,
+      titleSnapshot:
+        operation.rewardTitleSnapshot ||
+        assignment.selectedRewardTitleSnapshot ||
+        poolItem?.label ||
+        null,
+      variantTitleSnapshot:
+        operation.rewardVariantTitleSnapshot ||
+        assignment.selectedRewardVariantTitleSnapshot ||
+        null,
+    };
+
+    if (!rewardTarget.productId) {
+      throw new ValidationError('Inventory operation is missing a reward product id or legacy source product id');
     }
 
     return {
       operation,
       assignment,
       poolItem,
+      rewardTarget,
     };
   }
 }

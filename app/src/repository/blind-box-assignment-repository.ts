@@ -10,7 +10,13 @@ interface BlindBoxAssignmentRow {
   blind_box_id: string;
   order_id: string;
   order_line_id: string;
+  reward_group_id: string | null;
   selected_pool_item_id: string | null;
+  selected_reward_product_id: string | null;
+  selected_reward_variant_id: string | null;
+  selected_reward_title_snapshot: string | null;
+  selected_reward_variant_title_snapshot: string | null;
+  selected_reward_payload_json: string | null;
   status: BlindBoxAssignment['status'];
   selection_strategy: BlindBoxAssignment['selectionStrategy'];
   idempotency_key: string;
@@ -26,7 +32,13 @@ function mapBlindBoxAssignmentRow(row: BlindBoxAssignmentRow): BlindBoxAssignmen
     blindBoxId: row.blind_box_id,
     orderId: row.order_id,
     orderLineId: row.order_line_id,
+    rewardGroupId: normalizeNullableString(row.reward_group_id),
     selectedPoolItemId: normalizeNullableString(row.selected_pool_item_id),
+    selectedRewardProductId: normalizeNullableString(row.selected_reward_product_id),
+    selectedRewardVariantId: normalizeNullableString(row.selected_reward_variant_id),
+    selectedRewardTitleSnapshot: normalizeNullableString(row.selected_reward_title_snapshot),
+    selectedRewardVariantTitleSnapshot: normalizeNullableString(row.selected_reward_variant_title_snapshot),
+    selectedRewardPayloadJson: normalizeNullableString(row.selected_reward_payload_json),
     status: row.status,
     selectionStrategy: normalizeNullableString(row.selection_strategy) as BlindBoxAssignment['selectionStrategy'],
     idempotencyKey: row.idempotency_key,
@@ -65,14 +77,20 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
             blind_box_id,
             order_id,
             order_line_id,
+            reward_group_id,
             selected_pool_item_id,
+            selected_reward_product_id,
+            selected_reward_variant_id,
+            selected_reward_title_snapshot,
+            selected_reward_variant_title_snapshot,
+            selected_reward_payload_json,
             status,
             selection_strategy,
             idempotency_key,
             metadata,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           id,
@@ -80,7 +98,13 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           input.blindBoxId,
           input.orderId,
           input.orderLineId,
+          input.rewardGroupId,
           input.selectedPoolItemId,
+          input.selectedRewardProductId,
+          input.selectedRewardVariantId,
+          input.selectedRewardTitleSnapshot,
+          input.selectedRewardVariantTitleSnapshot,
+          input.selectedRewardPayloadJson,
           input.status,
           input.selectionStrategy,
           input.idempotencyKey,
@@ -114,7 +138,13 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           blind_box_id,
           order_id,
           order_line_id,
+          reward_group_id,
           selected_pool_item_id,
+          selected_reward_product_id,
+          selected_reward_variant_id,
+          selected_reward_title_snapshot,
+          selected_reward_variant_title_snapshot,
+          selected_reward_payload_json,
           status,
           selection_strategy,
           idempotency_key,
@@ -140,7 +170,13 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           blind_box_id,
           order_id,
           order_line_id,
+          reward_group_id,
           selected_pool_item_id,
+          selected_reward_product_id,
+          selected_reward_variant_id,
+          selected_reward_title_snapshot,
+          selected_reward_variant_title_snapshot,
+          selected_reward_payload_json,
           status,
           selection_strategy,
           idempotency_key,
@@ -165,7 +201,13 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           blind_box_id,
           order_id,
           order_line_id,
+          reward_group_id,
           selected_pool_item_id,
+          selected_reward_product_id,
+          selected_reward_variant_id,
+          selected_reward_title_snapshot,
+          selected_reward_variant_title_snapshot,
+          selected_reward_payload_json,
           status,
           selection_strategy,
           idempotency_key,

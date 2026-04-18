@@ -26,7 +26,7 @@ function compareSessionPriority(left: Session, right: Session): number {
   if (left.isOnline === right.isOnline) {
     const leftExpires = left.expires?.getTime() || Number.MAX_SAFE_INTEGER;
     const rightExpires = right.expires?.getTime() || Number.MAX_SAFE_INTEGER;
-    return leftExpires - rightExpires;
+    return rightExpires - leftExpires;
   }
 
   return Number(left.isOnline) - Number(right.isOnline);

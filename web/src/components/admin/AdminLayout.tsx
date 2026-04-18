@@ -4,7 +4,6 @@ import { useEmbeddedPath } from "../../hooks/useEmbeddedRouting";
 
 const navigationItems = [
   { to: "/blind-box/pools", label: "Blind Boxes" },
-  { to: "/blind-box/pools/new", label: "Create Box" },
   { to: "/blind-box/assignments", label: "Assignments" },
   { to: "/blind-box/failures", label: "Operations" },
   { to: "/blind-box/debug", label: "Debug" },
@@ -24,8 +23,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <span className="admin-eyebrow">SHOPLINE Admin</span>
           <h1>Blind Box Console</h1>
           <p>
-            Merchant tooling for pools, mappings, assignments, and operational
-            visibility.
+            Merchant tooling for detected blind boxes, collection linking,
+            assignments, and operational visibility.
           </p>
         </div>
 
@@ -44,7 +43,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </nav>
 
         <div className="admin-sidebar-note">
-          Prize selection, assignment, and webhook processing remain backend-owned.
+          Blind-box identity now comes from tagged SHOPLINE products. Prize selection,
+          assignment, and webhook processing remain backend-owned.
         </div>
       </aside>
 

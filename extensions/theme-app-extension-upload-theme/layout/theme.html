@@ -3,16 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#b97819">
+    <meta name="theme-color" content="{{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#7a5c32{{/if}}">
+    <title>{{#if page_title}}{{ page_title }}{{else}}Blind Box Atelier{{/if}}</title>
+    {{#if page_description}}
+      <meta name="description" content="{{ page_description }}">
+    {{/if}}
     <style>
       :root {
-        --blind-box-page-background: #f5efe6;
-        --blind-box-page-text: #17202a;
-        --blind-box-page-muted: #5d6877;
-        --blind-box-page-accent: #b97819;
-        --blind-box-page-card: rgba(255, 255, 255, 0.84);
-        --blind-box-page-border: rgba(23, 32, 42, 0.08);
-        --blind-box-page-shadow: 0 28px 64px rgba(23, 32, 42, 0.08);
+        --blind-box-page-background: {{#if theme.settings.color_page_background}}{{ theme.settings.color_page_background }}{{else}}#f4efe8{{/if}};
+        --blind-box-page-text: {{#if theme.settings.color_text}}{{ theme.settings.color_text }}{{else}}#1f1b17{{/if}};
+        --blind-box-page-muted: #6e645a;
+        --blind-box-page-accent: {{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#7a5c32{{/if}};
+        --blind-box-page-card: rgba(255, 251, 247, 0.9);
+        --blind-box-page-border: rgba(31, 27, 23, 0.09);
+        --blind-box-page-shadow: 0 24px 58px rgba(31, 27, 23, 0.08);
+        --blind-box-page-ink-soft: #f8f2ea;
+        --blind-box-page-heading-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+        --blind-box-page-body-font: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        --blind-box-page-radius-xl: 1.75rem;
+        --blind-box-page-radius-lg: 1.25rem;
       }
 
       * {
@@ -27,53 +36,46 @@
 
       body {
         background:
-          radial-gradient(circle at top, rgba(255, 255, 255, 0.72), transparent 34%),
-          linear-gradient(180deg, #f9f5ef 0%, var(--blind-box-page-background) 100%);
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 32%),
+          radial-gradient(circle at top right, rgba(212, 193, 168, 0.18), transparent 28%),
+          linear-gradient(180deg, #faf6f0 0%, var(--blind-box-page-background) 100%);
         color: var(--blind-box-page-text);
-        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        font-family: var(--blind-box-page-body-font);
       }
 
       a {
         color: inherit;
       }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: var(--blind-box-page-heading-font);
+        font-weight: 700;
+      }
     </style>
     {{#content "header" /}}
     <link href="{{`theme.css` | asset_url()}}" rel="stylesheet">
-    <link href="{{`blind-box-product-shell.css` | asset_url()}}" rel="stylesheet">
+    <script src="{{`blind-box-theme-core.js` | asset_url()}}" defer></script>
+    <script>
+      window.routes = {
+        cart_change_url: "{{ routes.cart_change_url }}",
+        search_url: "{{ routes.search_url }}"
+      };
+    </script>
   </head>
   <body class="layout-{{ layout.name }}">
     <div class="store-shell">
-      <div class="store-shell__announcement">
-        Fresh drops, sealed picks, and surprise reveals.
-      </div>
-      <header class="store-shell__header">
-        <a class="store-shell__brand" href="/">
-          <img class="store-shell__brand-mark" src="{{`logo.png` | asset_url()}}" alt="Blind Box Atelier">
-          <span>Blind Box Atelier</span>
-        </a>
-        <nav class="store-shell__nav" aria-label="Primary">
-          <a href="/">Home</a>
-          <a href="/collections/all">Catalog</a>
-          <a href="/search">Search</a>
-          <a href="/cart">Cart</a>
-        </nav>
-        <a class="store-shell__cta" href="/collections/all">Shop the Drop</a>
-      </header>
+      {{#section "storefront-header" /}}
       <main class="store-shell__main">
         {{#content "layout" /}}
       </main>
-      <footer class="store-shell__footer">
-        <div>
-          <strong>Blind Box Atelier</strong>
-          <p>Retail-style storefront shell for curated mystery drops and collector launches.</p>
-        </div>
-        <div class="store-shell__footer-links">
-          <a href="/collections/all">Catalog</a>
-          <a href="/search">Search</a>
-          <a href="/cart">Cart</a>
-        </div>
-      </footer>
+      {{#section "storefront-footer" /}}
     </div>
+    <script src="{{`theme-interactions.js` | asset_url()}}" defer></script>
     {{#content "footer" /}}
   </body>
 </html>

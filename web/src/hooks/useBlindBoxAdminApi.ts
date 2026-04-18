@@ -4,7 +4,9 @@ import {
 } from "./useAuthenticatedFetch";
 import type {
   BlindBox,
+  BlindBoxActivationReadinessReport,
   BlindBoxAssignment,
+  BlindBoxRewardGroupLink,
   BlindBoxPoolItem,
   BlindBoxProductMapping,
   CreateBlindBoxInput,
@@ -14,8 +16,12 @@ import type {
   InventoryDebugProduct,
   InventoryDebugVariantInventory,
   InventoryOperation,
+  RewardCandidatePreview,
+  RewardGroup,
+  UpsertBlindBoxRewardGroupLinkInput,
   UpsertBlindBoxPoolItemInput,
   UpsertBlindBoxProductMappingInput,
+  UpsertRewardGroupInput,
   WebhookEvent,
   WebhookEventStatus,
 } from "../types/blindBox";
@@ -187,14 +193,31 @@ export function useBlindBoxAdminApi() {
     initializationError,
     retryInitialization,
     listBlindBoxes: () => request<BlindBox[]>("/api/blind-box/pools"),
-    createBlindBox: (input: CreateBlindBoxInput) =>
-      request<BlindBox>("/api/blind-box/pools", {
-        method: "POST",
-        json: input,
-      }),
     updateBlindBox: (blindBoxId: string, input: CreateBlindBoxInput) =>
       request<BlindBox>(`/api/blind-box/pools/${blindBoxId}`, {
         method: "PUT",
+        json: input,
+      }),
+    getBlindBoxReadiness: (blindBoxId: string) =>
+      request<BlindBoxActivationReadinessReport>(
+        `/api/blind-box/pools/${encodeURIComponent(blindBoxId)}/readiness`,
+      ),
+    getRewardCandidatePreview: (blindBoxId: string) =>
+      request<RewardCandidatePreview>(
+        `/api/blind-box/pools/${encodeURIComponent(blindBoxId)}/reward-candidates`,
+      ),
+    listRewardGroups: () =>
+      request<RewardGroup[]>("/api/blind-box/reward-groups"),
+    upsertRewardGroup: (input: UpsertRewardGroupInput) =>
+      request<RewardGroup>("/api/blind-box/reward-groups", {
+        method: "POST",
+        json: input,
+      }),
+    listRewardGroupLinks: () =>
+      request<BlindBoxRewardGroupLink[]>("/api/blind-box/reward-group-links"),
+    upsertRewardGroupLink: (input: UpsertBlindBoxRewardGroupLinkInput) =>
+      request<BlindBoxRewardGroupLink>("/api/blind-box/reward-group-links", {
+        method: "POST",
         json: input,
       }),
     listPoolItems: (blindBoxId: string) =>
@@ -254,6 +277,18 @@ export function useBlindBoxAdminApi() {
     getDebugProduct: (productId: string) =>
       request<InventoryDebugProduct>(
         `/api/blind-box/debug/products/${encodeURIComponent(productId)}`
+      ),
+    getDebugCollection: (collectionId: string) =>
+      request<{
+        collection: {
+          id: string;
+          title: string | null;
+          handle: string | null;
+        };
+        products: InventoryDebugProduct[];
+        traceIds: string[];
+      }>(
+        `/api/blind-box/debug/collections/${encodeURIComponent(collectionId)}`
       ),
     getDebugVariantInventory: (variantId: string) =>
       request<InventoryDebugVariantInventory>(

@@ -41,9 +41,11 @@ export function AssignmentsTable({ rows }: AssignmentsTableProps) {
         },
         {
           key: "item",
-          header: "Assigned Item",
+          header: "Assigned Reward",
           cell: (row) =>
             row.poolItem?.label ||
+            row.assignment.selectedRewardTitleSnapshot ||
+            row.assignment.selectedRewardProductId ||
             formatOptionalValue(row.assignment.selectedPoolItemId),
         },
         {

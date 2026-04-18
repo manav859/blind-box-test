@@ -12,7 +12,13 @@ interface AssignmentBoundaryRow {
   blind_box_id: string;
   order_id: string;
   order_line_id: string;
+  reward_group_id: string | null;
   selected_pool_item_id: string | null;
+  selected_reward_product_id: string | null;
+  selected_reward_variant_id: string | null;
+  selected_reward_title_snapshot: string | null;
+  selected_reward_variant_title_snapshot: string | null;
+  selected_reward_payload_json: string | null;
   status: BlindBoxAssignment['status'];
 }
 
@@ -21,13 +27,21 @@ interface InventoryOperationBoundaryRow {
   status: InventoryOperation['status'];
   assignment_id: string | null;
   pool_item_id: string | null;
+  reward_product_id: string | null;
+  reward_variant_id: string | null;
 }
 
 export interface PersistAssignmentInventoryBoundaryInput {
   blindBoxId: string;
   orderId: string;
   orderLineId: string;
-  selectedPoolItemId: string;
+  rewardGroupId?: string | null;
+  selectedPoolItemId?: string | null;
+  selectedRewardProductId?: string | null;
+  selectedRewardVariantId?: string | null;
+  selectedRewardTitleSnapshot?: string | null;
+  selectedRewardVariantTitleSnapshot?: string | null;
+  selectedRewardPayloadJson?: string | null;
   selectionStrategy: NonNullable<BlindBoxAssignment['selectionStrategy']>;
   idempotencyKey: string;
   assignmentMetadata: string | null;
@@ -55,7 +69,13 @@ async function loadAssignmentBoundaryRow(
         blind_box_id,
         order_id,
         order_line_id,
+        reward_group_id,
         selected_pool_item_id,
+        selected_reward_product_id,
+        selected_reward_variant_id,
+        selected_reward_title_snapshot,
+        selected_reward_variant_title_snapshot,
+        selected_reward_payload_json,
         status
       FROM blind_box_assignments
       WHERE shop = ? AND order_id = ? AND order_line_id = ?
@@ -75,7 +95,9 @@ async function loadCommitOperationBoundaryRow(
         id,
         status,
         assignment_id,
-        pool_item_id
+        pool_item_id,
+        reward_product_id,
+        reward_variant_id
       FROM inventory_operations
       WHERE shop = ? AND assignment_id = ? AND operation_type = 'commit'
       ORDER BY created_at DESC
@@ -88,14 +110,19 @@ async function loadCommitOperationBoundaryRow(
 async function insertPendingCommitOperation(
   db: BlindBoxDatabase,
   shop: string,
-  input: {
-    blindBoxId: string;
-    assignmentId: string;
-    poolItemId: string;
-    idempotencyKey: string;
-    metadata: string | null;
-    reason: string;
-  },
+    input: {
+      blindBoxId: string;
+      assignmentId: string;
+      poolItemId?: string | null;
+      rewardGroupId?: string | null;
+      rewardProductId?: string | null;
+      rewardVariantId?: string | null;
+      rewardTitleSnapshot?: string | null;
+      rewardVariantTitleSnapshot?: string | null;
+      idempotencyKey: string;
+      metadata: string | null;
+      reason: string;
+    },
 ): Promise<string> {
   const operationId = randomUUID();
   const timestamp = nowIsoString();
@@ -108,6 +135,11 @@ async function insertPendingCommitOperation(
         blind_box_id,
         assignment_id,
         pool_item_id,
+        reward_group_id,
+        reward_product_id,
+        reward_variant_id,
+        reward_title_snapshot,
+        reward_variant_title_snapshot,
         idempotency_key,
         quantity,
         operation_type,
@@ -121,14 +153,19 @@ async function insertPendingCommitOperation(
         metadata,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       operationId,
       shop,
       input.blindBoxId,
       input.assignmentId,
-      input.poolItemId,
+      input.poolItemId || null,
+      input.rewardGroupId || null,
+      input.rewardProductId || null,
+      input.rewardVariantId || null,
+      input.rewardTitleSnapshot || null,
+      input.rewardVariantTitleSnapshot || null,
       input.idempotencyKey,
       1,
       'commit',
@@ -182,6 +219,10 @@ export class SqliteAssignmentInventoryBoundaryRepository
     shop: string,
     input: PersistAssignmentInventoryBoundaryInput,
   ): Promise<PersistAssignmentInventoryBoundaryResult> {
+    if (!input.selectedPoolItemId && !input.selectedRewardProductId) {
+      throw new ValidationError('Assignment boundary requires either a selected pool item or a selected reward product');
+    }
+
     const existingAssignment = await loadAssignmentBoundaryRow(
       transaction,
       shop,
@@ -203,14 +244,20 @@ export class SqliteAssignmentInventoryBoundaryRepository
           blind_box_id,
           order_id,
           order_line_id,
+          reward_group_id,
           selected_pool_item_id,
+          selected_reward_product_id,
+          selected_reward_variant_id,
+          selected_reward_title_snapshot,
+          selected_reward_variant_title_snapshot,
+          selected_reward_payload_json,
           status,
           selection_strategy,
           idempotency_key,
           metadata,
           created_at,
           updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         assignmentId,
@@ -218,7 +265,13 @@ export class SqliteAssignmentInventoryBoundaryRepository
         input.blindBoxId,
         input.orderId,
         input.orderLineId,
-        input.selectedPoolItemId,
+        input.rewardGroupId || null,
+        input.selectedPoolItemId || null,
+        input.selectedRewardProductId || null,
+        input.selectedRewardVariantId || null,
+        input.selectedRewardTitleSnapshot || null,
+        input.selectedRewardVariantTitleSnapshot || null,
+        input.selectedRewardPayloadJson || null,
         'inventory_pending',
         input.selectionStrategy,
         input.idempotencyKey,
@@ -231,7 +284,12 @@ export class SqliteAssignmentInventoryBoundaryRepository
     const inventoryOperationId = await insertPendingCommitOperation(transaction, shop, {
       blindBoxId: input.blindBoxId,
       assignmentId,
-      poolItemId: input.selectedPoolItemId,
+      poolItemId: input.selectedPoolItemId || null,
+      rewardGroupId: input.rewardGroupId || null,
+      rewardProductId: input.selectedRewardProductId || null,
+      rewardVariantId: input.selectedRewardVariantId || null,
+      rewardTitleSnapshot: input.selectedRewardTitleSnapshot || null,
+      rewardVariantTitleSnapshot: input.selectedRewardVariantTitleSnapshot || null,
       idempotencyKey: input.idempotencyKey,
       metadata: input.inventoryOperationMetadata,
       reason: 'Inventory execution pending after immutable blind-box assignment persistence',
@@ -263,8 +321,10 @@ export class SqliteAssignmentInventoryBoundaryRepository
       };
     }
 
-    if (!existingAssignment.selected_pool_item_id) {
-      throw new ValidationError('Existing blind-box assignment is missing its selected pool item');
+    if (!existingAssignment.selected_pool_item_id && !existingAssignment.selected_reward_product_id) {
+      throw new ValidationError(
+        'Existing blind-box assignment is missing both its selected pool item and selected reward product',
+      );
     }
 
     if (!isRecoverableMissingInventoryBoundaryAssignmentStatus(existingAssignment.status)) {
@@ -290,6 +350,11 @@ export class SqliteAssignmentInventoryBoundaryRepository
       blindBoxId: existingAssignment.blind_box_id,
       assignmentId: existingAssignment.id,
       poolItemId: existingAssignment.selected_pool_item_id,
+      rewardGroupId: existingAssignment.reward_group_id,
+      rewardProductId: existingAssignment.selected_reward_product_id,
+      rewardVariantId: existingAssignment.selected_reward_variant_id,
+      rewardTitleSnapshot: existingAssignment.selected_reward_title_snapshot,
+      rewardVariantTitleSnapshot: existingAssignment.selected_reward_variant_title_snapshot,
       idempotencyKey: input.idempotencyKey,
       metadata: input.inventoryOperationMetadata,
       reason: 'Recovered missing inventory operation for an existing immutable blind-box assignment',

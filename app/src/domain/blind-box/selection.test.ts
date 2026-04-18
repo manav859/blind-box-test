@@ -10,6 +10,10 @@ const uniformBlindBox: BlindBox = {
   description: null,
   status: 'active',
   selectionStrategy: 'uniform',
+  shoplineProductId: null,
+  shoplineVariantId: null,
+  productTitleSnapshot: null,
+  configJson: null,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };

@@ -1,0 +1,94 @@
+<section class="theme-page page-content">
+  <div class="theme-page__hero">
+    <div class="theme-page__panel">
+      <span class="theme-page__eyebrow">
+        {{#if page.handle}}
+          {{ page.handle }}
+        {{else}}
+          Brand page
+        {{/if}}
+      </span>
+      <h1 class="theme-page__title">
+        {{#if page.title}}
+          {{ page.title }}
+        {{else}}
+          Editorial storefront page
+        {{/if}}
+      </h1>
+      <p class="theme-page__lead">
+        Use this page template for launch notes, brand stories, policies, FAQ content, or collector guidance without rebuilding the layout by hand.
+      </p>
+      <div class="theme-page__actions">
+        <a class="theme-page__button" href="/collections/all">Shop catalog</a>
+        <a class="theme-page__link-button" href="/search">Search store</a>
+      </div>
+    </div>
+
+    <aside class="theme-page__sidebar">
+      <span class="theme-page__kicker">Store guide</span>
+      <h3>Pages now ship with a built-in information layout.</h3>
+      <p>Use admin page content to fill the main rich-text panel, while this sidebar keeps support and conversion context visible.</p>
+      <div class="theme-page__list-grid">
+        <div class="theme-page__stat">
+          <strong>Policies</strong>
+          <span>Shipping, returns, and support details</span>
+        </div>
+        <div class="theme-page__stat">
+          <strong>Stories</strong>
+          <span>Brand notes and campaign landing pages</span>
+        </div>
+        <div class="theme-page__stat">
+          <strong>FAQs</strong>
+          <span>Collector and order expectations</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="theme-page__content-grid">
+    <article class="theme-page__panel">
+      <h2 class="theme-page__content-title">Page content</h2>
+      <div class="page-content__body">
+        {{#if page.content}}
+          {{{ page.content }}}
+        {{else}}
+          <p>
+            Add page content in SHOPLINE admin to replace this starter copy. The template is already structured for long-form content,
+            launch announcements, policies, or landing-page storytelling.
+          </p>
+        {{/if}}
+      </div>
+    </article>
+
+    <div class="theme-page__card-grid">
+      <article class="theme-page__card">
+        <span class="theme-page__kicker">Need a collection?</span>
+        <h3>Send shoppers back into the catalog.</h3>
+        <p>Use page links as campaign landing destinations, then move visitors directly into product or collection pages.</p>
+      </article>
+      <article class="theme-page__card">
+        <span class="theme-page__kicker">Need product detail?</span>
+        <h3>The PDP now supports standard and blind-box products.</h3>
+        <p>Tagged drops automatically reveal the sealed checkout block; regular products stay on the native add-to-cart flow.</p>
+      </article>
+      <article class="theme-page__card">
+        <span class="theme-page__kicker">Need support?</span>
+        <h3>Search, cart, collections, article, and password pages are also prebuilt.</h3>
+        <p>The theme can be imported and previewed without manually fixing empty templates afterward.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+{{#schema}}
+{
+  "name": "Main page",
+  "class": "theme-main-page",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main page"
+    }
+  ]
+}
+{{/schema}}

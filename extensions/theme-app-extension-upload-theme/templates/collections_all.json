@@ -1,15 +1,7 @@
 {
   "sections": {
     "main": {
-      "type": "basic-page",
-      "settings": {
-        "eyebrow": "Collections",
-        "title": "All collections",
-        "lead": "Starter template for the collections index.",
-        "kicker": "Collections overview",
-        "body": "Turn this page into a curated collections landing area with drop-based groupings and category highlights.",
-        "note": "Customize this page in the theme editor after import."
-      }
+      "type": "main-collections-all"
     }
   },
   "order": [

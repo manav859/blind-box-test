@@ -1,0 +1,129 @@
+{{#var paginate = collection | get_product_pagination(24) /}}
+
+<section class="theme-page collection-page catalog-page">
+  <div class="theme-page__hero catalog-page__hero">
+    <div class="theme-page__panel catalog-page__hero-copy">
+      <span class="theme-page__eyebrow">
+        {{#if collection.handle == "all"}}
+          Catalog
+        {{else}}
+          Collection
+        {{/if}}
+      </span>
+
+      <h1 class="theme-page__title">
+        {{#if collection.title}}
+          {{ collection.title }}
+        {{else}}
+          Store collection
+        {{/if}}
+      </h1>
+
+      <p class="theme-page__lead">
+        {{#if collection.description}}
+          {{ collection.description }}
+        {{else}}
+          Browse the live products in this collection. Sorting and pagination are backed by the real SHOPLINE collection data.
+        {{/if}}
+      </p>
+
+      <div class="catalog-page__stats theme-page__stat-grid">
+        <article class="theme-page__stat">
+          <strong>{{ collection.products_count }}</strong>
+          <span>published products</span>
+        </article>
+        <article class="theme-page__stat">
+          <strong>Live sorting</strong>
+          <span>sort options come directly from the active collection</span>
+        </article>
+        <article class="theme-page__stat">
+          <strong>Blind-box safe</strong>
+          <span>tag-based messaging stays conditional and intact</span>
+        </article>
+      </div>
+
+      <div class="theme-page__actions">
+        <a class="theme-page__button" href="/collections/all">All products</a>
+        <a class="theme-page__link-button" href="/collections-all">All collections</a>
+      </div>
+    </div>
+
+    <div class="theme-page__panel catalog-page__hero-media">
+      {{#if collection.image}}
+        <img src="{{ collection.image | image_url(width=1600, height=1100) }}" alt="{{ collection.title }}">
+      {{else}}
+        <div class="catalog-page__hero-placeholder">
+          <span>Live collection</span>
+          <strong>{{ collection.title }}</strong>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  <div class="catalog-page__toolbar theme-page__panel">
+    <div class="catalog-page__toolbar-copy">
+      <span class="theme-page__kicker">Browse the assortment</span>
+      <h2>Live product grid</h2>
+      <p>Every card below is rendered from the real collection listing, with pagination controlled by the live catalog.</p>
+    </div>
+
+    <div class="catalog-page__toolbar-actions">
+      {{#if collection.sort_options}}
+        <div class="theme-page__field catalog-page__sort">
+          <label class="theme-page__label" for="CollectionSort">Sort</label>
+          <select class="theme-page__select" id="CollectionSort" data-sort-by-select>
+            {{#each collection.sort_options as |sort_option|}}
+              <option value="{{ sort_option.value }}" {{#if sort_option.value == collection.sort_by}}selected{{/if}}>
+                {{ sort_option.name }}
+              </option>
+            {{/each}}
+          </select>
+        </div>
+      {{/if}}
+
+      <div class="catalog-page__result-count">
+        <strong>{{ collection.products_count }}</strong>
+        <span>products in this collection</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="theme-page__product-grid catalog-page__grid">
+    {{#for paginate.list as |product_item|}}
+      {{#component
+        "product-card/product-card"
+        product=product_item
+        meta_label=collection.title
+        badge_text=section.settings.badge_text
+        show_quick_add="true"
+      /}}
+    {{else}}
+      <div class="theme-page__empty">
+        <h3>No products in this collection yet.</h3>
+        <p>Add or publish products in SHOPLINE admin and this collection template will render them automatically.</p>
+      </div>
+    {{/for}}
+  </div>
+
+  {{#component "pagination/pagination" paginate=paginate /}}
+</section>
+
+{{#schema}}
+{
+  "name": "Main collection",
+  "class": "theme-main-collection",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge_text",
+      "label": "Blind box badge text",
+      "default": "Blind Box"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Main collection"
+    }
+  ]
+}
+{{/schema}}

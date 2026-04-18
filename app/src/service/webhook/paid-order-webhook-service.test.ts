@@ -60,6 +60,8 @@ async function seedActiveBlindBoxContext(
   await context.blindBoxPoolItemService.upsertPoolItem('blind-box', {
     blindBoxId: blindBox.id,
     label: 'Prize A',
+    sourceProductId: 'reward-1',
+    sourceVariantId: 'reward-1-v1',
     weight: 1,
     inventoryQuantity: 5,
   });
@@ -67,6 +69,8 @@ async function seedActiveBlindBoxContext(
   await context.blindBoxPoolItemService.upsertPoolItem('blind-box', {
     blindBoxId: blindBox.id,
     label: 'Prize B',
+    sourceProductId: 'reward-2',
+    sourceVariantId: 'reward-2-v1',
     weight: 4,
     inventoryQuantity: 3,
   });

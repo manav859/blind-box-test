@@ -1,0 +1,41 @@
+<article class="collection-tile theme-page__collection-card">
+  <a class="collection-tile__media theme-page__collection-media" href="{{ props.collection_item.url }}">
+    {{#if props.collection_item.image}}
+      <img
+        class="theme-page__card-image collection-tile__image"
+        src="{{ props.collection_item.image | image_url(width=1200, height=760) }}"
+        alt="{{ props.collection_item.title }}"
+        loading="lazy"
+      >
+    {{else}}
+      <div class="collection-tile__placeholder">
+        <span>Collection</span>
+        <strong>{{ props.collection_item.title }}</strong>
+      </div>
+    {{/if}}
+  </a>
+
+  <div class="collection-tile__body theme-page__grid">
+    <span class="theme-page__meta">
+      {{#if props.meta_label}}
+        {{ props.meta_label }}
+      {{else}}
+        Collection
+      {{/if}}
+    </span>
+
+    <h3>
+      <a class="theme-page__subtle-link" href="{{ props.collection_item.url }}">{{ props.collection_item.title }}</a>
+    </h3>
+
+    <p class="theme-page__body">
+      {{#if props.collection_item.description}}
+        {{ props.collection_item.description }}
+      {{else}}
+        Browse the currently published products in this collection.
+      {{/if}}
+    </p>
+
+    <a class="collection-tile__link" href="{{ props.collection_item.url }}">View collection</a>
+  </div>
+</article>

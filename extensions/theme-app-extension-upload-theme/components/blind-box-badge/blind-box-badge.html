@@ -1,0 +1,14 @@
+<span class="blind-box-badge" role="note" aria-label="Blind box product">
+  {{#component "blind-box-badge-icon/blind-box-badge-icon" /}}
+  <span class="blind-box-badge__text">
+    {{#if props.label}}
+      {{ props.label }}
+    {{else}}
+      {{#if section.settings.badge_text}}
+        {{ section.settings.badge_text }}
+      {{else}}
+        Blind Box
+      {{/if}}
+    {{/if}}
+  </span>
+</span>

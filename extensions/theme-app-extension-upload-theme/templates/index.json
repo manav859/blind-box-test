@@ -3,9 +3,9 @@
     "main": {
       "type": "storefront-home",
       "settings": {
-        "eyebrow": "Curated surprise drops",
-        "title": "Collect the drop before you know the reveal.",
-        "lead": "Blind Box Atelier blends store-style merchandising with surprise-product energy: sealed picks, limited capsules, and backend-managed blind-box fulfillment."
+        "eyebrow": "Native SHOPLINE storefront",
+        "title": "Browse real products and collections from your live catalog.",
+        "lead": "Products and collections come directly from SHOPLINE. Blind-box products use the same native product, cart, and checkout flow as every other product."
       }
     }
   },

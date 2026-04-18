@@ -99,6 +99,8 @@ function createGatewayIssue(error: InventoryGatewayError): InventoryExecutionRea
       'Update BLIND_BOX_SHOPLINE_LOCATION_ID so it points to an active location in the connected store.',
     SHOPLINE_INVENTORY_NOT_TRACKED:
       'Enable inventory tracking for the mapped SHOPLINE item before using execute mode.',
+    SHOPLINE_INVENTORY_INSUFFICIENT:
+      'Increase available stock at the execute-mode location or remove this reward from the collection until inventory is replenished.',
     SHOPLINE_INVENTORY_LEVEL_MISSING:
       'Connect the inventory item to the target location and confirm SHOPLINE reports inventory for that location.',
     SHOPLINE_INVENTORY_HTTP_ERROR:
@@ -117,7 +119,10 @@ function createGatewayIssue(error: InventoryGatewayError): InventoryExecutionRea
 }
 
 function buildNotReadyReport(
-  poolItem: BlindBoxPoolItem,
+  target: {
+    id: string;
+    label: string;
+  },
   issues: InventoryExecutionReadinessIssue[],
   configuredScopes: string[],
 ): InventoryExecutionReadinessReport {
@@ -133,8 +138,8 @@ function buildNotReadyReport(
     requiredScopes: [...REQUIRED_EXECUTE_MODE_SCOPES],
     missingScopes,
     configuredLocationId: runtimeConfig.blindBoxShoplineLocationId,
-    poolItemId: poolItem.id,
-    poolItemLabel: poolItem.label,
+    poolItemId: target.id,
+    poolItemLabel: target.label,
     identifiers: null,
     inventoryItem: null,
     inventoryLevel: null,
@@ -144,7 +149,10 @@ function buildNotReadyReport(
 }
 
 function buildReadyReport(
-  poolItem: BlindBoxPoolItem,
+  target: {
+    id: string;
+    label: string;
+  },
   configuredScopes: string[],
   snapshot: InventoryExecutionReadinessSnapshot,
 ): InventoryExecutionReadinessReport {
@@ -157,13 +165,13 @@ function buildReadyReport(
     requiredScopes: [...REQUIRED_EXECUTE_MODE_SCOPES],
     missingScopes: [],
     configuredLocationId: runtimeConfig.blindBoxShoplineLocationId,
-    poolItemId: poolItem.id,
-    poolItemLabel: poolItem.label,
+    poolItemId: target.id,
+    poolItemLabel: target.label,
     identifiers: snapshot.identifiers,
     inventoryItem: snapshot.inventoryItem,
     inventoryLevel: snapshot.inventoryLevel,
     issues: [],
-    summary: `Pool item "${poolItem.label}" is ready for execute mode in the connected SHOPLINE store`,
+    summary: `"${target.label}" is ready for execute mode in the connected SHOPLINE store`,
   };
 }
 
@@ -193,21 +201,71 @@ export class InventoryExecutionReadinessService {
     } = {},
   ): Promise<InventoryExecutionReadinessReport> {
     const operation = await this.dependencies.inventoryOperationRepository.findById(shop, operationId);
-    if (!operation?.poolItemId) {
-      throw new NotFoundError('Inventory operation or pool item context not found for execute-mode validation');
+    if (!operation) {
+      throw new NotFoundError('Inventory operation not found for execute-mode validation');
     }
 
-    const poolItem = await this.dependencies.poolItemRepository.findById(shop, operation.poolItemId);
-    if (!poolItem) {
-      throw new NotFoundError('Blind-box pool item not found for inventory operation validation');
+    if (operation.poolItemId) {
+      const poolItem = await this.dependencies.poolItemRepository.findById(shop, operation.poolItemId);
+      if (!poolItem) {
+        throw new NotFoundError('Blind-box pool item not found for inventory operation validation');
+      }
+
+      return this.validateTarget(
+        shop,
+        {
+          id: poolItem.id,
+          label: poolItem.label,
+          sourceProductId: poolItem.sourceProductId,
+          sourceVariantId: poolItem.sourceVariantId,
+        },
+        options,
+      );
     }
 
-    return this.validatePoolItem(shop, poolItem, options);
+    if (!operation.rewardProductId) {
+      throw new NotFoundError('Inventory operation is missing reward execution identifiers');
+    }
+
+    return this.validateTarget(
+      shop,
+      {
+        id: operation.id,
+        label: operation.rewardTitleSnapshot || operation.rewardProductId,
+        sourceProductId: operation.rewardProductId,
+        sourceVariantId: operation.rewardVariantId,
+      },
+      options,
+    );
   }
 
   private async validatePoolItem(
     shop: string,
     poolItem: BlindBoxPoolItem,
+    options: {
+      accessToken?: string;
+    },
+  ): Promise<InventoryExecutionReadinessReport> {
+    return this.validateTarget(
+      shop,
+      {
+        id: poolItem.id,
+        label: poolItem.label,
+        sourceProductId: poolItem.sourceProductId,
+        sourceVariantId: poolItem.sourceVariantId,
+      },
+      options,
+    );
+  }
+
+  private async validateTarget(
+    shop: string,
+    target: {
+      id: string;
+      label: string;
+      sourceProductId: string | null;
+      sourceVariantId: string | null;
+    },
     options: {
       accessToken?: string;
     },
@@ -219,7 +277,7 @@ export class InventoryExecutionReadinessService {
     );
 
     if (missingScopes.length > 0) {
-      return buildNotReadyReport(poolItem, [createMissingScopesIssue(missingScopes, configuredScopes)], configuredScopes);
+      return buildNotReadyReport(target, [createMissingScopesIssue(missingScopes, configuredScopes)], configuredScopes);
     }
 
     let accessToken: string;
@@ -227,32 +285,32 @@ export class InventoryExecutionReadinessService {
       accessToken = options.accessToken || (await this.dependencies.accessTokenProvider.getAccessToken(shop));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Missing SHOPLINE admin access token';
-      return buildNotReadyReport(poolItem, [createAccessTokenIssue(message)], configuredScopes);
+      return buildNotReadyReport(target, [createAccessTokenIssue(message)], configuredScopes);
     }
 
     try {
       const snapshot = await this.dependencies.inventoryGateway.validateExecutionReadiness({
         shop,
         accessToken,
-        poolItemId: poolItem.id,
-        sourceProductId: poolItem.sourceProductId,
-        sourceVariantId: poolItem.sourceVariantId,
+        poolItemId: target.id,
+        sourceProductId: target.sourceProductId,
+        sourceVariantId: target.sourceVariantId,
         quantity: 1,
         reason: 'blind_box_execute_mode_validation',
-        idempotencyKey: `validate:${shop}:${poolItem.id}`,
+        idempotencyKey: `validate:${shop}:${target.id}`,
         preferredLocationId: runtimeConfig.blindBoxShoplineLocationId,
       });
 
-      this.dependencies.logger.info('Validated inventory execute-mode readiness for blind-box pool item', {
+      this.dependencies.logger.info('Validated inventory execute-mode readiness for blind-box reward target', {
         shop,
-        poolItemId: poolItem.id,
+        targetId: target.id,
         identifiers: snapshot.identifiers,
       });
 
-      return buildReadyReport(poolItem, configuredScopes, snapshot);
+      return buildReadyReport(target, configuredScopes, snapshot);
     } catch (error) {
       if (error instanceof InventoryGatewayError) {
-        return buildNotReadyReport(poolItem, [createGatewayIssue(error)], configuredScopes);
+        return buildNotReadyReport(target, [createGatewayIssue(error)], configuredScopes);
       }
 
       throw error;

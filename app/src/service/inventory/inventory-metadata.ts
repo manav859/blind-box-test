@@ -13,7 +13,10 @@ export interface BuildInitialOperationMetadataInput {
   orderLineId: string;
   assignmentId: string;
   blindBoxId: string;
-  poolItemId: string;
+  poolItemId?: string | null;
+  rewardGroupId?: string | null;
+  rewardProductId?: string | null;
+  rewardVariantId?: string | null;
   createdBy: string;
   metadata?: string | null;
   gatewayBoundary?: InventoryGatewayBoundaryDescription;
@@ -82,7 +85,10 @@ export function buildInitialOperationMetadata(
     orderLineId: input.orderLineId,
     assignmentId: input.assignmentId,
     blindBoxId: input.blindBoxId,
-    poolItemId: input.poolItemId,
+    poolItemId: input.poolItemId || null,
+    rewardGroupId: input.rewardGroupId || null,
+    rewardProductId: input.rewardProductId || null,
+    rewardVariantId: input.rewardVariantId || null,
     stateMachine: INVENTORY_WORKFLOW_STATE_MACHINE,
     createdBy: input.createdBy,
     gatewayBoundary: input.gatewayBoundary || getInventoryGatewayBoundaryDescription(),

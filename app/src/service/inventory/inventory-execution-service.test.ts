@@ -289,6 +289,29 @@ test('store validation reports missing inventory level linkage clearly', async (
   assert.match(report.summary, /not linked to location/i);
 });
 
+test('store validation reports insufficient inventory at the execute-mode location clearly', async () => {
+  const gateway = new TestInventoryGateway({
+    validationError: {
+      code: 'SHOPLINE_INVENTORY_INSUFFICIENT',
+      message:
+        'SHOPLINE inventory item "inventory-item-pool-item" only has 0 available at location "test-location-1", but blind-box execution requires 1',
+    },
+  });
+  const { context, poolItem } = await seedInventoryExecutionContext('execute', gateway, {
+    configuredLocationId: 'test-location-1',
+  });
+
+  const report = await context.inventoryExecutionReadinessService.validatePoolItemExecutionReadiness(
+    'blind-box',
+    poolItem.id,
+  );
+
+  assert.equal(report.status, 'not_ready');
+  assert.equal(report.issues[0].code, 'SHOPLINE_INVENTORY_INSUFFICIENT');
+  assert.match(report.summary, /only has 0 available/i);
+  assert.match(report.issues[0].fixRecommendation, /Increase available stock/i);
+});
+
 test('execute-mode readiness report succeeds when connected-store requirements are satisfied', async () => {
   const gateway = new TestInventoryGateway();
   const { context, poolItem } = await seedInventoryExecutionContext('execute', gateway, {

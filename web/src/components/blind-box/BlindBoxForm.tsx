@@ -60,6 +60,9 @@ export function BlindBoxForm({
       description: description.trim() || null,
       selectionStrategy,
       status,
+      shoplineProductId: initialValues?.shoplineProductId || null,
+      shoplineVariantId: initialValues?.shoplineVariantId || null,
+      productTitleSnapshot: initialValues?.productTitleSnapshot || name.trim(),
     });
   }
 
@@ -67,8 +70,8 @@ export function BlindBoxForm({
     <form className="stack-lg" onSubmit={handleSubmit}>
       <div className="form-grid">
         <FormField
-          label="Blind box name"
-          hint="Merchant-facing label for the pool."
+          label="Blind box label"
+          hint="Internal label for this detected blind-box product."
           error={errors.name}
         >
           <TextInput
@@ -79,8 +82,26 @@ export function BlindBoxForm({
         </FormField>
 
         <FormField
+          label="SHOPLINE product ID"
+          hint="Read-only. Blind-box identity is derived from the tagged SHOPLINE product."
+        >
+          <div className="text-input text-input-code is-readonly">
+            {initialValues?.shoplineProductId || "Legacy configuration"}
+          </div>
+        </FormField>
+
+        <FormField
+          label="SHOPLINE variant ID"
+          hint="Read-only. Variant-specific legacy references remain visible, but new detection is product-level."
+        >
+          <div className="text-input text-input-code is-readonly">
+            {initialValues?.shoplineVariantId || "Product-level detection"}
+          </div>
+        </FormField>
+
+        <FormField
           label="Selection strategy"
-          hint="Selection still happens in the backend."
+          hint="Reward selection still happens server-side after payment."
         >
           <SelectInput
             value={selectionStrategy}
@@ -144,5 +165,9 @@ export function getBlindBoxFormValues(blindBox: BlindBox): CreateBlindBoxInput {
     description: blindBox.description,
     selectionStrategy: blindBox.selectionStrategy,
     status: blindBox.status,
+    shoplineProductId: blindBox.shoplineProductId,
+    shoplineVariantId: blindBox.shoplineVariantId,
+    productTitleSnapshot: blindBox.productTitleSnapshot,
+    configJson: blindBox.configJson,
   };
 }

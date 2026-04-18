@@ -101,15 +101,25 @@ export function InventoryOperationsTable({
         },
         {
           key: "item",
-          header: "Blind Box / Item",
+          header: "Blind Box / Reward",
           cell: (row) => (
             <div className="table-primary">
               <strong>{row.blindBoxName}</strong>
-              <span>{row.poolItem?.label || row.operation.poolItemId || "Pool item not linked"}</span>
+              <span>
+                {row.poolItem?.label ||
+                  row.operation.rewardTitleSnapshot ||
+                  row.assignment?.selectedRewardTitleSnapshot ||
+                  row.operation.rewardProductId ||
+                  row.operation.poolItemId ||
+                  "Reward target not linked"}
+              </span>
               <span>
                 Variant{" "}
                 <code className="inline-code">
-                  {row.poolItem?.sourceVariantId || "Not set"}
+                  {row.poolItem?.sourceVariantId ||
+                    row.operation.rewardVariantId ||
+                    row.assignment?.selectedRewardVariantId ||
+                    "Not set"}
                 </code>
               </span>
             </div>

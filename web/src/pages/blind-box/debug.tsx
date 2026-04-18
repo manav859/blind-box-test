@@ -293,8 +293,8 @@ export default function BlindBoxDebugPage() {
         </SectionCard>
 
         <SectionCard
-          title="Storefront Mapping Overview"
-          description="Confirm which blind boxes are actually wired to a sold storefront product or variant before product-page and checkout testing."
+          title="Detection & Legacy Mapping Overview"
+          description="Confirm which blind boxes are being auto-detected from SHOPLINE products and which still rely on deprecated legacy sold-product mappings."
           actions={
             <button
               className="button button-primary"
@@ -312,8 +312,8 @@ export default function BlindBoxDebugPage() {
         >
           {storefrontMappingsState.isLoading ? (
             <StatePanel
-              title="Loading storefront mappings"
-              description="Fetching blind boxes and their enabled sold-product mappings from the authenticated admin API."
+              title="Loading detection overview"
+              description="Fetching detected blind boxes and any remaining enabled legacy sold-product mappings from the authenticated admin API."
             />
           ) : storefrontMappingsState.error ? (
             <StatePanel
@@ -348,12 +348,11 @@ export default function BlindBoxDebugPage() {
                       </div>
                     </div>
                     <span>
-                      Enabled sold mappings: {entry.enabledMappings.length}. Variant-specific
-                      sold mappings: {entry.variantScopedMappings.length}.
+                      Enabled legacy sold mappings: {entry.enabledMappings.length}. Variant-specific
+                      legacy mappings: {entry.variantScopedMappings.length}.
                     </span>
                     <span>
-                      The theme block uses the product tag as a storefront rendering gate, but
-                      webhook identification still depends on these enabled product mappings.
+                      Tagged SHOPLINE products are now detected automatically. Any enabled product mappings shown here are compatibility-only fallback paths.
                     </span>
                   </div>
                 ))}
@@ -361,13 +360,13 @@ export default function BlindBoxDebugPage() {
             ) : (
               <StatePanel
                 title="No blind boxes found"
-                description="Create a blind box in the admin dashboard before running storefront mapping diagnostics."
+                description='Tag a SHOPLINE product with "blind-box" and reload the detected blind-box list before running storefront diagnostics.'
               />
             )
           ) : (
             <StatePanel
-              title="No mapping overview loaded yet"
-              description="Load the overview to confirm whether each blind box has an enabled sold storefront mapping before QA."
+              title="No detection overview loaded yet"
+              description="Load the overview to confirm whether each blind box is being auto-detected and whether any deprecated legacy mappings still remain before QA."
             />
           )}
         </SectionCard>

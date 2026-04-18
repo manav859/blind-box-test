@@ -99,7 +99,7 @@ export class PaidOrderWebhookService {
         status: 'ignored',
         shouldAcknowledge: true,
         summary: {
-          message: 'No blind-box product mapping matched this paid order',
+          message: 'No detected blind-box product matched this paid order',
           detectedLineCount: processingSummary.detectedLineCount,
           ignoredDetections: processingSummary.ignoredDetections,
         },

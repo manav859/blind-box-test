@@ -1,0 +1,19 @@
+{{#if props.paginate.parts.length > 0}}
+  <nav class="theme-page__pagination theme-pagination" aria-label="Pagination">
+    {{#if props.paginate.previous}}
+      <a class="theme-pagination__edge" href="{{ props.paginate.previous.url }}">Previous</a>
+    {{/if}}
+
+    {{#each props.paginate.parts as |part|}}
+      {{#if part.is_link}}
+        <a href="{{ part.url }}">{{ part.title }}</a>
+      {{else}}
+        <span {{#if part.is_current}}aria-current="page"{{/if}}>{{ part.title }}</span>
+      {{/if}}
+    {{/each}}
+
+    {{#if props.paginate.next}}
+      <a class="theme-pagination__edge" href="{{ props.paginate.next.url }}">Next</a>
+    {{/if}}
+  </nav>
+{{/if}}

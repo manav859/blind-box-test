@@ -7,16 +7,21 @@ import {
   INVENTORY_OPERATION_TYPES,
 } from './status';
 import {
+  BlindBoxRewardGroupLink,
   CreateBlindBoxAssignmentInput,
   CreateBlindBoxInput,
   CreateInventoryOperationInput,
   NormalizedCreateBlindBoxAssignmentInput,
   NormalizedCreateBlindBoxInput,
   NormalizedCreateInventoryOperationInput,
+  NormalizedUpsertBlindBoxRewardGroupLinkInput,
   NormalizedUpsertBlindBoxPoolItemInput,
   NormalizedUpsertBlindBoxProductMappingInput,
+  NormalizedUpsertRewardGroupInput,
+  UpsertBlindBoxRewardGroupLinkInput,
   UpsertBlindBoxPoolItemInput,
   UpsertBlindBoxProductMappingInput,
+  UpsertRewardGroupInput,
 } from './types';
 
 export function requireNonEmptyString(value: unknown, fieldName: string): string {
@@ -107,6 +112,10 @@ export function validateCreateBlindBoxInput(input: CreateBlindBoxInput): Normali
       BLIND_BOX_SELECTION_STRATEGIES,
       'uniform',
     ),
+    shoplineProductId: normalizeOptionalString(input.shoplineProductId),
+    shoplineVariantId: normalizeOptionalString(input.shoplineVariantId),
+    productTitleSnapshot: normalizeOptionalString(input.productTitleSnapshot),
+    configJson: normalizeOptionalString(input.configJson),
   };
 }
 
@@ -138,6 +147,27 @@ export function validateUpsertBlindBoxProductMappingInput(
   };
 }
 
+export function validateUpsertRewardGroupInput(input: UpsertRewardGroupInput): NormalizedUpsertRewardGroupInput {
+  return {
+    id: normalizeOptionalString(input.id),
+    sourceType: 'shopline_collection',
+    shoplineCollectionId: requireNonEmptyString(input.shoplineCollectionId, 'shoplineCollectionId'),
+    collectionTitleSnapshot: normalizeOptionalString(input.collectionTitleSnapshot),
+    status: requireIncludedValue(input.status, 'status', BLIND_BOX_STATUSES, 'draft'),
+    configJson: normalizeOptionalString(input.configJson),
+  };
+}
+
+export function validateUpsertBlindBoxRewardGroupLinkInput(
+  input: UpsertBlindBoxRewardGroupLinkInput,
+): NormalizedUpsertBlindBoxRewardGroupLinkInput {
+  return {
+    id: normalizeOptionalString(input.id),
+    blindBoxId: requireNonEmptyString(input.blindBoxId, 'blindBoxId'),
+    rewardGroupId: requireNonEmptyString(input.rewardGroupId, 'rewardGroupId'),
+  };
+}
+
 export function validateCreateBlindBoxAssignmentInput(
   input: CreateBlindBoxAssignmentInput,
 ): NormalizedCreateBlindBoxAssignmentInput {
@@ -145,7 +175,13 @@ export function validateCreateBlindBoxAssignmentInput(
     blindBoxId: requireNonEmptyString(input.blindBoxId, 'blindBoxId'),
     orderId: requireNonEmptyString(input.orderId, 'orderId'),
     orderLineId: requireNonEmptyString(input.orderLineId, 'orderLineId'),
+    rewardGroupId: normalizeOptionalString(input.rewardGroupId),
     selectedPoolItemId: normalizeOptionalString(input.selectedPoolItemId),
+    selectedRewardProductId: normalizeOptionalString(input.selectedRewardProductId),
+    selectedRewardVariantId: normalizeOptionalString(input.selectedRewardVariantId),
+    selectedRewardTitleSnapshot: normalizeOptionalString(input.selectedRewardTitleSnapshot),
+    selectedRewardVariantTitleSnapshot: normalizeOptionalString(input.selectedRewardVariantTitleSnapshot),
+    selectedRewardPayloadJson: normalizeOptionalString(input.selectedRewardPayloadJson),
     status: requireIncludedValue(input.status, 'status', BLIND_BOX_ASSIGNMENT_STATUSES),
     selectionStrategy:
       input.selectionStrategy === undefined || input.selectionStrategy === null
@@ -167,6 +203,11 @@ export function validateCreateInventoryOperationInput(
     blindBoxId: normalizeOptionalString(input.blindBoxId),
     assignmentId: normalizeOptionalString(input.assignmentId),
     poolItemId: normalizeOptionalString(input.poolItemId),
+    rewardGroupId: normalizeOptionalString(input.rewardGroupId),
+    rewardProductId: normalizeOptionalString(input.rewardProductId),
+    rewardVariantId: normalizeOptionalString(input.rewardVariantId),
+    rewardTitleSnapshot: normalizeOptionalString(input.rewardTitleSnapshot),
+    rewardVariantTitleSnapshot: normalizeOptionalString(input.rewardVariantTitleSnapshot),
     idempotencyKey: requireNonEmptyString(input.idempotencyKey, 'idempotencyKey'),
     quantity: requirePositiveInteger(input.quantity ?? 1, 'quantity'),
     operationType: requireIncludedValue(input.operationType, 'operationType', INVENTORY_OPERATION_TYPES),

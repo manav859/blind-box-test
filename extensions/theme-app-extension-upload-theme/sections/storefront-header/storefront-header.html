@@ -1,0 +1,111 @@
+{{#var primary_menu = linklists[section.settings.primary_menu] /}}
+
+<header class="store-shell__site-header" data-site-header>
+  {{#if section.settings.announcement}}
+    <div class="store-shell__announcement">
+      <span>{{ section.settings.announcement }}</span>
+    </div>
+  {{/if}}
+
+  <div class="store-shell__header-wrap">
+    <a class="store-shell__brand" href="/">
+      <img
+        class="store-shell__brand-mark"
+        src="{{`logo.png` | asset_url()}}"
+        alt="{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}"
+      >
+      <span>{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}</span>
+    </a>
+
+    <button
+      class="store-shell__menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="StorefrontNav-{{ section.id }}"
+      data-nav-toggle
+    >
+      <span>Menu</span>
+    </button>
+
+    <nav
+      id="StorefrontNav-{{ section.id }}"
+      class="store-shell__nav-panel"
+      aria-label="Primary"
+      data-nav-panel
+    >
+      <div class="store-shell__nav-list">
+        {{#if primary_menu}}
+          {{#each primary_menu.links as |link|}}
+            <div class="store-shell__nav-item {{#if link.links.length}}store-shell__nav-item--has-children{{/if}}">
+              <a href="{{ link.url }}" {{#if link.active}}aria-current="page"{{/if}}>
+                {{ link.title }}
+              </a>
+
+              {{#if link.links.length}}
+                <div class="store-shell__subnav">
+                  {{#each link.links as |child_link|}}
+                    <a href="{{ child_link.url }}" {{#if child_link.active}}aria-current="page"{{/if}}>
+                      {{ child_link.title }}
+                    </a>
+                  {{/each}}
+                </div>
+              {{/if}}
+            </div>
+          {{/each}}
+        {{else}}
+          <div class="store-shell__nav-item"><a href="/">Home</a></div>
+          <div class="store-shell__nav-item"><a href="/collections/all">Catalog</a></div>
+          <div class="store-shell__nav-item"><a href="/collections-all">Collections</a></div>
+        {{/if}}
+      </div>
+    </nav>
+
+    <div class="store-shell__header-actions">
+      <a class="store-shell__header-link" href="{{ routes.search_url }}">Search</a>
+      <a class="store-shell__header-link store-shell__header-link--cart" href="{{ routes.cart_url }}">
+        Cart
+        <span class="store-shell__cart-count">
+          {{#if cart.item_count}}
+            {{ cart.item_count }}
+          {{else}}
+            0
+          {{/if}}
+        </span>
+      </a>
+      <a class="store-shell__cta" href="/collections/all">
+        {{#if section.settings.cta_label}}
+          {{ section.settings.cta_label }}
+        {{else}}
+          Shop catalog
+        {{/if}}
+      </a>
+    </div>
+  </div>
+</header>
+
+{{#schema}}
+{
+  "name": "Storefront header",
+  "class": "storefront-header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "announcement",
+      "label": "Announcement text",
+      "default": "Collector-ready blind boxes with native SHOPLINE checkout."
+    },
+    {
+      "type": "menu_picker",
+      "id": "primary_menu",
+      "label": "Primary navigation",
+      "default": "head"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "CTA label",
+      "default": "Shop catalog"
+    }
+  ]
+}
+{{/schema}}

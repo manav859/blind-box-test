@@ -1,0 +1,74 @@
+<section class="how-it-works-block" aria-labelledby="blind-box-how-it-works-{{ section.id }}">
+  <div class="how-it-works-block__header">
+    <span>
+      {{#if section.settings.how_it_works_label}}
+        {{ section.settings.how_it_works_label }}
+      {{else}}
+        How it works
+      {{/if}}
+    </span>
+    <h2 id="blind-box-how-it-works-{{ section.id }}">
+      {{#if section.settings.how_it_works_title}}
+        {{ section.settings.how_it_works_title }}
+      {{else}}
+        Clear in three steps
+      {{/if}}
+    </h2>
+  </div>
+
+  <div class="how-it-works-block__steps">
+    <article class="how-it-works-block__step">
+      <span class="how-it-works-block__step-number">1</span>
+      <strong>
+        {{#if section.settings.how_step_one_title}}
+          {{ section.settings.how_step_one_title }}
+        {{else}}
+          Buy
+        {{/if}}
+      </strong>
+      <p>
+        {{#if section.settings.how_step_one_text}}
+          {{ section.settings.how_step_one_text }}
+        {{else}}
+          Add the blind box to cart and complete checkout.
+        {{/if}}
+      </p>
+    </article>
+
+    <article class="how-it-works-block__step">
+      <span class="how-it-works-block__step-number">2</span>
+      <strong>
+        {{#if section.settings.how_step_two_title}}
+          {{ section.settings.how_step_two_title }}
+        {{else}}
+          Payment confirmed
+        {{/if}}
+      </strong>
+      <p>
+        {{#if section.settings.how_step_two_text}}
+          {{ section.settings.how_step_two_text }}
+        {{else}}
+          Your order is locked in through the normal SHOPLINE flow.
+        {{/if}}
+      </p>
+    </article>
+
+    <article class="how-it-works-block__step">
+      <span class="how-it-works-block__step-number">3</span>
+      <strong>
+        {{#if section.settings.how_step_three_title}}
+          {{ section.settings.how_step_three_title }}
+        {{else}}
+          Reward assigned
+        {{/if}}
+      </strong>
+      <p>
+        {{#if section.settings.how_step_three_text}}
+          {{ section.settings.how_step_three_text }}
+        {{else}}
+          One surprise item is assigned after payment, based on availability.
+        {{/if}}
+      </p>
+    </article>
+  </div>
+</section>

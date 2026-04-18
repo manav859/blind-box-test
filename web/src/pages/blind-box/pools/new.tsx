@@ -1,88 +1,54 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
 import { AdminLayout } from "../../../components/admin/AdminLayout";
 import { PageHeader } from "../../../components/admin/PageHeader";
 import { SectionCard } from "../../../components/admin/SectionCard";
-import { BlindBoxForm } from "../../../components/blind-box/BlindBoxForm";
-import { useBlindBoxAdminApi } from "../../../hooks/useBlindBoxAdminApi";
-import {
-  useEmbeddedNavigate,
-  useEmbeddedPath,
-} from "../../../hooks/useEmbeddedRouting";
-import { useToast } from "../../../hooks/useToast";
-import type { CreateBlindBoxInput } from "../../../types/blindBox";
+import { StatePanel } from "../../../components/admin/StatePanel";
+import { useEmbeddedPath } from "../../../hooks/useEmbeddedRouting";
 
 export default function CreateBlindBoxPage() {
-  const api = useBlindBoxAdminApi();
-  const toast = useToast();
-  const navigate = useEmbeddedNavigate();
   const embeddedPath = useEmbeddedPath();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-
-  async function handleSubmit(values: CreateBlindBoxInput) {
-    setIsSubmitting(true);
-    setSubmissionError(null);
-
-    try {
-      const blindBox = await api.createBlindBox(values);
-      toast.success("Blind box created.");
-      navigate(`/blind-box/pools/${blindBox.id}`);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create blind box.";
-      setSubmissionError(message);
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
 
   return (
     <AdminLayout>
       <div className="admin-content-area stack-xl">
         <PageHeader
-          eyebrow="Create"
-          title="Create Blind Box"
-          description="Set up the pool shell first. Items and product mappings can be added immediately after creation."
+          eyebrow="Deprecated"
+          title="Manual Registration Removed"
+          description='Blind-box products are no longer created in the app admin. Detection now happens automatically from tagged SHOPLINE products.'
           actions={
             <Link className="button button-secondary" to={embeddedPath("/blind-box/pools")}>
-              Back To List
+              Back To Detected Blind Boxes
             </Link>
           }
         />
 
         <div className="dashboard-grid dashboard-grid--split">
           <SectionCard
-            title="Basic configuration"
-            description="The frontend only saves merchant-managed metadata. Assignment behavior stays in backend services."
+            title="New setup flow"
+            description="Use SHOPLINE admin as the source of truth for blind-box identity."
           >
-            {submissionError ? (
-              <div className="inline-banner inline-banner-error">{submissionError}</div>
-            ) : null}
-            <BlindBoxForm
-              submitLabel="Create Blind Box"
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
+            <StatePanel
+              title="No registration form required"
+              description='1. Create the product in SHOPLINE. 2. Add the "blind-box" tag. 3. Add the "blind-box-collection:<handle>" tag. 4. Refresh the detected list.'
             />
           </SectionCard>
 
           <SectionCard
             title="What happens next"
-            description="After creation, continue in the edit screen to finish the operational setup."
+            description="The app now stores only cached references plus operational settings."
           >
             <div className="stack-md">
               <div className="info-list-item">
-                <strong>Pool items</strong>
-                <span>Add prizes, inventory quantities, weights, and enabled states.</span>
+                <strong>Detection</strong>
+                <span>Tagged products are auto-hydrated into the local blind-box cache when the admin list or webhook sees them.</span>
               </div>
               <div className="info-list-item">
-                <strong>Product mappings</strong>
-                <span>Attach the store product or variant that should trigger the blind-box flow.</span>
+                <strong>Reward collection</strong>
+                <span>The product tag blind-box-collection:&lt;handle&gt; is now the primary reward source. Use the admin fallback link only for older products that are not migrated yet.</span>
               </div>
               <div className="info-list-item">
-                <strong>Assignments</strong>
-                <span>Use the assignment history page to monitor live order outcomes after paid orders arrive.</span>
+                <strong>Readiness</strong>
+                <span>Use readiness and candidate health to confirm the tagged collection can assign rewards safely.</span>
               </div>
             </div>
           </SectionCard>

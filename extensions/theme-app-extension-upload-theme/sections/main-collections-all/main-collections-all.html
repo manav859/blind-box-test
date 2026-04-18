@@ -1,0 +1,47 @@
+<section class="theme-page collections-page">
+  <div class="theme-page__hero collections-page__hero">
+    <div class="theme-page__panel">
+      <span class="theme-page__eyebrow">Collections</span>
+      <h1 class="theme-page__title">Browse every published collection in one place.</h1>
+      <p class="theme-page__lead">
+        This page is connected to your live collection objects, so it stays in sync as the catalog changes.
+      </p>
+      <div class="theme-page__actions">
+        <a class="theme-page__button" href="/collections/all">All products</a>
+        <a class="theme-page__link-button" href="/search">Search store</a>
+      </div>
+    </div>
+
+    <aside class="theme-page__sidebar">
+      <span class="theme-page__kicker">Collection directory</span>
+      <h3>Published collections in one place.</h3>
+      <p>Use this route for collection-level browsing, then open a collection to view its live product grid.</p>
+    </aside>
+  </div>
+
+  {{#if collections.length > 0}}
+    <div class="collections-page__grid">
+      {{#each collections as |collection_item|}}
+        {{#component "collection-card/collection-card" collection_item=collection_item /}}
+      {{/each}}
+    </div>
+  {{else}}
+    <div class="theme-page__empty">
+      <h3>No collections are published yet.</h3>
+      <p>Create or publish collections in SHOPLINE admin and this landing page will populate automatically.</p>
+    </div>
+  {{/if}}
+</section>
+
+{{#schema}}
+{
+  "name": "Main collections all",
+  "class": "theme-main-collections-all",
+  "settings": [],
+  "presets": [
+    {
+      "name": "Main collections all"
+    }
+  ]
+}
+{{/schema}}

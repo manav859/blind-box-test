@@ -4,12 +4,9 @@ import shopline from './shopline';
 import { readFileSync } from 'fs';
 import serveStatic from 'serve-static';
 import { webhooksController } from './controller/webhook';
-import createProductController from './controller/product/create';
 import { initializeBlindBoxPersistence } from './db/client';
 import { logger } from './lib/logger';
-import { createBlindBoxAdminRouter } from './controller/admin/blind-box';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
-import { createBlindBoxStorefrontRouter } from './controller/storefront/blind-box';
 
 const resolvedPort = resolveBackendPort();
 
@@ -39,15 +36,6 @@ async function start() {
 
   app.get(shopline.config.auth.callbackPath, shopline.auth.callback(), shopline.redirectToAppHome());
   app.post('/api/webhooks', express.text({ type: '*/*' }), webhooksController());
-  app.use('/storefront/blind-box', createBlindBoxStorefrontRouter());
-
-  // api path for frontend/vite.config
-  app.use('/api/*', express.text({ type: '*/*' }), shopline.validateAuthentication());
-
-  app.get('/api/products/create', createProductController);
-  app.use('/api/blind-box', createBlindBoxAdminRouter());
-
-  app.use(express.json());
 
   app.use(shopline.cspHeaders());
   app.use(serveStatic(STATIC_PATH, { index: false }));

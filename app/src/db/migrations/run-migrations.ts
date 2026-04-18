@@ -1,13 +1,18 @@
 import { BlindBoxDatabase } from '../client';
 import { INITIAL_FOUNDATION_MIGRATION } from '../schema/initial-foundation';
 import { INVENTORY_RECOVERY_HARDENING_MIGRATION } from '../schema/002_inventory_recovery_hardening';
+import { COLLECTION_REWARD_GROUPS_MIGRATION } from '../schema/003_collection_reward_groups';
 import { logger } from '../../lib/logger';
 
 interface AppliedMigrationRow {
   name: string;
 }
 
-const MIGRATIONS = [INITIAL_FOUNDATION_MIGRATION, INVENTORY_RECOVERY_HARDENING_MIGRATION];
+const MIGRATIONS = [
+  INITIAL_FOUNDATION_MIGRATION,
+  INVENTORY_RECOVERY_HARDENING_MIGRATION,
+  COLLECTION_REWARD_GROUPS_MIGRATION,
+];
 
 async function ensureMigrationTable(db: BlindBoxDatabase): Promise<void> {
   await db.exec(`

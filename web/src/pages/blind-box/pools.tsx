@@ -1,16 +1,13 @@
-import { Link } from "react-router-dom";
 import { AdminLayout } from "../../components/admin/AdminLayout";
 import { PageHeader } from "../../components/admin/PageHeader";
 import { SectionCard } from "../../components/admin/SectionCard";
 import { StatePanel } from "../../components/admin/StatePanel";
 import { BlindBoxesTable } from "../../components/blind-box/BlindBoxesTable";
 import { useBlindBoxAdminApi } from "../../hooks/useBlindBoxAdminApi";
-import { useEmbeddedPath } from "../../hooks/useEmbeddedRouting";
 import { useResource } from "../../hooks/useResource";
 
 export default function BlindBoxListPage() {
   const api = useBlindBoxAdminApi();
-  const embeddedPath = useEmbeddedPath();
   const blindBoxes = useResource(() => api.listBlindBoxes(), [], {
     enabled: api.isReady,
   });
@@ -20,18 +17,18 @@ export default function BlindBoxListPage() {
       <div className="admin-content-area stack-xl">
         <PageHeader
           eyebrow="Merchant Dashboard"
-          title="Blind Boxes"
-          description="Manage blind-box pools, review strategies, and jump into box-level configuration."
+          title="Detected Blind Boxes"
+          description='Tagged SHOPLINE products are discovered automatically. Use this page to review detected products, confirm tag-based reward resolution, and keep a legacy fallback link only when older products still need it.'
           actions={
-            <Link className="button button-primary" to={embeddedPath("/blind-box/pools/new")}>
-              Create Blind Box
-            </Link>
+            <button className="button button-primary" type="button" onClick={blindBoxes.reload}>
+              Refresh Detection
+            </button>
           }
         />
 
         <SectionCard
-          title="All blind boxes"
-          description="Each blind box remains a backend-owned pool with frontend admin controls only."
+          title="All detected blind-box products"
+          description='SHOPLINE owns the product catalog and the primary reward-collection tag. This app caches detected blind-box references, stores operational state, and keeps legacy fallback links for older setups.'
           actions={
             blindBoxes.data ? (
               <span className="section-meta">
@@ -80,16 +77,8 @@ export default function BlindBoxListPage() {
             <BlindBoxesTable blindBoxes={blindBoxes.data} />
           ) : (
             <StatePanel
-              title="No blind boxes yet"
-              description="Create your first blind box to start configuring pool items and product mappings."
-              action={
-                <Link
-                  className="button button-primary"
-                  to={embeddedPath("/blind-box/pools/new")}
-                >
-                  Create Blind Box
-                </Link>
-              }
+              title="No detected blind boxes yet"
+              description='Add the "blind-box" tag to a SHOPLINE product, then refresh this page to hydrate its app cache record automatically.'
             />
           )}
         </SectionCard>

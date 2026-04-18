@@ -1,7 +1,7 @@
 {
   "blind_box_purchase_flow_label": "Purchase flow",
   "blind_box_assignment_notice": "Final item assigned after purchase.",
-  "blind_box_presentation_notice": "This product-page block explains the blind box format only. Selection and fulfillment remain backend-managed.",
+  "blind_box_presentation_notice": "This product-page block explains the blind box format only. One surprise item is assigned after payment.",
   "blind_box_collectible_label": "Collectible note",
   "blind_box_disclaimer_label": "Store note"
 }

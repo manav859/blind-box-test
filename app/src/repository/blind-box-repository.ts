@@ -2,7 +2,12 @@ import { randomUUID } from 'crypto';
 import { BlindBoxDatabase, getBlindBoxDatabase } from '../db/client';
 import { ConflictError, NotFoundError } from '../lib/errors';
 import { BlindBox, NormalizedCreateBlindBoxInput } from '../domain/blind-box/types';
-import { isSqliteUniqueConstraintError, nowIsoString } from './helpers';
+import {
+  isSqliteUniqueConstraintError,
+  normalizeNullableString,
+  nowIsoString,
+  sqliteVariantKey,
+} from './helpers';
 
 interface BlindBoxRow {
   id: string;
@@ -11,6 +16,10 @@ interface BlindBoxRow {
   description: string | null;
   status: BlindBox['status'];
   selection_strategy: BlindBox['selectionStrategy'];
+  shopline_product_id: string | null;
+  shopline_variant_id: string | null;
+  product_title_snapshot: string | null;
+  config_json: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +32,10 @@ function mapBlindBoxRow(row: BlindBoxRow): BlindBox {
     description: row.description,
     status: row.status,
     selectionStrategy: row.selection_strategy,
+    shoplineProductId: normalizeNullableString(row.shopline_product_id),
+    shoplineVariantId: normalizeNullableString(row.shopline_variant_id),
+    productTitleSnapshot: normalizeNullableString(row.product_title_snapshot),
+    configJson: normalizeNullableString(row.config_json),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -32,6 +45,7 @@ export interface BlindBoxRepository {
   create(shop: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
   update(shop: string, blindBoxId: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
   listByShop(shop: string): Promise<BlindBox[]>;
+  listByShoplineProductId(shop: string, shoplineProductId: string): Promise<BlindBox[]>;
   findById(shop: string, blindBoxId: string): Promise<BlindBox | null>;
 }
 
@@ -52,9 +66,13 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
             description,
             status,
             selection_strategy,
+            shopline_product_id,
+            shopline_variant_id,
+            product_title_snapshot,
+            config_json,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           id,
@@ -63,6 +81,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
           input.description,
           input.status,
           input.selectionStrategy,
+          input.shoplineProductId,
+          sqliteVariantKey(input.shoplineVariantId),
+          input.productTitleSnapshot,
+          input.configJson,
           timestamp,
           timestamp,
         ],
@@ -94,6 +116,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
           description = ?,
           status = ?,
           selection_strategy = ?,
+          shopline_product_id = ?,
+          shopline_variant_id = ?,
+          product_title_snapshot = ?,
+          config_json = ?,
           updated_at = ?
         WHERE shop = ? AND id = ?
       `,
@@ -102,6 +128,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
         input.description,
         input.status,
         input.selectionStrategy,
+        input.shoplineProductId,
+        sqliteVariantKey(input.shoplineVariantId),
+        input.productTitleSnapshot,
+        input.configJson,
         timestamp,
         shop,
         blindBoxId,
@@ -126,6 +156,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
           description,
           status,
           selection_strategy,
+          shopline_product_id,
+          shopline_variant_id,
+          product_title_snapshot,
+          config_json,
           created_at,
           updated_at
         FROM blind_boxes
@@ -133,6 +167,32 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
         ORDER BY created_at DESC
       `,
       [shop],
+    );
+
+    return rows.map(mapBlindBoxRow);
+  }
+
+  async listByShoplineProductId(shop: string, shoplineProductId: string): Promise<BlindBox[]> {
+    const rows = await this.db.all<BlindBoxRow>(
+      `
+        SELECT
+          id,
+          shop,
+          name,
+          description,
+          status,
+          selection_strategy,
+          shopline_product_id,
+          shopline_variant_id,
+          product_title_snapshot,
+          config_json,
+          created_at,
+          updated_at
+        FROM blind_boxes
+        WHERE shop = ? AND shopline_product_id = ?
+        ORDER BY updated_at DESC, created_at DESC
+      `,
+      [shop, shoplineProductId],
     );
 
     return rows.map(mapBlindBoxRow);
@@ -148,6 +208,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
           description,
           status,
           selection_strategy,
+          shopline_product_id,
+          shopline_variant_id,
+          product_title_snapshot,
+          config_json,
           created_at,
           updated_at
         FROM blind_boxes

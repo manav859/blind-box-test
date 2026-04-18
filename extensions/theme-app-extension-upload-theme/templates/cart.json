@@ -1,15 +1,7 @@
 {
   "sections": {
     "main": {
-      "type": "basic-page",
-      "settings": {
-        "eyebrow": "Cart",
-        "title": "Cart template placeholder",
-        "lead": "Starter cart template for a cleaner storefront shell.",
-        "kicker": "Cart page",
-        "body": "Replace this section with a production cart experience if you intend to use the uploaded theme live.",
-        "note": "Use the editor to replace this with your preferred cart content and conversion messaging."
-      }
+      "type": "main-cart"
     }
   },
   "order": [

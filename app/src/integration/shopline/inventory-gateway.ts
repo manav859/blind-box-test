@@ -495,6 +495,22 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       traceIds,
     );
 
+    if (inventoryLevel.available !== null && inventoryLevel.available < request.quantity) {
+      throw new InventoryGatewayError(
+        `SHOPLINE inventory item "${inventoryItem.id}" only has ${inventoryLevel.available} available at location "${inventoryLevel.locationId}", but blind-box execution requires ${request.quantity}`,
+        {
+          code: 'SHOPLINE_INVENTORY_INSUFFICIENT',
+          disposition: 'definitive',
+          details: {
+            inventoryItemId: inventoryItem.id,
+            locationId: inventoryLevel.locationId,
+            available: inventoryLevel.available,
+            requiredQuantity: request.quantity,
+          },
+        },
+      );
+    }
+
     return {
       identifiers,
       inventoryItem,

@@ -11,6 +11,8 @@ interface InventoryExecutionRow {
   assignment_exists: string | null;
   pool_item_id: string | null;
   pool_item_exists: string | null;
+  reward_product_id: string | null;
+  reward_variant_id: string | null;
 }
 
 async function loadExecutionRow(
@@ -27,7 +29,9 @@ async function loadExecutionRow(
         io.assignment_id AS assignment_id,
         a.id AS assignment_exists,
         io.pool_item_id AS pool_item_id,
-        p.id AS pool_item_exists
+        p.id AS pool_item_exists,
+        io.reward_product_id AS reward_product_id,
+        io.reward_variant_id AS reward_variant_id
       FROM inventory_operations io
       LEFT JOIN blind_box_assignments a
         ON a.id = io.assignment_id AND a.shop = io.shop
@@ -91,8 +95,8 @@ export class SqliteInventoryExecutionRepository implements InventoryExecutionRep
         throw new ValidationError('Inventory operation is missing its blind-box assignment context');
       }
 
-      if (!executionRow.pool_item_id || !executionRow.pool_item_exists) {
-        throw new ValidationError('Inventory operation is missing its pool item context');
+      if (!executionRow.pool_item_id && !executionRow.reward_product_id) {
+        throw new ValidationError('Inventory operation is missing both pool-item and reward-product execution context');
       }
 
       if (!['pending', 'failed'].includes(executionRow.operation_status)) {
@@ -100,19 +104,21 @@ export class SqliteInventoryExecutionRepository implements InventoryExecutionRep
       }
 
       const timestamp = nowIsoString();
-      const reservationResult = await transaction.run(
-        `
-          UPDATE blind_box_pool_items
-          SET
-            inventory_quantity = inventory_quantity - ?,
-            updated_at = ?
-          WHERE shop = ? AND id = ? AND inventory_quantity >= ?
-        `,
-        [executionRow.quantity, timestamp, shop, executionRow.pool_item_id, executionRow.quantity],
-      );
+      if (executionRow.pool_item_id && executionRow.pool_item_exists) {
+        const reservationResult = await transaction.run(
+          `
+            UPDATE blind_box_pool_items
+            SET
+              inventory_quantity = inventory_quantity - ?,
+              updated_at = ?
+            WHERE shop = ? AND id = ? AND inventory_quantity >= ?
+          `,
+          [executionRow.quantity, timestamp, shop, executionRow.pool_item_id, executionRow.quantity],
+        );
 
-      if (reservationResult.changes !== 1) {
-        throw new ConflictError('Pool item inventory could not be reserved safely for execution');
+        if (reservationResult.changes !== 1) {
+          throw new ConflictError('Pool item inventory could not be reserved safely for execution');
+        }
       }
 
       await transaction.run(

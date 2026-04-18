@@ -57,7 +57,7 @@
       },
       "disclaimer": {
         "label": "Store disclaimer",
-        "info": "Optional presentation disclaimer for storefront expectation setting. Fulfillment logic still stays in the backend."
+        "info": "Optional presentation disclaimer for storefront expectation setting. Keep it clear and shopper-facing."
       }
     }
   }

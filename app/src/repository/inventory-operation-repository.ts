@@ -10,6 +10,11 @@ interface InventoryOperationRow {
   blind_box_id: string | null;
   assignment_id: string | null;
   pool_item_id: string | null;
+  reward_group_id: string | null;
+  reward_product_id: string | null;
+  reward_variant_id: string | null;
+  reward_title_snapshot: string | null;
+  reward_variant_title_snapshot: string | null;
   idempotency_key: string;
   quantity: number;
   operation_type: InventoryOperation['operationType'];
@@ -32,6 +37,11 @@ function mapInventoryOperationRow(row: InventoryOperationRow): InventoryOperatio
     blindBoxId: normalizeNullableString(row.blind_box_id),
     assignmentId: normalizeNullableString(row.assignment_id),
     poolItemId: normalizeNullableString(row.pool_item_id),
+    rewardGroupId: normalizeNullableString(row.reward_group_id),
+    rewardProductId: normalizeNullableString(row.reward_product_id),
+    rewardVariantId: normalizeNullableString(row.reward_variant_id),
+    rewardTitleSnapshot: normalizeNullableString(row.reward_title_snapshot),
+    rewardVariantTitleSnapshot: normalizeNullableString(row.reward_variant_title_snapshot),
     idempotencyKey: row.idempotency_key,
     quantity: row.quantity,
     operationType: row.operation_type,
@@ -82,6 +92,11 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
             blind_box_id,
             assignment_id,
             pool_item_id,
+            reward_group_id,
+            reward_product_id,
+            reward_variant_id,
+            reward_title_snapshot,
+            reward_variant_title_snapshot,
             idempotency_key,
             quantity,
             operation_type,
@@ -95,7 +110,7 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
             metadata,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           id,
@@ -103,6 +118,11 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
           input.blindBoxId,
           input.assignmentId,
           input.poolItemId,
+          input.rewardGroupId,
+          input.rewardProductId,
+          input.rewardVariantId,
+          input.rewardTitleSnapshot,
+          input.rewardVariantTitleSnapshot,
           input.idempotencyKey,
           input.quantity,
           input.operationType,
@@ -143,6 +163,11 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
           blind_box_id,
           assignment_id,
           pool_item_id,
+          reward_group_id,
+          reward_product_id,
+          reward_variant_id,
+          reward_title_snapshot,
+          reward_variant_title_snapshot,
           idempotency_key,
           quantity,
           operation_type,
@@ -175,6 +200,11 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
           blind_box_id,
           assignment_id,
           pool_item_id,
+          reward_group_id,
+          reward_product_id,
+          reward_variant_id,
+          reward_title_snapshot,
+          reward_variant_title_snapshot,
           idempotency_key,
           quantity,
           operation_type,
@@ -206,6 +236,11 @@ export class SqliteInventoryOperationRepository implements InventoryOperationRep
           blind_box_id,
           assignment_id,
           pool_item_id,
+          reward_group_id,
+          reward_product_id,
+          reward_variant_id,
+          reward_title_snapshot,
+          reward_variant_title_snapshot,
           idempotency_key,
           quantity,
           operation_type,

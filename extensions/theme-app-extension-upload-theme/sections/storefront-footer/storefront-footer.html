@@ -1,0 +1,63 @@
+{{#var footer_menu = linklists[section.settings.footer_menu] /}}
+
+<footer class="store-shell__site-footer">
+  <div class="store-shell__footer-grid">
+    <div class="store-shell__footer-panel store-shell__footer-panel--brand">
+      <span class="store-shell__footer-kicker">Blind box storefront</span>
+      <strong>{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}</strong>
+      <p>
+        {{#if section.settings.footer_copy}}
+          {{ section.settings.footer_copy }}
+        {{else}}
+          Premium collection browsing, product-first storytelling, and native SHOPLINE checkout for every release.
+        {{/if}}
+      </p>
+    </div>
+
+    <div class="store-shell__footer-panel">
+      <span class="store-shell__footer-kicker">Browse</span>
+      <div class="store-shell__footer-links">
+        {{#if footer_menu}}
+          {{#each footer_menu.links as |link|}}
+            <a href="{{ link.url }}">{{ link.title }}</a>
+          {{/each}}
+        {{else}}
+          <a href="/collections/all">Catalog</a>
+          <a href="/collections-all">Collections</a>
+          <a href="{{ routes.search_url }}">Search</a>
+          <a href="{{ routes.cart_url }}">Cart</a>
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="store-shell__footer-panel">
+      <span class="store-shell__footer-kicker">Checkout confidence</span>
+      <ul class="store-shell__footer-list">
+        <li>Live product and collection data only.</li>
+        <li>Blind-box rules stay visible before purchase.</li>
+        <li>Cart and checkout remain native SHOPLINE flow.</li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+{{#schema}}
+{
+  "name": "Storefront footer",
+  "class": "storefront-footer",
+  "settings": [
+    {
+      "type": "menu_picker",
+      "id": "footer_menu",
+      "label": "Footer navigation",
+      "default": "footer"
+    },
+    {
+      "type": "textarea",
+      "id": "footer_copy",
+      "label": "Footer copy",
+      "default": "Premium collection browsing, product-first storytelling, and native SHOPLINE checkout for every release."
+    }
+  ]
+}
+{{/schema}}
