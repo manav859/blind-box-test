@@ -3,58 +3,88 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="{{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#7a5c32{{/if}}">
-    <title>{{#if page_title}}{{ page_title }}{{else}}Blind Box Atelier{{/if}}</title>
+    <meta name="theme-color" content="{{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#fd7ad4{{/if}}">
+    <title>{{#if page_title}}{{ page_title }}{{else}}Blind Box Store{{/if}}</title>
     {{#if page_description}}
       <meta name="description" content="{{ page_description }}">
     {{/if}}
+
+    <!-- Sipply1 / Fashion fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Jost:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+      /* ── Sipply1 "Fashion" design tokens ── */
       :root {
-        --blind-box-page-background: {{#if theme.settings.color_page_background}}{{ theme.settings.color_page_background }}{{else}}#f4efe8{{/if}};
-        --blind-box-page-text: {{#if theme.settings.color_text}}{{ theme.settings.color_text }}{{else}}#1f1b17{{/if}};
-        --blind-box-page-muted: #6e645a;
-        --blind-box-page-accent: {{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#7a5c32{{/if}};
-        --blind-box-page-card: rgba(255, 251, 247, 0.9);
-        --blind-box-page-border: rgba(31, 27, 23, 0.09);
-        --blind-box-page-shadow: 0 24px 58px rgba(31, 27, 23, 0.08);
-        --blind-box-page-ink-soft: #f8f2ea;
-        --blind-box-page-heading-font: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-        --blind-box-page-body-font: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-        --blind-box-page-radius-xl: 1.75rem;
-        --blind-box-page-radius-lg: 1.25rem;
+        /* Core palette */
+        --sp-primary: {{#if theme.settings.color_text}}{{ theme.settings.color_text }}{{else}}#424cab{{/if}};
+        --sp-accent: {{#if theme.settings.color_accent}}{{ theme.settings.color_accent }}{{else}}#fd7ad4{{/if}};
+        --sp-bg: {{#if theme.settings.color_page_background}}{{ theme.settings.color_page_background }}{{else}}#FFFFFF{{/if}};
+        --sp-light-text: {{#if theme.settings.color_light_text}}{{ theme.settings.color_light_text }}{{else}}#949494{{/if}};
+        --sp-entry-line: {{#if theme.settings.color_entry_line}}{{ theme.settings.color_entry_line }}{{else}}#DDDDDD{{/if}};
+        --sp-secondary-bg: {{#if theme.settings.color_secondary_bg}}{{ theme.settings.color_secondary_bg }}{{else}}#d2d6ff{{/if}};
+        --sp-dark-bg: {{#if theme.settings.color_dark_bg}}{{ theme.settings.color_dark_bg }}{{else}}#424cab{{/if}};
+
+        /* Derived */
+        --sp-card-bg: rgba(255, 255, 255, 0.92);
+        --sp-card-border: rgba(66, 76, 171, 0.10);
+        --sp-card-shadow: 0 24px 58px rgba(66, 76, 171, 0.08);
+        --sp-ink-soft: #d2d6ff;
+
+        /* Typography */
+        --sp-title-font: 'Bagel Fat One', cursive;
+        --sp-heading-font: 'Jost', sans-serif;
+        --sp-body-font: 'Poppins', sans-serif;
+
+        /* Shape tokens */
+        --sp-radius-button: 24px;
+        --sp-radius-card: 12px;
+        --sp-radius-input: 40px;
+        --sp-radius-xl: 1.75rem;
+        --sp-radius-lg: 1.25rem;
+
+        /* Legacy compat aliases */
+        --blind-box-page-background: var(--sp-bg);
+        --blind-box-page-text: var(--sp-primary);
+        --blind-box-page-muted: var(--sp-light-text);
+        --blind-box-page-accent: var(--sp-accent);
+        --blind-box-page-card: var(--sp-card-bg);
+        --blind-box-page-border: var(--sp-card-border);
+        --blind-box-page-shadow: var(--sp-card-shadow);
+        --blind-box-page-ink-soft: var(--sp-ink-soft);
+        --blind-box-page-heading-font: var(--sp-title-font);
+        --blind-box-page-body-font: var(--sp-body-font);
+        --blind-box-page-radius-xl: var(--sp-radius-xl);
+        --blind-box-page-radius-lg: var(--sp-radius-lg);
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
 
-      html,
-      body {
+      html, body {
         margin: 0;
         min-height: 100%;
       }
 
       body {
-        background:
-          radial-gradient(circle at top left, rgba(255, 255, 255, 0.82), transparent 32%),
-          radial-gradient(circle at top right, rgba(212, 193, 168, 0.18), transparent 28%),
-          linear-gradient(180deg, #faf6f0 0%, var(--blind-box-page-background) 100%);
-        color: var(--blind-box-page-text);
-        font-family: var(--blind-box-page-body-font);
+        background: var(--sp-bg);
+        color: var(--sp-primary);
+        font-family: var(--sp-body-font);
+        font-weight: 300;
+        font-size: 14px;
+        line-height: 1.6;
       }
 
-      a {
-        color: inherit;
+      a { color: inherit; }
+
+      h1, h2, h3 {
+        font-family: var(--sp-title-font);
+        font-weight: 400;
       }
 
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6 {
-        font-family: var(--blind-box-page-heading-font);
-        font-weight: 700;
+      h4, h5, h6 {
+        font-family: var(--sp-heading-font);
+        font-weight: 500;
       }
     </style>
     {{#content "header"}}{{/content}}

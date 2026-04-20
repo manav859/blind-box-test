@@ -1,40 +1,56 @@
-<footer class="store-shell__site-footer">
+<footer class="store-shell__site-footer color-scheme-2">
   <div class="store-shell__footer-grid">
     <div class="store-shell__footer-panel store-shell__footer-panel--brand">
-      <span class="store-shell__footer-kicker">Blind box storefront</span>
-      <strong>{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}</strong>
-      <p>
+      <div class="store-shell__brand">
+        <a href="/" class="store-shell__brand-link">
+          <span class="store-shell__brand-text">{{ shop.name | default("Blind Box") }}</span>
+        </a>
+      </div>
+      <p class="store-shell__footer-desc">
         {{#if section.settings.footer_copy}}
           {{ section.settings.footer_copy }}
         {{else}}
-          Premium collection browsing, product-first storytelling, and native SHOPLINE checkout for every release.
+          Discover mystery fashion drops. Curated blind boxes featuring premium apparel and exclusive surprises.
         {{/if}}
       </p>
+      
+      <div class="store-shell__social-icons">
+        <a href="#" aria-label="Instagram"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+        <a href="#" aria-label="TikTok"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path></svg></a>
+      </div>
     </div>
 
     <div class="store-shell__footer-panel">
-      <span class="store-shell__footer-kicker">Browse</span>
+      <h4 class="store-shell__footer-title">Quick Links</h4>
       <div class="store-shell__footer-links">
         {{#if section.settings.footer_menu}}
           {{#each section.settings.footer_menu.links as |link|}}
             <a href="{{ link.url }}">{{ link.title }}</a>
           {{/each}}
         {{else}}
-          <a href="/collections/all">Catalog</a>
-          <a href="/collections-all">Collections</a>
-          <a href="{{ routes.search_url }}">Search</a>
-          <a href="{{ routes.cart_url }}">Cart</a>
+          <a href="/collections/all">Shop All</a>
+          <a href="/pages/how-it-works">How It Works</a>
+          <a href="/pages/faq">FAQ</a>
+          <a href="/pages/contact">Contact Us</a>
         {{/if}}
       </div>
     </div>
 
     <div class="store-shell__footer-panel">
-      <span class="store-shell__footer-kicker">Checkout confidence</span>
-      <ul class="store-shell__footer-list">
-        <li>Live product and collection data only.</li>
-        <li>Blind-box rules stay visible before purchase.</li>
-        <li>Cart and checkout remain native SHOPLINE flow.</li>
-      </ul>
+      <h4 class="store-shell__footer-title">Newsletter</h4>
+      <p class="store-shell__footer-desc">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
+      <form class="store-shell__newsletter-form">
+        <input type="email" placeholder="Enter your email" class="theme-page__input" required>
+        <button type="submit" class="theme-page__button theme-page__button--icon" aria-label="Subscribe">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <div class="store-shell__footer-bottom">
+    <div class="store-shell__footer-copyright">
+      &copy; {{ "now" | date('%Y') }} {{ shop.name }}. All rights reserved.
     </div>
   </div>
 </footer>
@@ -54,7 +70,7 @@
       "type": "textarea",
       "id": "footer_copy",
       "label": "Footer copy",
-      "default": "Premium collection browsing, product-first storytelling, and native SHOPLINE checkout for every release."
+      "default": "Discover mystery fashion drops. Curated blind boxes featuring premium apparel and exclusive surprises."
     }
   ]
 }

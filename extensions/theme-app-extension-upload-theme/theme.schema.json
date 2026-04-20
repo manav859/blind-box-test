@@ -1,6 +1,6 @@
 {
-  "theme_name": "Blind Box Upload Theme",
-  "theme_version": "1.0.0",
+  "theme_name": "Blind Box – Sipply Fashion",
+  "theme_version": "2.0.0",
   "theme_author": "Codex",
   "theme_documentation_url": "https://developer.shopline.com/docs/online-store-3-0-themes/theme-structure/overview/",
   "theme_support_url": "https://help.shopline.com/",
@@ -13,19 +13,43 @@
           "type": "color",
           "id": "color_page_background",
           "label": "Page background",
-          "default": "#f5efe6"
+          "default": "#FFFFFF"
         },
         {
           "type": "color",
           "id": "color_text",
           "label": "Text color",
-          "default": "#17202a"
+          "default": "#424cab"
         },
         {
           "type": "color",
           "id": "color_accent",
-          "label": "Accent color",
-          "default": "#b97819"
+          "label": "Accent / button color",
+          "default": "#fd7ad4"
+        },
+        {
+          "type": "color",
+          "id": "color_light_text",
+          "label": "Light / muted text",
+          "default": "#949494"
+        },
+        {
+          "type": "color",
+          "id": "color_entry_line",
+          "label": "Border / divider color",
+          "default": "#DDDDDD"
+        },
+        {
+          "type": "color",
+          "id": "color_secondary_bg",
+          "label": "Secondary background",
+          "default": "#d2d6ff"
+        },
+        {
+          "type": "color",
+          "id": "color_dark_bg",
+          "label": "Dark section background",
+          "default": "#424cab"
         }
       ]
     }

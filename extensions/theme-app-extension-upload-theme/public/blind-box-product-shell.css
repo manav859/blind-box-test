@@ -9,10 +9,10 @@
   width: fit-content;
   max-width: 100%;
   padding: 0.55rem 0.95rem;
-  border: 1px solid rgba(185, 120, 25, 0.2);
+  border: 1px solid rgba(253, 122, 212, 0.2);
   border-radius: 999px;
-  background: rgba(255, 250, 241, 0.92);
-  box-shadow: 0 12px 28px rgba(185, 120, 25, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 28px rgba(253, 122, 212, 0.12);
 }
 
 .blind-box-badge__text {
@@ -46,14 +46,14 @@
   width: 1.54rem;
   height: 0.45rem;
   border-radius: 0.4rem;
-  box-shadow: 0 0.12rem 0.35rem rgba(23, 32, 42, 0.12);
+  box-shadow: 0 0.12rem 0.35rem rgba(66, 76, 171, 0.12);
 }
 
 .blind-box-badge-icon__box {
   top: 0.64rem;
   width: 1.3rem;
   height: 1.06rem;
-  background: linear-gradient(180deg, var(--blind-box-page-accent) 0%, rgba(23, 32, 42, 0.84) 100%);
+  background: linear-gradient(180deg, var(--blind-box-page-accent) 0%, rgba(66, 76, 171, 0.84) 100%);
 }
 
 .blind-box-badge-icon__spark {
@@ -63,7 +63,7 @@
   height: 0.36rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 0.2rem rgba(185, 120, 25, 0.12);
+  box-shadow: 0 0 0 0.2rem rgba(253, 122, 212, 0.12);
 }
 
 .blind-box-badge-icon__spark--left {
@@ -77,7 +77,7 @@
 .blind-box-info-block,
 .how-it-works-block,
 .cart-blind-box-note {
-  border: 1px solid rgba(23, 32, 42, 0.08);
+  border: 1px solid rgba(66, 76, 171, 0.08);
   background: rgba(255, 255, 255, 0.84);
 }
 
@@ -87,7 +87,7 @@
   gap: 1rem;
   padding: 1.15rem;
   border-radius: 1.35rem;
-  box-shadow: 0 18px 38px rgba(23, 32, 42, 0.07);
+  box-shadow: 0 18px 38px rgba(66, 76, 171, 0.07);
 }
 
 .blind-box-info-block__header,
@@ -127,7 +127,7 @@
 .blind-box-info-block__list li {
   padding: 0.85rem 0.95rem;
   border-radius: 1rem;
-  background: rgba(248, 240, 228, 0.82);
+  background: rgba(210, 214, 255, 0.82);
   color: var(--blind-box-page-text);
   font-weight: 600;
   line-height: 1.5;
@@ -140,7 +140,7 @@
   width: fit-content;
   padding: 0.42rem 0.78rem;
   border-radius: 999px;
-  background: rgba(185, 120, 25, 0.12);
+  background: rgba(253, 122, 212, 0.12);
   color: var(--blind-box-page-accent);
   font-size: 0.74rem;
   font-weight: 800;
@@ -157,7 +157,7 @@
   gap: 0.55rem;
   padding: 1rem;
   border-radius: 1.1rem;
-  background: rgba(248, 240, 228, 0.76);
+  background: rgba(210, 214, 255, 0.76);
 }
 
 .how-it-works-block__step-number {
@@ -167,8 +167,8 @@
   width: 2rem;
   height: 2rem;
   border-radius: 999px;
-  background: rgba(23, 32, 42, 0.92);
-  color: #fff9f1;
+  background: rgba(66, 76, 171, 0.92);
+  color: #ffffff;
   font-size: 0.86rem;
   font-weight: 800;
 }
@@ -228,7 +228,7 @@
   gap: 0.35rem;
   padding: 0.95rem 1rem;
   border-radius: 1rem;
-  background: rgba(248, 240, 228, 0.82);
+  background: rgba(210, 214, 255, 0.82);
 }
 
 .main-product-page__trust-strip-item strong {
@@ -240,7 +240,7 @@
 .main-product-page__setup-card code {
   padding: 0.12rem 0.32rem;
   border-radius: 0.4rem;
-  background: rgba(23, 32, 42, 0.08);
+  background: rgba(66, 76, 171, 0.08);
 }
 
 .main-product-page__sticky-bar {
@@ -254,10 +254,10 @@
   width: min(1240px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 0.8rem 0.9rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
-  border: 1px solid rgba(23, 32, 42, 0.08);
+  border: 1px solid rgba(66, 76, 171, 0.08);
   border-radius: 1.25rem 1.25rem 0 0;
-  background: rgba(255, 253, 248, 0.96);
-  box-shadow: 0 -12px 30px rgba(23, 32, 42, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -12px 30px rgba(66, 76, 171, 0.08);
   backdrop-filter: blur(14px);
 }
 
@@ -288,12 +288,12 @@
   padding: 0.9rem 1.1rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--blind-box-page-accent) 0%, #d48d28 100%);
+  background: linear-gradient(135deg, var(--blind-box-page-accent) 0%, #c94db0 100%);
   color: #ffffff;
   font-size: 0.95rem;
   font-weight: 800;
   line-height: 1.2;
-  box-shadow: 0 14px 32px rgba(185, 120, 25, 0.2);
+  box-shadow: 0 14px 32px rgba(253, 122, 212, 0.2);
 }
 
 .theme-page__product-card,

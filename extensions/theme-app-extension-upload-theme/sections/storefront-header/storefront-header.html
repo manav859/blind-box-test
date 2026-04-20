@@ -1,84 +1,86 @@
-<header class="store-shell__site-header" data-site-header>
+{{#var is_home = template.name == "index" /}}
+
+<header class="store-shell__site-header">
+  <!-- Announcement bar -->
   {{#if section.settings.announcement}}
     <div class="store-shell__announcement">
-      <span>{{ section.settings.announcement }}</span>
+      {{ section.settings.announcement }}
     </div>
   {{/if}}
 
+  <!-- Header top: logo centered, actions on sides (Sipply1 layout) -->
   <div class="store-shell__header-wrap">
-    <a class="store-shell__brand" href="/">
-      <img
-        class="store-shell__brand-mark"
-        src="{{ "logo.png" | asset_url() }}"
-        alt="{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}"
+    <!-- Left: menu toggle (mobile) -->
+    <div class="store-shell__header-left">
+      <button
+        class="store-shell__menu-toggle"
+        type="button"
+        data-nav-toggle
+        aria-controls="main-nav-panel"
+        aria-expanded="false"
+        aria-label="Menu"
       >
-      <span>{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}</span>
-    </a>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
 
-    <button
-      class="store-shell__menu-toggle"
-      type="button"
-      aria-expanded="false"
-      aria-controls="StorefrontNav-{{ section.id }}"
-      data-nav-toggle
-    >
-      <span>Menu</span>
-    </button>
-
-    <nav
-      id="StorefrontNav-{{ section.id }}"
-      class="store-shell__nav-panel"
-      aria-label="Primary"
-      data-nav-panel
-    >
-      <div class="store-shell__nav-list">
-        {{#if section.settings.primary_menu}}
-          {{#each section.settings.primary_menu.links as |link|}}
-            <div class="store-shell__nav-item {{#if link.links.length}}store-shell__nav-item--has-children{{/if}}">
-              <a href="{{ link.url }}" {{#if link.active}}aria-current="page"{{/if}}>
-                {{ link.title }}
-              </a>
-
-              {{#if link.links.length}}
-                <div class="store-shell__subnav">
-                  {{#each link.links as |child_link|}}
-                    <a href="{{ child_link.url }}" {{#if child_link.active}}aria-current="page"{{/if}}>
-                      {{ child_link.title }}
-                    </a>
-                  {{/each}}
-                </div>
-              {{/if}}
-            </div>
-          {{/each}}
+    <!-- Center: brand logo -->
+    <div class="store-shell__brand">
+      <a href="/" class="store-shell__brand-link" aria-label="{{ shop.name }}">
+        {{#if section.settings.logo}}
+          <img
+            src="{{ section.settings.logo | image_url(width=400) }}"
+            alt="{{ shop.name }}"
+            class="store-shell__brand-logo"
+            width="150"
+            height="auto"
+          >
         {{else}}
-          <div class="store-shell__nav-item"><a href="/">Home</a></div>
-          <div class="store-shell__nav-item"><a href="/collections/all">Catalog</a></div>
-          <div class="store-shell__nav-item"><a href="/collections-all">Collections</a></div>
-        {{/if}}
-      </div>
-    </nav>
-
-    <div class="store-shell__header-actions">
-      <a class="store-shell__header-link" href="{{ routes.search_url }}">Search</a>
-      <a class="store-shell__header-link store-shell__header-link--cart" href="{{ routes.cart_url }}">
-        Cart
-        <span class="store-shell__cart-count">
-          {{#if cart.item_count}}
-            {{ cart.item_count }}
-          {{else}}
-            0
-          {{/if}}
-        </span>
-      </a>
-      <a class="store-shell__cta" href="/collections/all">
-        {{#if section.settings.cta_label}}
-          {{ section.settings.cta_label }}
-        {{else}}
-          Shop catalog
+          <span class="store-shell__brand-text">{{ shop.name | default("Blind Box") }}</span>
         {{/if}}
       </a>
     </div>
+
+    <!-- Right: actions (search, account, cart) -->
+    <div class="store-shell__header-actions">
+      <a href="{{ routes.search_url }}" class="store-shell__header-icon" aria-label="Search">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </a>
+
+      <a href="{{ routes.account_url | default('/account') }}" class="store-shell__header-icon" aria-label="Account">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+
+      <a href="{{ routes.cart_url }}" class="store-shell__header-link--cart" aria-label="Cart">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="store-shell__cart-count" data-cart-count>{{ cart.item_count | default(0) }}</span>
+      </a>
+    </div>
   </div>
+
+  <!-- Navigation bar (Sipply1 wrap menu below logo) -->
+  <nav class="store-shell__nav-panel" id="main-nav-panel" data-nav-panel>
+    <ul class="store-shell__nav-list">
+      {{#if section.settings.main_menu}}
+        {{#each section.settings.main_menu.links as |link|}}
+          <li class="store-shell__nav-item {{#if link.links.length > 0}}store-shell__nav-item--has-children{{/if}}">
+            <a href="{{ link.url }}" {{#if link.active}}aria-current="page"{{/if}}>{{ link.title }}</a>
+            {{#if link.links.length > 0}}
+              <div class="store-shell__subnav">
+                {{#each link.links as |child|}}
+                  <a href="{{ child.url }}" {{#if child.active}}aria-current="page"{{/if}}>{{ child.title }}</a>
+                {{/each}}
+              </div>
+            {{/if}}
+          </li>
+        {{/each}}
+      {{else}}
+        <li class="store-shell__nav-item"><a href="/collections/all">Shop All</a></li>
+        <li class="store-shell__nav-item"><a href="/collections-all">Collections</a></li>
+        <li class="store-shell__nav-item"><a href="{{ routes.search_url }}">Search</a></li>
+      {{/if}}
+    </ul>
+  </nav>
 </header>
 
 {{#schema}}
@@ -90,19 +92,18 @@
       "type": "text",
       "id": "announcement",
       "label": "Announcement text",
-      "default": "Collector-ready blind boxes with native SHOPLINE checkout."
+      "default": "✨ Mystery fashion drops — discover your surprise style today"
+    },
+    {
+      "type": "image",
+      "id": "logo",
+      "label": "Logo image"
     },
     {
       "type": "menu_picker",
-      "id": "primary_menu",
-      "label": "Primary navigation",
-      "default": "head"
-    },
-    {
-      "type": "text",
-      "id": "cta_label",
-      "label": "CTA label",
-      "default": "Shop catalog"
+      "id": "main_menu",
+      "label": "Main navigation",
+      "default": "main-menu"
     }
   ]
 }
