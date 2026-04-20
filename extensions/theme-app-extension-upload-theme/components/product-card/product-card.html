@@ -2,7 +2,7 @@
   class="theme-page__product-card merch-card"
   data-blind-box-card
   data-blind-box-mode="pending"
-  data-product-tags="{{ props.product.tags }}"
+  data-product-tags="{{ props.product.tags | join(',') }}"
 >
   <a class="theme-page__product-media merch-card__media" href="{{ props.product.url }}">
     {{#if props.product.featured_image}}
@@ -36,10 +36,10 @@
     </div>
 
     <div class="merch-card__pricing">
-      <strong class="theme-page__price">{{ props.product.price | money() }}</strong>
+      <strong class="theme-page__price">{{ props.product.price | money_with_currency() }}</strong>
       {{#if props.product.selected_or_first_available_variant.compare_at_price}}
         <span class="merch-card__compare-price">
-          {{ props.product.selected_or_first_available_variant.compare_at_price | money() }}
+          {{ props.product.selected_or_first_available_variant.compare_at_price | money_with_currency() }}
         </span>
       {{/if}}
     </div>
@@ -63,7 +63,7 @@
 
       {{#if props.product.available}}
         <a class="merch-card__action merch-card__action--primary" href="{{ props.product.url }}">
-          {{#if props.product.variants.length > 1}}
+          {{#if props.product.variants}}
             Choose options
           {{else}}
             Add to cart

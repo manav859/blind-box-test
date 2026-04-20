@@ -101,11 +101,11 @@
   </head>
   <body class="layout-{{ layout.name }}">
     <div class="store-shell">
-      {{#section "storefront-header"}}{{/section}}
+      {{ section "storefront-header" }}
       <main class="store-shell__main">
         {{#content "layout"}}{{/content}}
       </main>
-      {{#section "storefront-footer"}}{{/section}}
+      {{ section "storefront-footer" }}
     </div>
     <script src="{{ "theme-interactions.js" | asset_url() }}" defer></script>
     {{#content "footer"}}{{/content}}
