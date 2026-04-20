@@ -1,0 +1,44 @@
+<div class="product-card">
+  {{#block/}}
+</div>
+
+{{#schema}}
+{
+  "name": "t:blocks.product.name",
+  "icon": "collection",
+  "settings": [
+    {
+      "type": "product",
+      "id": "product",
+      "label": "t:blocks.product.settings.product.label"
+    },
+    {
+      "type": "switch",
+      "id": "hover_show_next_image",
+      "label": "t:blocks.product.settings.hover_show_next_image.label",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "fit_type",
+      "label": "t:blocks.product.settings.fit_type.label",
+      "default": "cover",
+      "options": [
+        {
+          "value": "cover",
+          "label": "t:blocks.product.settings.fit_type.options_0.label"
+        },
+        {
+          "value": "contain",
+          "label": "t:blocks.product.settings.fit_type.options_1.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:blocks.product.presets.presets_0.name"
+    }
+  ]
+}
+{{/schema}}

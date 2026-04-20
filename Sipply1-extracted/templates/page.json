@@ -1,0 +1,240 @@
+{
+  "sections": {
+    "1761821630616475bc3e": {
+      "type": "map",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "google_api_secret_key": "",
+        "is_map_jump": false,
+        "latitude_longitude": "51.30,0.7",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "10px",
+            "row-gap": "10px"
+          },
+          "align-items": "center",
+          "column-gap": "20px",
+          "flex-direction": "column",
+          "justify-content": "center",
+          "row-gap": "20px"
+        },
+        "size": {
+          "height": "auto",
+          "width": "auto"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "0px",
+            "padding-block-start": "40px",
+            "padding-inline-end": "0px",
+            "padding-inline-start": "0px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "0px",
+          "padding-inline-start": "0px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "1761821630618ec4fcb0": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-bottom": 0,
+              "padding-left": 0,
+              "padding-right": 0,
+              "padding-top": 0
+            },
+            "text": "Store Location",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "17618216306194a6d554": {
+          "type": "text",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "padding-bottom": 0,
+              "padding-top": 0
+            },
+            "text": "You can find a store nearby.",
+            "text_align": "center",
+            "typography": "typography-default"
+          },
+          "blocks": {}
+        },
+        "1761821630619d76c5bf": {
+          "type": "$bottom-content",
+          "settings": {
+            "layout": {
+              "@media (--mobile)": {
+                "column-gap": "20px",
+                "flex-direction": "column",
+                "row-gap": "20px"
+              },
+              "column-gap": 0,
+              "flex-direction": "row",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": 0
+            },
+            "size": {
+              "@media (--mobile)": {
+                "height": "100%",
+                "width": "100%"
+              },
+              "height": "100%",
+              "width": "100%"
+            },
+            "spacing": {
+              "@media (--mobile)": {
+                "padding-bottom": 0,
+                "padding-left": 0,
+                "padding-right": 0,
+                "padding-top": "10px"
+              },
+              "padding-bottom": 0,
+              "padding-left": 0,
+              "padding-right": 0,
+              "padding-top": "20px"
+            }
+          },
+          "blocks": {
+            "176182163061972d66d2": {
+              "type": "$map-style",
+              "settings": {
+                "mobile_image": "shopline://shop_images/Frame 3539.png",
+                "pc_image": "shopline://shop_images/Frame 3539.png"
+              },
+              "blocks": {}
+            },
+            "1761821630619b1f0759": {
+              "type": "$text-content",
+              "settings": {},
+              "blocks": {
+                "176182163061929ebc1c": {
+                  "type": "text",
+                  "settings": {
+                    "spacing": {
+                      "@media (--mobile)": {
+                        "padding-top": "35px"
+                      },
+                      "padding-bottom": 0,
+                      "padding-top": "168px"
+                    },
+                    "text": "\u003cdiv\u003e\n\u003cdiv\u003eLondon, UK\u003c/div\u003e\n\u003cdiv\u003eMon - Fri, 10am - 9pm\u003c/div\u003e\n\u003cdiv\u003eSaturday, 10am - 9pm\u003c/div\u003e\n\u003cdiv\u003eSunday, 11am - 5pm\u003c/div\u003e\n\u003c/div\u003e",
+                    "text_align": "left"
+                  },
+                  "blocks": {}
+                },
+                "17618216306193a763af": {
+                  "type": "heading",
+                  "settings": {
+                    "spacing": {
+                      "padding-bottom": 0,
+                      "padding-top": 0
+                    },
+                    "text": "OUR STORE",
+                    "text_align": "left"
+                  },
+                  "blocks": {}
+                },
+                "1761821630619419064e": {
+                  "type": "$btn-group",
+                  "settings": {},
+                  "blocks": {
+                    "1761821630619c56e085": {
+                      "type": "$custom-btn",
+                      "settings": {
+                        "style": "secondary",
+                        "text": "LEARN MORE"
+                      },
+                      "disabled": true,
+                      "blocks": {}
+                    },
+                    "1761821630619f6e139f": {
+                      "type": "$custom-btn",
+                      "settings": {
+                        "text": "Get Direcions"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "1761821630619f6e139f",
+                    "1761821630619c56e085"
+                  ]
+                },
+                "17618216306197034c76": {
+                  "type": "text",
+                  "settings": {
+                    "spacing": {
+                      "padding-bottom": 0,
+                      "padding-top": 0
+                    },
+                    "text": "DEMURE",
+                    "text_align": "left"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17618216306197034c76",
+                "17618216306193a763af",
+                "176182163061929ebc1c",
+                "1761821630619419064e"
+              ]
+            }
+          },
+          "block_order": [
+            "1761821630619b1f0759",
+            "176182163061972d66d2"
+          ]
+        }
+      },
+      "block_order": [
+        "1761821630618ec4fcb0",
+        "17618216306194a6d554",
+        "1761821630619d76c5bf"
+      ],
+      "custom_css": [],
+      "name": "t:sections.map.presets.presets_0.name"
+    },
+    "main-page": {
+      "type": "main-page",
+      "settings": {
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "40px",
+            "padding-left": "0",
+            "padding-right": "0",
+            "padding-top": "40px"
+          },
+          "padding-bottom": "80px",
+          "padding-left": "210px",
+          "padding-right": "210px",
+          "padding-top": "80px"
+        }
+      },
+      "disabled": true,
+      "blocks": {}
+    }
+  },
+  "order": [
+    "main-page",
+    "1761821630616475bc3e"
+  ]
+}

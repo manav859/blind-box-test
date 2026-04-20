@@ -16,6 +16,21 @@ export class BlindBoxPoolItemService {
   async listPoolItems(shop: string, blindBoxId: string): Promise<BlindBoxPoolItem[]> {
     return this.blindBoxPoolItemRepository.listByBlindBoxId(shop, blindBoxId);
   }
+
+  async decrementInventory(shop: string, poolItem: BlindBoxPoolItem, by = 1): Promise<BlindBoxPoolItem> {
+    const newQty = Math.max(0, poolItem.inventoryQuantity - by);
+    return this.blindBoxPoolItemRepository.upsert(shop, {
+      id: poolItem.id,
+      blindBoxId: poolItem.blindBoxId,
+      label: poolItem.label,
+      sourceProductId: poolItem.sourceProductId,
+      sourceVariantId: poolItem.sourceVariantId,
+      enabled: poolItem.enabled,
+      weight: poolItem.weight,
+      inventoryQuantity: newQty,
+      metadata: poolItem.metadata,
+    });
+  }
 }
 
 export async function getBlindBoxPoolItemService(): Promise<BlindBoxPoolItemService> {

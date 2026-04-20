@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: blindbox-backend
+    runtime: node
+    rootDir: app
+    buildCommand: npm install && npm run build
+    startCommand: npm run serve
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BLIND_BOX_DATABASE_PATH
+        value: /var/data/blind-box-domain.sqlite
+      - key: SHOPLINE_APP_URL
+        sync: false
+      - key: SHOPLINE_APP_KEY
+        sync: false
+      - key: SHOPLINE_APP_SECRET
+        sync: false
+      - key: SCOPES
+        sync: false
+      - key: SHOPLINE_ADMIN_API_VERSION
+        sync: false
+      - key: BLIND_BOX_SHOPLINE_LOCATION_ID
+        sync: false
+      - key: BLIND_BOX_INVENTORY_EXECUTION_MODE
+        value: execute
+      - key: LOG_LEVEL
+        value: info
+    disk:
+      name: blindbox-data
+      mountPath: /var/data
+      sizeGB: 1

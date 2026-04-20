@@ -1,0 +1,1382 @@
+{
+  "sections": {
+    "1761817358386124cfe5": {
+      "type": "shopline://apps/高阶组件库/sections/image-with-text/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "autoplay": false,
+        "autoplay_speed": 3,
+        "body_font_color": "#ffffff",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "btn_background": "#111111",
+        "btn_border_color": "#111111",
+        "btn_border_opacity": 100,
+        "btn_border_radius": 0,
+        "btn_border_thickness": 1,
+        "btn_font_color": "#FFFFFF",
+        "btn_font_family": "Montserrat:500",
+        "btn_hover_animation": "1",
+        "btn_letter_spacing": 0,
+        "btn_line_height": 1.6,
+        "btn_m_font_size": 12,
+        "btn_pc_font_size": 13,
+        "btn_shadow_blur": 5,
+        "btn_shadow_color": "#000000",
+        "btn_shadow_offset_x": 0,
+        "btn_shadow_offset_y": 4,
+        "btn_shadow_opacity": 0,
+        "btn_style": "primary",
+        "button_text1": "",
+        "button_text2": "",
+        "container_bg_color": "#fd7ad4",
+        "container_config": {
+          "mobile": {
+            "bottom": 40,
+            "left": 20,
+            "right": 20,
+            "top": 40
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 0,
+            "lock": true,
+            "right": 0,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "jump_link1": "",
+        "jump_link2": "",
+        "mb_show": true,
+        "pc_image_width": "medium",
+        "pc_show": true,
+        "product_sales_layout": "list",
+        "product_sales_point_1": "Add 3 items get 10% off, Add 6 items get 15% off",
+        "product_sales_point_1_icon": "globe",
+        "product_sales_point_2": "Free New Flavour with Every box",
+        "product_sales_point_2_icon": "leaf",
+        "product_sales_point_3": "Additional 10% off recurring subscription shipments",
+        "product_sales_point_3_icon": "checkmark",
+        "product_sales_point_4": "Custom Bundles Ship Free",
+        "product_sales_point_4_icon": "package",
+        "show_divider": false,
+        "sub_title": "",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:400",
+        "sub_title_letter_spacing": 300,
+        "sub_title_line_height": 1.6,
+        "sub_title_m_font_size": 14,
+        "sub_title_pc_font_size": 16,
+        "text": "",
+        "text_position": "right",
+        "title": "Subscribe and Sip, Save, Repeat.",
+        "title_font_color": "#ffffff",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.2,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 36,
+        "title_tag_name": "h2"
+      },
+      "disabled": false,
+      "blocks": {
+        "1761817358387d308c3f": {
+          "type": "$image",
+          "settings": {
+            "image": "shopline://shop_images/image_7239188915063637157.png"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1761817358387d308c3f"
+      ],
+      "name": "t:sections.image-with-text.presets_0.name"
+    },
+    "1761819135333f0d25e7": {
+      "type": "apps",
+      "settings": {
+        "sync_margins_with_theme": true
+      },
+      "disabled": false,
+      "blocks": {
+        "17618191353339f6d335": {
+          "type": "shopline://apps/商品评价/blocks/comment-group/bd4a09d9-7542-4e11-931c-19fe441576aa",
+          "settings": {
+            "head_text_align": "left",
+            "isOpen_store_comment": false,
+            "isShow_btnWrite": true,
+            "isShow_productLink": true,
+            "mb_comment_num": "4",
+            "mb_header_size": "3",
+            "mb_turn_page": "2",
+            "padding_config": {
+              "mobile": {
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+                "top": 0
+              },
+              "pc": {
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+                "top": 0
+              }
+            },
+            "pc_comment_num": "8",
+            "pc_header_size": "3",
+            "pc_turn_page": "2"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17618191353339f6d335"
+      ]
+    },
+    "1761819178595f797c79": {
+      "type": "rich-text",
+      "settings": {
+        "background_image": {},
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "align-items": "center",
+            "column-gap": "14px",
+            "flex-direction": "column",
+            "flex-wrap": "nowrap",
+            "justify-content": "center",
+            "row-gap": "14px"
+          },
+          "align-items": "center",
+          "column-gap": "28px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "28px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "40px",
+          "padding-block-start": "40px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17618191785963a20e04": {
+          "type": "rich-text",
+          "settings": {},
+          "disabled": true,
+          "blocks": {}
+        },
+        "1761819178596714ee61": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Fom Sipply drinkers",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "17618191785968d312da": {
+          "type": "button-group",
+          "settings": {
+            "layout": {
+              "align-items": "center",
+              "column-gap": "14px",
+              "flex-direction": "row",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "14px"
+            },
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "padding-bottom": "0px",
+              "padding-left": "0px",
+              "padding-right": "0px",
+              "padding-top": "8px"
+            }
+          },
+          "disabled": true,
+          "blocks": {
+            "1761819178596ae1f475": {
+              "type": "button",
+              "settings": {
+                "style": "primary",
+                "text": "Shop all"
+              },
+              "blocks": {}
+            },
+            "1761819178596e1d52c8": {
+              "type": "button",
+              "settings": {
+                "style": "secondary",
+                "text": "Shop this"
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "1761819178596e1d52c8",
+            "1761819178596ae1f475"
+          ]
+        }
+      },
+      "block_order": [
+        "1761819178596714ee61",
+        "17618191785963a20e04",
+        "17618191785968d312da"
+      ],
+      "name": "t:sections.rich_text.presets.presets_0.name"
+    },
+    "176181927213652271e1": {
+      "type": "shopline://apps/高阶组件库/sections/logo-list/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "alignment": "center",
+        "background_color": "#ffffff",
+        "body_font_color": "#424cab",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "card_border_color": "#000000",
+        "card_border_opacity": 10,
+        "card_border_radius": 0,
+        "card_border_thickness": 0,
+        "card_color": "#f8f8f8",
+        "card_shadow_blur": 5,
+        "card_shadow_color": "#000000",
+        "card_shadow_offset_x": 0,
+        "card_shadow_offset_y": 4,
+        "card_shadow_opacity": 0,
+        "card_style": false,
+        "container_config": {
+          "mobile": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 40,
+            "right": 40,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "horizontal_spacing": 22,
+        "icon_color": "#000000",
+        "icon_layout": "vertical",
+        "icon_width": 92,
+        "mb_horizontal_spacing": 8,
+        "mobile_rendermode": "scroll",
+        "title_font_color": "#424cab",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 18,
+        "title_pc_font_size": 20
+      },
+      "disabled": false,
+      "blocks": {
+        "17618192721370ae9b80": {
+          "type": "$icon",
+          "settings": {
+            "icon": "logistics",
+            "image": "shopline://shop_images/icon1_7239220750552407048.png",
+            "sub_title": "Exclusive discounts on every order",
+            "title": "Save Every Time"
+          },
+          "blocks": {}
+        },
+        "176181927213714c460c": {
+          "type": "$icon",
+          "settings": {
+            "icon": "pay",
+            "image": "shopline://shop_images/icon3.png",
+            "sub_title": "Skip, swap, or cancel anytime",
+            "title": "Flexible \u0026 Easy"
+          },
+          "blocks": {}
+        },
+        "176181927213716ab20c": {
+          "type": "$icon",
+          "settings": {
+            "icon": "package",
+            "sub_title": "Shop with confidence.",
+            "title": "14-day returns"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "176181927213745019df": {
+          "type": "$icon",
+          "settings": {
+            "icon": "customer",
+            "image": "shopline://shop_images/icon2.png",
+            "sub_title": "Regular deliveries keep your fridge stocked",
+            "title": "Never Run Out"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17618192721370ae9b80",
+        "176181927213745019df",
+        "176181927213714c460c",
+        "176181927213716ab20c"
+      ],
+      "name": "t:sections.logo-list.presets_0.name"
+    },
+    "176181948410459324c1": {
+      "type": "shopline://apps/高阶组件库/sections/logo-list/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "alignment": "center",
+        "background_color": "#ffffff",
+        "body_font_color": "#424cab",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "card_border_color": "#000000",
+        "card_border_opacity": 10,
+        "card_border_radius": 0,
+        "card_border_thickness": 0,
+        "card_color": "#f8f8f8",
+        "card_shadow_blur": 5,
+        "card_shadow_color": "#000000",
+        "card_shadow_offset_x": 0,
+        "card_shadow_offset_y": 4,
+        "card_shadow_opacity": 0,
+        "card_style": false,
+        "container_config": {
+          "mobile": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 40,
+            "right": 40,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "horizontal_spacing": 22,
+        "icon_color": "#000000",
+        "icon_layout": "vertical",
+        "icon_width": 92,
+        "mb_horizontal_spacing": 8,
+        "mobile_rendermode": "scroll",
+        "title_font_color": "#424cab",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 18,
+        "title_pc_font_size": 20
+      },
+      "disabled": false,
+      "blocks": {
+        "176181948410500aa057": {
+          "type": "$icon",
+          "settings": {
+            "icon": "pay",
+            "image": "shopline://shop_images/step3.png",
+            "sub_title": "Get your drinks delivered, adjust anytime",
+            "title": "Sip \u0026 Enjoy"
+          },
+          "blocks": {}
+        },
+        "17618194841052450fcc": {
+          "type": "$icon",
+          "settings": {
+            "icon": "package",
+            "sub_title": "Shop with confidence.",
+            "title": "14-day returns"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "1761819484105b82c8de": {
+          "type": "$icon",
+          "settings": {
+            "icon": "customer",
+            "image": "shopline://shop_images/step2.png",
+            "sub_title": "Decide how often you’d like deliveries",
+            "title": "Set Your frequency"
+          },
+          "blocks": {}
+        },
+        "1761819484105da3f5e8": {
+          "type": "$icon",
+          "settings": {
+            "icon": "logistics",
+            "image": "shopline://shop_images/step1.png",
+            "sub_title": "Choose your favorites from our collection",
+            "title": "Pick Your Drinks"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1761819484105da3f5e8",
+        "1761819484105b82c8de",
+        "176181948410500aa057",
+        "17618194841052450fcc"
+      ],
+      "name": "t:sections.logo-list.presets_0.name"
+    },
+    "1761819593183a16b1d6": {
+      "type": "rich-text",
+      "settings": {
+        "background_image": {},
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "align-items": "center",
+            "column-gap": "14px",
+            "flex-direction": "column",
+            "flex-wrap": "nowrap",
+            "justify-content": "center",
+            "row-gap": "14px"
+          },
+          "align-items": "center",
+          "column-gap": "28px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "28px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "0px",
+          "padding-block-start": "40px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17618195931836ae867f": {
+          "type": "button-group",
+          "settings": {
+            "layout": {
+              "align-items": "center",
+              "column-gap": "14px",
+              "flex-direction": "row",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "14px"
+            },
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "padding-bottom": "0px",
+              "padding-left": "0px",
+              "padding-right": "0px",
+              "padding-top": "8px"
+            }
+          },
+          "disabled": true,
+          "blocks": {
+            "1761819593183723c9ab": {
+              "type": "button",
+              "settings": {
+                "style": "primary",
+                "text": "Shop all"
+              },
+              "blocks": {}
+            },
+            "176181959318398d06c5": {
+              "type": "button",
+              "settings": {
+                "style": "secondary",
+                "text": "Shop this"
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "176181959318398d06c5",
+            "1761819593183723c9ab"
+          ]
+        },
+        "17618195931836d71370": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Why subcribe",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "1761819593183824e8d2": {
+          "type": "rich-text",
+          "settings": {
+            "content": "More sips, less stress — let your drinks come to you."
+          },
+          "disabled": false,
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17618195931836d71370",
+        "1761819593183824e8d2",
+        "17618195931836ae867f"
+      ],
+      "custom_css": [],
+      "name": "t:sections.rich_text.presets.presets_0.name"
+    },
+    "176181971047957b7fee": {
+      "type": "rich-text",
+      "settings": {
+        "background_image": {},
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "align-items": "center",
+            "column-gap": "14px",
+            "flex-direction": "column",
+            "flex-wrap": "nowrap",
+            "justify-content": "center",
+            "row-gap": "14px"
+          },
+          "align-items": "center",
+          "column-gap": "28px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "28px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "0px",
+          "padding-block-start": "40px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "1761819710479fbefe48": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "How subscribing works",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "176181971048082abb04": {
+          "type": "button-group",
+          "settings": {
+            "layout": {
+              "align-items": "center",
+              "column-gap": "14px",
+              "flex-direction": "row",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "14px"
+            },
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "padding-bottom": "0px",
+              "padding-left": "0px",
+              "padding-right": "0px",
+              "padding-top": "8px"
+            }
+          },
+          "disabled": true,
+          "blocks": {
+            "176181971048044bb2ce": {
+              "type": "button",
+              "settings": {
+                "style": "secondary",
+                "text": "Shop this"
+              },
+              "blocks": {}
+            },
+            "176181971048078a2eb1": {
+              "type": "button",
+              "settings": {
+                "style": "primary",
+                "text": "Shop all"
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "176181971048044bb2ce",
+            "176181971048078a2eb1"
+          ]
+        },
+        "1761819710480b9df160": {
+          "type": "rich-text",
+          "settings": {
+            "content": "More sips, less stress — let your drinks come to you."
+          },
+          "disabled": false,
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1761819710479fbefe48",
+        "1761819710480b9df160",
+        "176181971048082abb04"
+      ],
+      "custom_css": [],
+      "name": "t:sections.rich_text.presets.presets_0.name"
+    },
+    "176181986276422f017d": {
+      "type": "custom-section",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "row",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "0px"
+        },
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "padding-block-end": "0px",
+          "padding-block-start": "0px",
+          "padding-inline-end": "250px",
+          "padding-inline-start": "250px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17618198627653e88d64": {
+          "type": "group",
+          "settings": {
+            "color_scheme": "scheme-3",
+            "inherit_color_scheme": true,
+            "layout": {
+              "align-items": "center",
+              "column-gap": "0px",
+              "flex-direction": "column",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "0px"
+            },
+            "open_in_new_tab": true,
+            "size": {
+              "height": "auto",
+              "width": "50%"
+            },
+            "spacing": {
+              "padding-bottom": "0px",
+              "padding-left": "0px",
+              "padding-right": "0px",
+              "padding-top": "0px"
+            }
+          },
+          "blocks": {
+            "1761819862765284b32f": {
+              "type": "heading",
+              "settings": {
+                "text": "1/2",
+                "text_align": "center"
+              },
+              "disabled": true,
+              "blocks": {}
+            },
+            "17618199535150f8a644": {
+              "type": "image/image",
+              "settings": {
+                "aspect_ratio": "unset",
+                "border_radius": 0,
+                "image": "shopline://shop_images/Group 1217945047.png",
+                "mask_opacity": 0,
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                }
+              },
+              "blocks": {},
+              "block_order": []
+            }
+          },
+          "block_order": [
+            "1761819862765284b32f",
+            "17618199535150f8a644"
+          ]
+        },
+        "1761819862765d3f999c": {
+          "type": "group",
+          "settings": {
+            "color_scheme": "scheme-3",
+            "inherit_color_scheme": true,
+            "layout": {
+              "align-items": "center",
+              "column-gap": "0px",
+              "flex-direction": "column",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "0px"
+            },
+            "open_in_new_tab": true,
+            "size": {
+              "height": "auto",
+              "width": "50%"
+            },
+            "spacing": {
+              "padding-bottom": "0px",
+              "padding-left": "0px",
+              "padding-right": "0px",
+              "padding-top": "0px"
+            }
+          },
+          "blocks": {
+            "176181986276527d8353": {
+              "type": "heading",
+              "settings": {
+                "text": "1/2",
+                "text_align": "center"
+              },
+              "disabled": true,
+              "blocks": {}
+            },
+            "17618199163312d4ed94": {
+              "type": "image/image",
+              "settings": {
+                "aspect_ratio": "unset",
+                "border_radius": 0,
+                "image": "shopline://shop_images/Group 1217945048.png",
+                "mask_opacity": 0,
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                }
+              },
+              "blocks": {},
+              "block_order": []
+            }
+          },
+          "block_order": [
+            "176181986276527d8353",
+            "17618199163312d4ed94"
+          ]
+        }
+      },
+      "block_order": [
+        "1761819862765d3f999c",
+        "17618198627653e88d64"
+      ],
+      "custom_css": [],
+      "name": "t:sections.custom_section.presets.presets_1.name"
+    },
+    "176182019459452cd977": {
+      "type": "faq",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "container_background_color": "#eee",
+        "expand_first_label": false,
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "30px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "40px"
+        },
+        "layout_style": "none",
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "1761820194595a020dda": {
+          "type": "$group",
+          "settings": {},
+          "blocks": {
+            "176182019459592d415c": {
+              "type": "$collapsible-group",
+              "settings": {},
+              "blocks": {
+                "17618201945953358a72": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "Our beverages come in a variety of can sizes to meet your different needs. Here are the specifications for some of our most common cans\u0026nbsp;",
+                    "title": "How big are the cans?"
+                  },
+                  "blocks": {}
+                },
+                "176182030303136dba2d": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "We provide flexible shipping options to balance cost, speed, and your needs.",
+                    "title": "What are the shipping options?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761820305097711f585": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "Yes, we do offer international shipping to many countries around the world. Our services include air freight and ocean freight options to accommodate different budgets and delivery timelines",
+                    "title": "Do you offer international shipping?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "17618203685485ea834f": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "title": "What are the shipping options?"
+                  },
+                  "disabled": true,
+                  "blocks": {},
+                  "block_order": []
+                },
+                "17618204203129180cb1": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "Once opened, we recommend consuming the beverage as soon as possible for the best taste and carbonation. If you need to store an opened drink, please tightly seal the cap and ​\u003cstrong\u003erefrigerate it\u003c/strong\u003e. The general guidelines for different types of drinks are as follows\u0026nbsp;",
+                    "title": "How long can I keep the drink after opening it?​​"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                }
+              },
+              "block_order": [
+                "17618201945953358a72",
+                "176182030303136dba2d",
+                "1761820305097711f585",
+                "17618203685485ea834f",
+                "17618204203129180cb1"
+              ]
+            },
+            "1761820223177e0c7e68": {
+              "type": "image/image",
+              "settings": {
+                "aspect_ratio": "unset",
+                "border_radius": 0,
+                "image": "shopline://shop_images/内容 3.png",
+                "mask_opacity": 0,
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                }
+              },
+              "blocks": {},
+              "block_order": []
+            }
+          },
+          "block_order": [
+            "1761820223177e0c7e68",
+            "176182019459592d415c"
+          ]
+        },
+        "1761820194595ff9b600": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-block-end": "0",
+              "padding-block-start": "0"
+            },
+            "text": "FAQs",
+            "text_align": "left",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1761820194595ff9b600",
+        "1761820194595a020dda"
+      ],
+      "custom_css": [],
+      "name": "t:sections.faq.presets.presets_0.name"
+    },
+    "app-blocks": {
+      "type": "apps",
+      "settings": {
+        "include_margins": false,
+        "sync_margins_with_theme": true
+      },
+      "disabled": true,
+      "blocks": {
+        "member-plugin-banner": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-banner/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "banner_button_allows_show_a": true,
+            "banner_button_allows_show_b": true,
+            "banner_button_color_bg": "#ffffff",
+            "banner_button_color_text": "#28190e",
+            "banner_button_link_a": "",
+            "banner_button_radius": 24,
+            "banner_button_text_a": "SIGN IN",
+            "banner_button_text_b": "SIGN UP",
+            "banner_color_bg": "#f9f9f9",
+            "banner_color_title": "#ffffff",
+            "banner_mobile_image": {
+              "url": "https://img.myshopline.com/image/official/0b2eb0919a3a4c7790f157c2caadf36d.png"
+            },
+            "banner_mobile_ratio": "1",
+            "banner_pc_image": null,
+            "banner_pc_ratio": "1",
+            "banner_subtitle": "We have some exclusive offer for you!",
+            "banner_title": "Welcome~New Member！",
+            "login_show": true
+          },
+          "disabled": false,
+          "blocks": {}
+        },
+        "member-plugin-info": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-info/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "info_benefit_num": true,
+            "info_button_allows_show": true,
+            "info_button_color_bg": "#73533A",
+            "info_button_color_text": "#fff",
+            "info_button_radius": 24,
+            "info_card_color_bg": "#fff",
+            "info_card_color_text": "#28190E",
+            "info_card_radius": 16,
+            "info_color_bg": "#F8EAD8",
+            "info_color_progress": "#73533A",
+            "info_color_text": "#28190E",
+            "info_credit": true,
+            "info_giftcard": true,
+            "info_level": true,
+            "info_point": true,
+            "info_reward_num": true,
+            "info_title_fontsize": 40,
+            "login_show": true
+          },
+          "blocks": {}
+        },
+        "member-plugin-level": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-level/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "bg_color": "#f9f9f9",
+            "btn_bg_color": "#73533A",
+            "btn_link": "",
+            "btn_raidurs_range": 24,
+            "btn_text": "SIGN IN",
+            "btn_text_color": "#FFFFFF",
+            "card_bg_color": "#FFFFFF",
+            "card_raidurs_range": 16,
+            "card_text_color": "#28190E",
+            "main_title": "BECOME MEMBER",
+            "main_title_color": "#28190E",
+            "mian_title_size_range": 40,
+            "mobile_image": {
+              "url": "https://img.myshopline.com/image/official/66bad9c31e414abdbbb566f3f15f15d9.png"
+            },
+            "mobile_image_height": "500",
+            "pc_image": {
+              "url": "https://img.myshopline.com/image/official/d062a171ac5242e88ed125473189ca6d.png"
+            },
+            "pc_image_height": "700",
+            "show_btn": true
+          },
+          "blocks": {}
+        },
+        "member-plugin-point-earn-1": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-point-earn/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "point_button_allows_show": false,
+            "point_button_color_bg": "#73533a",
+            "point_button_color_text": "#ffffff",
+            "point_button_radius": 24,
+            "point_button_text": "SIGN IN",
+            "point_color_bg": "#f8ead8",
+            "point_color_title": "#28190e",
+            "point_custom_image": {
+              "url": "https://img.myshopline.com/image/official/36bed65599ef4b0a93222fac769c52e9.png"
+            },
+            "point_custom_text": "",
+            "point_pc_image": null,
+            "point_rule_card_radius": 16,
+            "point_rule_color_bg": "#ffffff",
+            "point_rule_color_icon_active": "#edd2ad",
+            "point_rule_color_name": "#28190e",
+            "point_rule_color_value": "#28190e",
+            "point_rule_color_value_bg": "#edd2ad",
+            "point_rule_mobile_column": "1",
+            "point_rule_mobile_row": "1",
+            "point_rule_pc_column": 1,
+            "point_rule_pc_row": 1,
+            "point_rule_style": "1",
+            "point_subtitle": "",
+            "point_switch_birthday": false,
+            "point_switch_comment": false,
+            "point_switch_fill_birthday": false,
+            "point_switch_follow_facebook": false,
+            "point_switch_follow_instagram": false,
+            "point_switch_login": false,
+            "point_switch_mobile": false,
+            "point_switch_order": true,
+            "point_switch_register": false,
+            "point_switch_share_facebook": false,
+            "point_switch_sign": false,
+            "point_switch_subscription": false,
+            "point_title": "WAYS TO EARN POINTS",
+            "point_title_fontsize": 40
+          },
+          "blocks": {}
+        },
+        "member-plugin-point-earn-2": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-point-earn/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "point_button_allows_show": true,
+            "point_button_color_bg": "#73533a",
+            "point_button_color_text": "#ffffff",
+            "point_button_radius": 24,
+            "point_button_text": "SIGN IN",
+            "point_color_bg": "#f8ead8",
+            "point_color_title": "#28190e",
+            "point_custom_image": null,
+            "point_custom_text": "",
+            "point_pc_image": null,
+            "point_rule_card_radius": 16,
+            "point_rule_color_bg": "#ffffff",
+            "point_rule_color_icon_active": "#edd2ad",
+            "point_rule_color_name": "#28190e",
+            "point_rule_color_value": "#28190e",
+            "point_rule_color_value_bg": "#edd2ad",
+            "point_rule_mobile_column": 2,
+            "point_rule_mobile_row": "2",
+            "point_rule_pc_column": 2,
+            "point_rule_pc_row": 3,
+            "point_rule_style": "2",
+            "point_subtitle": "",
+            "point_switch_birthday": true,
+            "point_switch_comment": true,
+            "point_switch_fill_birthday": true,
+            "point_switch_follow_facebook": true,
+            "point_switch_follow_instagram": true,
+            "point_switch_login": true,
+            "point_switch_mobile": true,
+            "point_switch_order": false,
+            "point_switch_register": true,
+            "point_switch_share_facebook": true,
+            "point_switch_sign": true,
+            "point_switch_subscription": true,
+            "point_title": "WAYS TO EARN POINTS",
+            "point_title_fontsize": 32
+          },
+          "blocks": {}
+        },
+        "member-plugin-point-redeem-1": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-point-redeem/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "point_button_allows_show": false,
+            "point_button_color_bg": "#73533a",
+            "point_button_color_text": "#ffffff",
+            "point_button_radius": 24,
+            "point_button_text": "SIGN IN",
+            "point_color_bg": "#d1b38c",
+            "point_color_title": "#28190e",
+            "point_custom_image": {
+              "url": "https://img.myshopline.com/image/official/9d8afce6d17b4dc4a16d6bf59a704d78.png"
+            },
+            "point_custom_text": "",
+            "point_rule_card_radius": 16,
+            "point_rule_color_bg": "#ffffff",
+            "point_rule_color_icon_active": "#edd2ad",
+            "point_rule_color_name": "#28190e",
+            "point_rule_color_value": "#28190e",
+            "point_rule_color_value_bg": "#edd2ad",
+            "point_rule_mobile_column": "1",
+            "point_rule_mobile_row": "1",
+            "point_rule_pc_column": 1,
+            "point_rule_pc_row": 1,
+            "point_rule_style": "1",
+            "point_subtitle": "",
+            "point_switch_cash": true,
+            "point_switch_discount": false,
+            "point_switch_products": false,
+            "point_switch_shipping": false,
+            "point_switch_voucher": false,
+            "point_title": "WAYS TO REDEEM POINTS",
+            "point_title_fontsize": 40
+          },
+          "blocks": {}
+        },
+        "member-plugin-point-redeem-2": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-point-redeem/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "point_button_allows_show": true,
+            "point_button_color_bg": "#73533a",
+            "point_button_color_text": "#ffffff",
+            "point_button_radius": 24,
+            "point_button_text": "SIGN IN",
+            "point_color_bg": "#d1b384",
+            "point_color_title": "#28190e",
+            "point_custom_image": null,
+            "point_custom_text": "",
+            "point_rule_card_radius": 16,
+            "point_rule_color_bg": "#ffffff",
+            "point_rule_color_icon_active": "#edd2ad",
+            "point_rule_color_name": "#28190e",
+            "point_rule_color_value": "#28190e",
+            "point_rule_color_value_bg": "#ffffff",
+            "point_rule_mobile_column": 2,
+            "point_rule_mobile_row": "2",
+            "point_rule_pc_column": 1,
+            "point_rule_pc_row": 4,
+            "point_rule_style": "3",
+            "point_subtitle": "",
+            "point_switch_cash": false,
+            "point_switch_discount": true,
+            "point_switch_products": false,
+            "point_switch_shipping": true,
+            "point_switch_voucher": true,
+            "point_title": "WAYS TO REDEEM POINTS",
+            "point_title_fontsize": 32
+          },
+          "blocks": {}
+        },
+        "member-plugin-point-redeem-3": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-point-redeem/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "point_button_allows_show": true,
+            "point_button_color_bg": "#73533a",
+            "point_button_color_text": "#ffffff",
+            "point_button_radius": 24,
+            "point_button_text": "SIGN IN",
+            "point_color_bg": "#d1b38c",
+            "point_color_title": "#28190e",
+            "point_custom_image": null,
+            "point_custom_text": "",
+            "point_rule_card_radius": 16,
+            "point_rule_color_bg": "#ffffff",
+            "point_rule_color_icon_active": "#edd2ad",
+            "point_rule_color_name": "#28190e",
+            "point_rule_color_value": "#28190e",
+            "point_rule_color_value_bg": "#ffffff",
+            "point_rule_mobile_column": 2,
+            "point_rule_mobile_row": "2",
+            "point_rule_pc_column": 1,
+            "point_rule_pc_row": 4,
+            "point_rule_style": "1",
+            "point_subtitle": "",
+            "point_switch_cash": false,
+            "point_switch_discount": false,
+            "point_switch_products": true,
+            "point_switch_shipping": false,
+            "point_switch_voucher": false,
+            "point_title": "WAYS TO REDEEM POINTS",
+            "point_title_fontsize": 32
+          },
+          "blocks": {}
+        },
+        "member-plugin-price": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-price/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "button_text": "View all",
+            "color_bg": "#d1b38c",
+            "color_button_bg": "#73533a",
+            "color_button_text": "#efffff",
+            "color_title": "#28190e",
+            "fontsize": 40,
+            "image_fill": "cover",
+            "image_ratio": "3",
+            "is_full_width": true,
+            "mobile_column": "3",
+            "mobile_row": 2,
+            "pc_column": 6,
+            "pc_row": 4,
+            "product_categories": "",
+            "title": "Member price"
+          },
+          "blocks": {}
+        },
+        "member-plugin-referral": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-banner/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "banner_button_allows_show_a": true,
+            "banner_button_allows_show_b": false,
+            "banner_button_color_bg": "#ffffff",
+            "banner_button_color_text": "#28190e",
+            "banner_button_link_a": "",
+            "banner_button_radius": 24,
+            "banner_button_text_a": "SIGN IN",
+            "banner_button_text_b": "",
+            "banner_color_bg": "#f9f9f9",
+            "banner_color_title": "#ffffff",
+            "banner_mobile_image": {
+              "url": "https://img.myshopline.com/image/official/1a68a24d696e4a4c87c2e4e2dcd763cf.png"
+            },
+            "banner_mobile_ratio": "1",
+            "banner_pc_image": {
+              "url": "https://img.myshopline.com/image/official/d8558c4ebea3457d83dfa43578ddff01.png"
+            },
+            "banner_pc_ratio": "1",
+            "banner_subtitle": "Refer your friends to give them a reward and claim your own",
+            "banner_title": "Referrals",
+            "login_show": false
+          },
+          "blocks": {}
+        },
+        "member-plugin-referral-2": {
+          "type": "shopline://apps/customer system/blocks/member-plugin-referral/e5cfecd9-9006-4dab-9bb5-e9239784db3b",
+          "settings": {
+            "login_show": true,
+            "mobile_image": {
+              "url": "https://img.myshopline.com/image/official/1a68a24d696e4a4c87c2e4e2dcd763cf.png"
+            },
+            "mobile_ratio": 4,
+            "pc_image": {
+              "url": "https://img.myshopline.com/image/official/d8558c4ebea3457d83dfa43578ddff01.png"
+            },
+            "pc_ratio": 3
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "member-plugin-banner",
+        "member-plugin-info",
+        "member-plugin-level",
+        "member-plugin-point-earn-1",
+        "member-plugin-point-earn-2",
+        "member-plugin-point-redeem-1",
+        "member-plugin-point-redeem-2",
+        "member-plugin-point-redeem-3",
+        "member-plugin-price",
+        "member-plugin-referral",
+        "member-plugin-referral-2"
+      ]
+    }
+  },
+  "order": [
+    "1761817358386124cfe5",
+    "app-blocks",
+    "1761819593183a16b1d6",
+    "176181927213652271e1",
+    "176181971047957b7fee",
+    "176181948410459324c1",
+    "176181986276422f017d",
+    "1761819178595f797c79",
+    "1761819135333f0d25e7",
+    "176182019459452cd977"
+  ]
+}

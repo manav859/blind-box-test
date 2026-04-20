@@ -1,3 +1,8 @@
+{{#component "script" src="public/blind-box-theme-core.js" | asset_url() /}}
+{{#component "script" src="public/blind-box-product-shell.js" | asset_url() /}}
+{{#component "script" src="public/theme-interactions.js" | asset_url() /}}
+{{#component "script" src="public/blind-box-cart-modal.js" | asset_url() /}}
+
 <section
   class="theme-page theme-product"
   data-product-section
@@ -107,9 +112,9 @@
           {{/if}}
         </div>
 
-        <div class="theme-product__blind-box-note" data-blind-box-note hidden>
-          <strong>Mystery product</strong>
-          <p>This is a mystery product. You will receive a random item from the collection.</p>
+        <div class="theme-product__blind-box-note" data-blind-box-note hidden></div>
+        <div class="theme-product__blind-box-status" hidden>
+          Pool: <span data-blind-box-pool-status hidden></span>
         </div>
       </div>
 

@@ -67,8 +67,8 @@ function mergeBlindBoxSettingsInput(
       payload.description === undefined ? existingBlindBox.description || null : payload.description,
     status: payload.status || existingBlindBox.status,
     selectionStrategy: payload.selectionStrategy || existingBlindBox.selectionStrategy,
-    shoplineProductId: existingBlindBox.shoplineProductId || null,
-    shoplineVariantId: existingBlindBox.shoplineVariantId || null,
+    shoplineProductId: payload.shoplineProductId !== undefined ? payload.shoplineProductId : (existingBlindBox.shoplineProductId || null),
+    shoplineVariantId: payload.shoplineVariantId !== undefined ? payload.shoplineVariantId : (existingBlindBox.shoplineVariantId || null),
     productTitleSnapshot: productTitleSnapshot || existingBlindBox.productTitleSnapshot || null,
     configJson: payload.configJson === undefined ? existingBlindBox.configJson || null : payload.configJson,
   };

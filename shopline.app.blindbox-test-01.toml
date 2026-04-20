@@ -1,9 +1,9 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://humanitarian-whereas-emissions-surfaces.trycloudflare.com"
+appUrl = "https://participated-fan-athletes-amsterdam.trycloudflare.com"
 appCallbackUrlList = [
-  "https://humanitarian-whereas-emissions-surfaces.trycloudflare.com/api/auth/callback"
+  "https://participated-fan-athletes-amsterdam.trycloudflare.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"
