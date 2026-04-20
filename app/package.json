@@ -6,6 +6,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon ./src/index.ts",
+    "start": "node dist/index.js",
     "serve": "cross-env NODE_ENV=production node dist/index.js",
     "build": "tsc",
     "test": "powershell -Command \"$files = Get-ChildItem -Recurse -Filter *.test.ts src | ForEach-Object { $_.FullName }; if (-not $files) { exit 0 }; node --test -r ts-node/register $files\""
