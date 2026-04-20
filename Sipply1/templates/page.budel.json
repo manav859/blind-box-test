@@ -1,0 +1,212 @@
+{
+ "order": [
+  "main-page",
+  "1763374323879a7478f6",
+  "1761818763991e83cbc9"
+ ],
+ "sections": {
+  "1761818763991e83cbc9": {
+   "block_order": [
+    "1761818763991d9ef35c"
+   ],
+   "blocks": {
+    "1761818763991d9ef35c": {
+     "blocks": {},
+     "settings": {
+      "addToCartButtonText": "Add To Cart",
+      "backgroundColor": "#FFFFFF",
+      "borderColor": "#D7DBE7",
+      "borderRadius": 0,
+      "borderSize": 1,
+      "buttonBackgroundColor": "#424cab",
+      "buttonBorderColor": "#424cab",
+      "buttonSelectorSelectedBackgroundColor": "#424cab",
+      "buttonSelectorSelectedBorderColor": "#424cab",
+      "buttonSelectorSelectedTextColor": "#FFFFFF",
+      "buttonSelectorUnselectedBackgroundColor": "#FFFFFF",
+      "buttonSelectorUnselectedBorderColor": "#242833",
+      "buttonSelectorUnselectedTextColor": "#242833",
+      "buttonTextColor": "#FFFFFF",
+      "cardBackgroundColor": "#FFFFFF",
+      "descriptionText": "",
+      "isBoldDiscountFont": true,
+      "oneTimePurchaseText": "One-time Purchase",
+      "primaryTextColor": "#424cab",
+      "productAddButtonText": "Add",
+      "productCardBorderRadius": 0,
+      "productCardColumn": 3,
+      "productPriceFontSize": 22,
+      "purchaseType": "subscribe",
+      "secondaryTextColor": "#474F5E",
+      "selectedProductBorderRadius": 0,
+      "selectedProductBorderSize": 1,
+      "skuButtonText": "Select flavor",
+      "subscribeAndSaveText": "Subscribe \u0026 Save",
+      "subscriptionBenefitText": "",
+      "titleFontSize": 70,
+      "titleText": "Build Your Box"
+     },
+     "type": "shopline://apps/订阅式电商/blocks/bundle/dc7225ea-8d91-400c-9a0c-7a168bb9ec98"
+    }
+   },
+   "disabled": false,
+   "settings": {
+    "sync_margins_with_theme": true
+   },
+   "type": "apps"
+  },
+  "1763374323879a7478f6": {
+   "block_order": [
+    "1763374323880d252db1",
+    "17633743238809b926af",
+    "176337432388077c113d",
+    "176337432388001e1237"
+   ],
+   "blocks": {
+    "176337432388001e1237": {
+     "blocks": {},
+     "settings": {
+      "image": {}
+     },
+     "type": "$image"
+    },
+    "176337432388077c113d": {
+     "blocks": {},
+     "settings": {
+      "image": {}
+     },
+     "type": "$image"
+    },
+    "17633743238809b926af": {
+     "blocks": {},
+     "settings": {
+      "image": {}
+     },
+     "type": "$image"
+    },
+    "1763374323880d252db1": {
+     "blocks": {},
+     "settings": {
+      "image": "shopline://shop_images/image_7260452636419172326.png"
+     },
+     "type": "$image"
+    }
+   },
+   "custom_css": [],
+   "disabled": false,
+   "name": "t:sections.image-with-text.presets_0.name",
+   "settings": {
+    "autoplay": false,
+    "autoplay_speed": 3,
+    "body_font_color": "#000000",
+    "body_font_family": "Montserrat:400",
+    "body_letter_spacing": 0,
+    "body_line_height": 1.6,
+    "body_m_font_size": 14,
+    "body_pc_font_size": 16,
+    "btn_background": "#111111",
+    "btn_border_color": "#111111",
+    "btn_border_opacity": 100,
+    "btn_border_radius": 0,
+    "btn_border_thickness": 1,
+    "btn_font_color": "#FFFFFF",
+    "btn_font_family": "Montserrat:500",
+    "btn_hover_animation": "1",
+    "btn_letter_spacing": 0,
+    "btn_line_height": 1.6,
+    "btn_m_font_size": 12,
+    "btn_pc_font_size": 13,
+    "btn_shadow_blur": 5,
+    "btn_shadow_color": "#000000",
+    "btn_shadow_offset_x": 0,
+    "btn_shadow_offset_y": 4,
+    "btn_shadow_opacity": 0,
+    "btn_style": "primary",
+    "button_text1": "Optional button",
+    "button_text2": "Optional button",
+    "container_bg_color": "#FFFFFF",
+    "container_config": {
+     "mobile": {
+      "bottom": 40,
+      "left": 20,
+      "right": 20,
+      "top": 40
+     },
+     "pc": {
+      "bottom": 60,
+      "left": 40,
+      "right": 40,
+      "top": 60
+     }
+    },
+    "container_margin_config": {
+     "mobile": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+     },
+     "pc": {
+      "bottom": 0,
+      "left": 0,
+      "right": 0,
+      "top": 0
+     }
+    },
+    "container_max_width": 1420,
+    "jump_link1": "",
+    "jump_link2": "",
+    "mb_show": true,
+    "pc_image_width": "medium",
+    "pc_show": true,
+    "product_sales_layout": "grid",
+    "product_sales_point_1": "Free worldwide shipping",
+    "product_sales_point_1_icon": "globe",
+    "product_sales_point_2": "Free returns",
+    "product_sales_point_2_icon": "checkmark",
+    "product_sales_point_3": "Carbon neutral",
+    "product_sales_point_3_icon": "leaf",
+    "product_sales_point_4": "Secure payments",
+    "product_sales_point_4_icon": "lock",
+    "show_divider": false,
+    "sub_title": "Improved",
+    "sub_title_font_color": "#000000",
+    "sub_title_font_family": "Poppins:400",
+    "sub_title_letter_spacing": 300,
+    "sub_title_line_height": 1.6,
+    "sub_title_m_font_size": 14,
+    "sub_title_pc_font_size": 16,
+    "text": "Pair large text with a full-width image to draw attention to an important detail of your brand or product line.",
+    "text_position": "right",
+    "title": "Large image with text box",
+    "title_font_color": "#000000",
+    "title_font_family": "Poppins:600",
+    "title_letter_spacing": 0,
+    "title_line_height": 1.2,
+    "title_m_font_size": 24,
+    "title_pc_font_size": 36,
+    "title_tag_name": "h2"
+   },
+   "type": "shopline://apps/高阶组件库/sections/image-with-text/01405986-ae6f-4fcc-adaa-2a21f14efc9f"
+  },
+  "main-page": {
+   "blocks": {},
+   "disabled": true,
+   "settings": {
+    "spacing": {
+     "@media (--mobile)": {
+      "padding-bottom": "40px",
+      "padding-left": "0",
+      "padding-right": "0",
+      "padding-top": "40px"
+     },
+     "padding-bottom": "80px",
+     "padding-left": "210px",
+     "padding-right": "210px",
+     "padding-top": "80px"
+    }
+   },
+   "type": "main-page"
+  }
+ }
+}

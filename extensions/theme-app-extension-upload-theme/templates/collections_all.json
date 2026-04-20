@@ -1,10 +1,44 @@
 {
   "sections": {
+    "1776533533140d88bfc7": {
+      "type": "main-product",
+      "settings": {
+        "badge_text": "Blind Box",
+        "blind_box_button_label": "Add Blind Box to Cart",
+        "blind_box_purchase_text": "Customers complete a normal SHOPLINE purchase now. The surprise item is assigned after payment.",
+        "blind_box_purchase_title": "Buy your surprise box",
+        "blind_box_short_text": "This is a blind box. One surprise item will be assigned after payment.",
+        "eyebrow": "Collector drop",
+        "how_it_works_label": "How it works",
+        "how_it_works_title": "Clear in three steps",
+        "how_step_one_text": "Add the blind box to cart and complete checkout.",
+        "how_step_one_title": "Buy",
+        "how_step_three_text": "One surprise item is assigned after payment, based on availability.",
+        "how_step_three_title": "Reward assigned",
+        "how_step_two_text": "Your order is locked in through the normal SHOPLINE flow.",
+        "how_step_two_title": "Payment confirmed",
+        "info_block_title": "What to expect",
+        "info_message_one": "No manual selection",
+        "info_message_three": "Every purchase is a surprise",
+        "info_message_two": "Assigned based on availability",
+        "sold_out_button_label": "Sold out",
+        "standard_button_label": "Add to cart",
+        "standard_lead": "Clear pricing, live variant selection, and native add-to-cart keep checkout friction low."
+      },
+      "disabled": false,
+      "blocks": {},
+      "block_order": [],
+      "name": "Blind Box main product"
+    },
     "main": {
-      "type": "main-collections-all"
+      "type": "main-collections-all",
+      "settings": {},
+      "disabled": false,
+      "blocks": {}
     }
   },
   "order": [
-    "main"
+    "main",
+    "1776533533140d88bfc7"
   ]
 }

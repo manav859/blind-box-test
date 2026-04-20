@@ -1,6 +1,8 @@
 <section
   class="theme-page theme-product"
   data-product-section
+  data-blind-box-product-page
+  data-product-id="{{ product.id }}"
   data-product-tags="{{ product.tags }}"
   data-initial-variant-available="{{#if product.selected_or_first_available_variant.available}}true{{else}}false{{/if}}"
   data-initial-product-price="{{ product.selected_or_first_available_variant.price | money() }}"
@@ -105,19 +107,19 @@
           {{/if}}
         </div>
 
-        <div class="theme-product__blind-box-note" data-blind-box-note>
+        <div class="theme-product__blind-box-note" data-blind-box-note hidden>
           <strong>Mystery product</strong>
           <p>This is a mystery product. You will receive a random item from the collection.</p>
         </div>
       </div>
 
-      {{#form
-        "product"
-        product
+      <form
         id="MainProductForm"
         class="theme-page__form theme-product__form"
+        method="post"
+        action="{{ routes.cart_add_url }}"
         data-product-native-form="true"
-      }}
+      >
         {{#if product.variants.length > 1}}
           <div class="theme-page__field">
             <label class="theme-page__label" for="ProductVariant-{{ section.id }}">
@@ -206,7 +208,7 @@
           </button>
           <a class="theme-page__link-button" href="/collections/all">Back to catalog</a>
         </div>
-      {{/form}}
+      </form>
 
       <div class="theme-page__body theme-product__description">
         {{#if product.description}}

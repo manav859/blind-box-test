@@ -1,0 +1,459 @@
+{
+  "sections": {
+    "17606899133344457f91": {
+      "type": "recently-viewed-product",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "20px",
+            "padding-top": "20px"
+          },
+          "padding-bottom": "60px",
+          "padding-top": "60px"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "17606899133363c1a0aa": {
+          "type": "product-list/list",
+          "settings": {
+            "desktop_columns": 4,
+            "desktop_enable_slider": true,
+            "mobile_columns": 2,
+            "mobile_enable_slider": true,
+            "page_size": 4
+          },
+          "blocks": {
+            "1760689913336658148e": {
+              "type": "product-card/card",
+              "settings": {},
+              "blocks": {
+                "1760689913336cf2ff54": {
+                  "type": "product-image",
+                  "settings": {},
+                  "blocks": {
+                    "17606899133364341eb4": {
+                      "type": "product-card/_layer",
+                      "settings": {
+                        "layout": {
+                          "justify-content": "flex-end"
+                        }
+                      },
+                      "blocks": {
+                        "1760689913336e64e5cc": {
+                          "type": "product-card/_quick-add",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760689913336e64e5cc"
+                      ]
+                    },
+                    "1760689913336f3e7f21": {
+                      "type": "product-card/_layer",
+                      "settings": {},
+                      "blocks": {
+                        "1760689913336ce14bca": {
+                          "type": "product-card/_discount-tag",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760689913336ce14bca"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760689913336f3e7f21",
+                    "17606899133364341eb4"
+                  ]
+                },
+                "1760689913336e2972a6": {
+                  "type": "product-card/_info",
+                  "settings": {},
+                  "blocks": {
+                    "17606899133360c291ec": {
+                      "type": "product-title",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "176068991333623c7999": {
+                      "type": "product-card/_description",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "17606899133363be7833": {
+                      "type": "product-buy-button",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "1760689913336d9a37a6": {
+                      "type": "product-price",
+                      "settings": {},
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17606899133360c291ec",
+                    "1760689913336d9a37a6",
+                    "176068991333623c7999",
+                    "17606899133363be7833"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760689913336cf2ff54",
+                "1760689913336e2972a6"
+              ]
+            }
+          },
+          "block_order": [
+            "1760689913336658148e"
+          ]
+        },
+        "1760689913336dc1b8a4": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Recently viewed",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1760689913336dc1b8a4",
+        "17606899133363c1a0aa"
+      ],
+      "name": "t:sections.recently_viewed_product.presets.presets_0.name"
+    },
+    "1760691945261757e044": {
+      "type": "shopline://apps/高阶组件库/sections/gallery/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "bg_color": "",
+        "body_font_color": "#000000",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "container_bg_color_gradient": "",
+        "container_config": {
+          "mobile": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 20,
+            "lock": true,
+            "right": 20,
+            "top": 0
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "desc": "",
+        "desc_width": 100,
+        "image_border_color": "#000000",
+        "image_border_opacity": 100,
+        "image_border_radius": 0,
+        "image_border_thickness": 0,
+        "image_gap": 40,
+        "image_round": 20,
+        "image_shadow_blur": 10,
+        "image_shadow_color": "#000000",
+        "image_shadow_offset_x": 0,
+        "image_shadow_offset_y": 4,
+        "image_shadow_opacity": 25,
+        "is_full_screen": true,
+        "is_hover_scale": true,
+        "is_mobile_scroll": true,
+        "is_show_navigation_button": false,
+        "m_cols": "1",
+        "mb_image_gap": 10,
+        "mb_img_height": 332,
+        "mb_show": true,
+        "pc_img_height": 332,
+        "pc_show": true,
+        "slider_color": "#111111",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:600",
+        "sub_title_letter_spacing": 0,
+        "sub_title_line_height": 1.2,
+        "sub_title_m_font_size": 18,
+        "sub_title_pc_font_size": 20,
+        "text_align": "bottomRight",
+        "text_show_type": "hover",
+        "title": "",
+        "title_align": "center",
+        "title_font_color": "#000000",
+        "title_font_family": "Poppins:600",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 32
+      },
+      "disabled": false,
+      "blocks": {},
+      "block_order": [],
+      "name": "t:sections.gallery.name"
+    },
+    "main-collection-cover": {
+      "type": "main-collection-cover",
+      "settings": {},
+      "disabled": true,
+      "blocks": {
+        "banner": {
+          "type": "$banner",
+          "settings": {},
+          "blocks": {
+            "banner_heading": {
+              "type": "$heading",
+              "settings": {},
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "banner_heading"
+          ]
+        },
+        "description": {
+          "type": "$description",
+          "settings": {},
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "banner",
+        "description"
+      ]
+    },
+    "main-collection-products": {
+      "type": "main-collection-products",
+      "settings": {
+        "color_scheme": "scheme-2",
+        "desktop_columns": 3,
+        "enable_filtering": true,
+        "enable_infinite_scroll": false,
+        "enable_infinite_scroll_button": false,
+        "enable_position_sticky": false,
+        "enable_sorting": true,
+        "filter_layout": "horizontal",
+        "mobile_columns": "2",
+        "page_size": 16,
+        "pagination_style": "simple"
+      },
+      "disabled": false,
+      "blocks": {
+        "1760691521020a0f4b11": {
+          "type": "$promotion-card",
+          "settings": {
+            "button_style": "button",
+            "button_text": "",
+            "card_size": "single-column",
+            "color_scheme": "scheme-1",
+            "desc": "Describe your promotion",
+            "image_display_position": "center center",
+            "inherit_color_scheme": true,
+            "list_position": 5,
+            "mask_opacity": 0,
+            "text_position": "center",
+            "title": "Promotion heading"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "main-collection-products__card": {
+          "type": "product-card/card",
+          "settings": {
+            "layout": {
+              "@media (--mobile)": {
+                "column-gap": "8px",
+                "flex-direction": "row",
+                "flex-wrap": "wrap",
+                "row-gap": "8px"
+              },
+              "column-gap": "16px",
+              "flex-direction": "column",
+              "flex-wrap": "nowrap",
+              "row-gap": "16px"
+            },
+            "product": ""
+          },
+          "blocks": {
+            "1761034898671cf77f18": {
+              "type": "shopline://apps/商品评价/blocks/product-card-star/bd4a09d9-7542-4e11-931c-19fe441576aa",
+              "settings": {},
+              "blocks": {}
+            },
+            "176120024534214b0cb1": {
+              "type": "shopline://apps/商品评价/blocks/product-card-star/bd4a09d9-7542-4e11-931c-19fe441576aa",
+              "settings": {},
+              "blocks": {}
+            },
+            "main-collection-products__card__image": {
+              "type": "product-image",
+              "settings": {
+                "aspect_ratio": "1/1",
+                "fit_type": "cover",
+                "layout": {
+                  "flex-wrap": "nowrap",
+                  "justify-content": "space-evenly"
+                },
+                "product": ""
+              },
+              "blocks": {
+                "main-collection-products__card__image__layer-1": {
+                  "type": "product-card/_layer",
+                  "settings": {},
+                  "blocks": {
+                    "main-collection-products__card__image__layer-1__discount-tag": {
+                      "type": "product-card/_discount-tag",
+                      "settings": {},
+                      "disabled": true,
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "main-collection-products__card__image__layer-1__discount-tag"
+                  ]
+                },
+                "main-collection-products__card__image__layer-2": {
+                  "type": "product-card/_layer",
+                  "settings": {
+                    "layout": {
+                      "justify-content": "flex-end"
+                    }
+                  },
+                  "disabled": false,
+                  "blocks": {
+                    "main-collection-products__card__image__layer-2__quick-add": {
+                      "type": "product-card/_quick-add",
+                      "settings": {},
+                      "disabled": false,
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "main-collection-products__card__image__layer-2__quick-add"
+                  ]
+                }
+              },
+              "block_order": [
+                "main-collection-products__card__image__layer-1",
+                "main-collection-products__card__image__layer-2"
+              ]
+            },
+            "main-collection-products__card__info": {
+              "type": "product-card/_info",
+              "settings": {
+                "inherit_color_scheme": true
+              },
+              "blocks": {
+                "main-collection-products__card__info__buy-button": {
+                  "type": "product-buy-button",
+                  "settings": {},
+                  "disabled": false,
+                  "blocks": {}
+                },
+                "main-collection-products__card__info__description": {
+                  "type": "product-card/_description",
+                  "settings": {
+                    "description": "\u003cp\u003e\u003cspan data-font-family=\"default\"\u003eAgave spirit or NA agave, carbonated water, citrus\u003c/span\u003e\u003c/p\u003e"
+                  },
+                  "disabled": false,
+                  "blocks": {}
+                },
+                "main-collection-products__card__info__price": {
+                  "type": "product-price",
+                  "settings": {},
+                  "disabled": false,
+                  "blocks": {}
+                },
+                "main-collection-products__card__info__title": {
+                  "type": "product-title",
+                  "settings": {},
+                  "disabled": false,
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "main-collection-products__card__info__title",
+                "main-collection-products__card__info__price",
+                "main-collection-products__card__info__description",
+                "main-collection-products__card__info__buy-button"
+              ]
+            }
+          },
+          "block_order": [
+            "main-collection-products__card__image",
+            "1761034898671cf77f18",
+            "main-collection-products__card__info",
+            "176120024534214b0cb1"
+          ]
+        },
+        "main-collection-products__promotion-card": {
+          "type": "$promotion-card",
+          "settings": {
+            "card_size": "single-column",
+            "desc": "",
+            "desktop_image": "shopline://shop_images/skin clean.png",
+            "image_display_position": "right top",
+            "list_position": 3,
+            "mask_opacity": 0,
+            "mobile_image": "shopline://shop_images/skin clean.png",
+            "title": ""
+          },
+          "disabled": false,
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "main-collection-products__promotion-card",
+        "main-collection-products__card",
+        "1760691521020a0f4b11"
+      ]
+    }
+  },
+  "order": [
+    "main-collection-cover",
+    "main-collection-products",
+    "1760691945261757e044",
+    "17606899133344457f91"
+  ]
+}

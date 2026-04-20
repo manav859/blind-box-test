@@ -1,5 +1,3 @@
-{{#var primary_menu = linklists[section.settings.primary_menu] /}}
-
 <header class="store-shell__site-header" data-site-header>
   {{#if section.settings.announcement}}
     <div class="store-shell__announcement">
@@ -11,7 +9,7 @@
     <a class="store-shell__brand" href="/">
       <img
         class="store-shell__brand-mark"
-        src="{{`logo.png` | asset_url()}}"
+        src="{{ "logo.png" | asset_url() }}"
         alt="{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}"
       >
       <span>{{#if shop.name}}{{ shop.name }}{{else}}Blind Box Atelier{{/if}}</span>
@@ -34,8 +32,8 @@
       data-nav-panel
     >
       <div class="store-shell__nav-list">
-        {{#if primary_menu}}
-          {{#each primary_menu.links as |link|}}
+        {{#if section.settings.primary_menu}}
+          {{#each section.settings.primary_menu.links as |link|}}
             <div class="store-shell__nav-item {{#if link.links.length}}store-shell__nav-item--has-children{{/if}}">
               <a href="{{ link.url }}" {{#if link.active}}aria-current="page"{{/if}}>
                 {{ link.title }}

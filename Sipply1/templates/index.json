@@ -1,0 +1,2740 @@
+{
+  "sections": {
+    "17600872431722110ca1": {
+      "type": "shopping-image",
+      "settings": {
+        "color_scheme": "scheme-3"
+      },
+      "disabled": false,
+      "blocks": {
+        "1760087243174c930df8": {
+          "type": "$image",
+          "settings": {
+            "desktop_image": "shopline://shop_images/men.webp",
+            "mobile_image": "shopline://shop_images/Rectangle 2823039.png"
+          },
+          "blocks": {
+            "1760087243174282739c": {
+              "type": "$product-anchor",
+              "settings": {
+                "desktop_columns": 50,
+                "desktop_rows": 20,
+                "mobile_columns": 20,
+                "mobile_rows": 75,
+                "product": "16072100556699693302012470"
+              },
+              "disabled": false,
+              "blocks": {}
+            },
+            "17600872431747abee18": {
+              "type": "$group",
+              "settings": {
+                "layout": {
+                  "@media (--mobile)": {
+                    "align-items": "flex-start",
+                    "justify-content": "space-between"
+                  },
+                  "align-items": "flex-start",
+                  "column-gap": "15px",
+                  "flex-direction": "column",
+                  "flex-wrap": "wrap",
+                  "justify-content": "flex-start",
+                  "row-gap": "15px"
+                },
+                "spacing": {
+                  "@media (--mobile)": {
+                    "padding-block-end": "20px",
+                    "padding-block-start": "40px",
+                    "padding-inline-end": "20px",
+                    "padding-inline-start": "20px"
+                  },
+                  "padding-block-end": "80px",
+                  "padding-block-start": "80px",
+                  "padding-inline-end": "80px",
+                  "padding-inline-start": "80px"
+                }
+              },
+              "blocks": {
+                "1760087243174687bb84": {
+                  "type": "heading",
+                  "settings": {
+                    "spacing": {
+                      "padding-block-end": "0",
+                      "padding-block-start": "0",
+                      "padding-inline-end": "0",
+                      "padding-inline-start": "0"
+                    },
+                    "text": "BLind-box",
+                    "typography": "title3"
+                  },
+                  "blocks": {}
+                },
+                "1760087243174ccaa400": {
+                  "type": "description",
+                  "settings": {
+                    "content": "get product with a bit of surprise",
+                    "size": {
+                      "@media (--mobile)": {
+                        "width": "auto"
+                      },
+                      "height": "auto",
+                      "width": "50%"
+                    },
+                    "text_align": "left",
+                    "text_tag": "p",
+                    "typography": "body2"
+                  },
+                  "disabled": false,
+                  "blocks": {}
+                },
+                "1760087243174ec1f9fd": {
+                  "type": "button",
+                  "settings": {
+                    "link": "shopline://collections-all",
+                    "size": {
+                      "@media (--mobile)": {
+                        "width": "auto"
+                      },
+                      "height": "auto",
+                      "width": "auto"
+                    },
+                    "spacing": {
+                      "@media (--mobile)": {
+                        "padding-block-end": "10px",
+                        "padding-block-start": "10px",
+                        "padding-inline-end": "10px",
+                        "padding-inline-start": "10px"
+                      },
+                      "padding-block-end": "10px",
+                      "padding-block-start": "10px",
+                      "padding-inline-end": "20px",
+                      "padding-inline-start": "20px"
+                    },
+                    "style": "primary",
+                    "text": "Make It Shoppable"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760087243174687bb84",
+                "1760087243174ccaa400",
+                "1760087243174ec1f9fd"
+              ]
+            }
+          },
+          "block_order": [
+            "17600872431747abee18",
+            "1760087243174282739c"
+          ]
+        }
+      },
+      "block_order": [
+        "1760087243174c930df8"
+      ],
+      "custom_css": [],
+      "name": "t:sections.shopping_image.presets.presets_0.name"
+    },
+    "1760088409721751223f": {
+      "type": "shopline://apps/高阶组件库/sections/scroll-banner/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "container_bg_color": "#d2d6ff",
+        "container_bg_color_gradient": "",
+        "enabel_scroll": true,
+        "icon": "pentagram",
+        "icon_color": "#F7B600",
+        "image": "shopline://shop_images/可乐_cola 4.png",
+        "mb_height": 36,
+        "mb_scroll_interval": 5,
+        "mb_show": true,
+        "pc_height": 60,
+        "pc_scroll_interval": 12,
+        "pc_show": true,
+        "title1": "25% OFF",
+        "title1_style_type": "solid_font",
+        "title2": "Free Delivery",
+        "title2_style_type": "hollow_font",
+        "title3": "25% OFF",
+        "title3_style_type": "solid_font",
+        "title4": "Free Delivery",
+        "title4_style_type": "solid_font",
+        "title_font_color": "#424cab",
+        "title_font_family": "Poppins:900",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.2,
+        "title_m_font_size": 20,
+        "title_pc_font_size": 36
+      },
+      "disabled": false,
+      "blocks": {},
+      "name": "t:sections.scroll-banner.presets_0.name"
+    },
+    "17600895940805c59dff": {
+      "type": "shopping-video",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "is_full_screen": false,
+        "layout": {
+          "align-items": "center",
+          "flex-direction": "column"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "40px",
+            "padding-block-start": "40px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17600895940826ab1955": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "80%",
+              "width": "80%"
+            },
+            "spacing": {
+              "padding-block-end": "20px",
+              "padding-block-start": "0px",
+              "padding-inline-end": "0px",
+              "padding-inline-start": "0px"
+            },
+            "text": "Testimonials",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "1760089594082b12d716": {
+          "type": "$video-list-group",
+          "settings": {
+            "indicator_style": "dot"
+          },
+          "blocks": {
+            "17600895940827b357d9": {
+              "type": "$video-group",
+              "settings": {},
+              "disabled": false,
+              "blocks": {
+                "17600895940823a3cc73": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/f f f.png",
+                    "local_video": "shopline://files/videos/Sipply3.mp4"
+                  },
+                  "blocks": {
+                    "1760089594082487cc15": {
+                      "type": "$product-text-group",
+                      "settings": {
+                        "is_float": false
+                      },
+                      "disabled": false,
+                      "blocks": {
+                        "17600895940822c9bbd9": {
+                          "type": "$heading",
+                          "settings": {
+                            "is_mobile_show": true,
+                            "text": "Jojoba Oil"
+                          },
+                          "blocks": {}
+                        },
+                        "1760089594082a67baff": {
+                          "type": "$description",
+                          "settings": {
+                            "is_mobile_show": true,
+                            "text": "A natural oil extracted from the seeds of the jojoba plant",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "17600895940822c9bbd9",
+                        "1760089594082a67baff"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760089594082487cc15"
+                  ]
+                },
+                "176008959408286d3482": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "176008959408206acf0d": {
+                      "type": "$product-card",
+                      "settings": {
+                        "inherit_color_scheme": false,
+                        "product": "16072242656034601118062470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "176008959408206acf0d"
+                  ]
+                }
+              },
+              "block_order": [
+                "17600895940823a3cc73",
+                "176008959408286d3482"
+              ]
+            },
+            "17600895940829a50f84": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "17600895940821e1c289": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/蓝3.png",
+                    "local_video": "shopline://files/videos/Sipply1.mp4"
+                  },
+                  "blocks": {
+                    "1760089594082b7087e5": {
+                      "type": "$product-text-group",
+                      "settings": {
+                        "is_float": false
+                      },
+                      "blocks": {
+                        "17610339211017d948d2": {
+                          "type": "$description",
+                          "settings": {
+                            "is_mobile_show": true,
+                            "text": "A natural oil extracted from the seeds of the jojoba plant,"
+                          },
+                          "blocks": {},
+                          "block_order": []
+                        },
+                        "1761033928624b5f6009": {
+                          "type": "$heading",
+                          "settings": {
+                            "is_mobile_show": true,
+                            "text": "Jojoba Oil"
+                          },
+                          "blocks": {},
+                          "block_order": []
+                        }
+                      },
+                      "block_order": [
+                        "1761033928624b5f6009",
+                        "17610339211017d948d2"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760089594082b7087e5"
+                  ]
+                },
+                "176008959408226d1c0f": {
+                  "type": "$product-card-group",
+                  "settings": {
+                    "product_card_expand": false,
+                    "show_expand_button": true
+                  },
+                  "blocks": {
+                    "17612907993059108c9b": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072289381047735916982470",
+                        "show_original_price": true
+                      },
+                      "blocks": {},
+                      "block_order": []
+                    },
+                    "17616424707230248006": {
+                      "type": "$product-card",
+                      "settings": {
+                        "color_scheme": "scheme-1",
+                        "inherit_color_scheme": true,
+                        "product": "16072289359343722657902470",
+                        "show_original_price": true
+                      },
+                      "blocks": {},
+                      "block_order": []
+                    },
+                    "176164249298960709d3": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072289434544405253312470",
+                        "show_original_price": true
+                      },
+                      "blocks": {},
+                      "block_order": []
+                    }
+                  },
+                  "block_order": [
+                    "17612907993059108c9b",
+                    "17616424707230248006",
+                    "176164249298960709d3"
+                  ]
+                }
+              },
+              "block_order": [
+                "17600895940821e1c289",
+                "176008959408226d1c0f"
+              ]
+            },
+            "1760089594082a6f04a2": {
+              "type": "$video-group",
+              "settings": {},
+              "disabled": false,
+              "blocks": {
+                "176008959408260f9f40": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/fffef.png",
+                    "local_video": "shopline://files/videos/Sipply4.mp4"
+                  },
+                  "blocks": {
+                    "176103402836469b4621": {
+                      "type": "$product-text-group",
+                      "settings": {
+                        "color_scheme": "scheme-1",
+                        "inherit_color_scheme": true,
+                        "is_float": false,
+                        "layout": {
+                          "align-items": "flex-start",
+                          "flex-direction": "column",
+                          "flex-wrap": "nowrap",
+                          "row-gap": "8px"
+                        },
+                        "spacing": {
+                          "padding-block-end": "15px",
+                          "padding-block-start": "15px",
+                          "padding-inline-end": "15px",
+                          "padding-inline-start": "15px"
+                        }
+                      },
+                      "blocks": {
+                        "17610340283646f3636f": {
+                          "type": "$description",
+                          "settings": {
+                            "text": "A natural oil extracted from the seeds of the jojoba plant, "
+                          },
+                          "blocks": {}
+                        },
+                        "1761034028364fa922b3": {
+                          "type": "$heading",
+                          "settings": {
+                            "text": "Jojoba Oil"
+                          },
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1761034028364fa922b3",
+                        "17610340283646f3636f"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "176103402836469b4621"
+                  ]
+                },
+                "17600895940828c6c9df": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "17600895940820b17c74": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072290799385355245642470",
+                        "show_original_price": true
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17600895940820b17c74"
+                  ]
+                }
+              },
+              "block_order": [
+                "176008959408260f9f40",
+                "17600895940828c6c9df"
+              ]
+            },
+            "1760089594082a9fa0f9": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "176008959408225af6a0": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/Rectangle 3667.png",
+                    "local_video": "shopline://files/videos/Sipply5.mp4"
+                  },
+                  "blocks": {
+                    "17600895940820dfc989": {
+                      "type": "$product-text-group",
+                      "settings": {
+                        "is_float": false
+                      },
+                      "disabled": false,
+                      "blocks": {
+                        "176008959408218b8461": {
+                          "type": "$button",
+                          "settings": {},
+                          "disabled": true,
+                          "blocks": {}
+                        },
+                        "17600895940821fbd6cd": {
+                          "type": "$description",
+                          "settings": {
+                            "text": "A natural oil extracted from the seeds of the jojoba plant, ",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "1760089594082def433b": {
+                          "type": "$heading",
+                          "settings": {
+                            "text": "Jojoba Oil"
+                          },
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760089594082def433b",
+                        "17600895940821fbd6cd",
+                        "176008959408218b8461"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17600895940820dfc989"
+                  ]
+                },
+                "1760089594082dd1ba9c": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "disabled": false,
+                  "blocks": {
+                    "176008959408285bd0b3": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072259805771066262452470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "176008959408285bd0b3"
+                  ]
+                }
+              },
+              "block_order": [
+                "176008959408225af6a0",
+                "1760089594082dd1ba9c"
+              ]
+            },
+            "1760089594082caf39b8": {
+              "type": "$video-group",
+              "settings": {},
+              "disabled": false,
+              "blocks": {
+                "1760089594082655e772": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "17600895940824165d59": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072290799385355245642470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17600895940824165d59"
+                  ]
+                },
+                "1760089594082db385e7": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/d d d.png",
+                    "local_video": "shopline://files/videos/Sipply2.mp4"
+                  },
+                  "blocks": {
+                    "1760089594082dec5bb7": {
+                      "type": "$product-text-group",
+                      "settings": {
+                        "is_float": false
+                      },
+                      "blocks": {
+                        "176101518166999a4891": {
+                          "type": "$heading",
+                          "settings": {
+                            "is_mobile_show": true,
+                            "text": "Jojoba Oil"
+                          },
+                          "blocks": {},
+                          "block_order": []
+                        },
+                        "176101518901405814f4": {
+                          "type": "$button",
+                          "settings": {
+                            "is_mobile_show": false,
+                            "link": "",
+                            "open_in_new_tab": true,
+                            "size": {
+                              "height": "auto",
+                              "width": "auto"
+                            },
+                            "spacing": {
+                              "padding-block-end": "10px",
+                              "padding-block-start": "10px",
+                              "padding-inline-end": "20px",
+                              "padding-inline-start": "20px"
+                            },
+                            "style": "primary",
+                            "text": "Button"
+                          },
+                          "disabled": true,
+                          "blocks": {},
+                          "block_order": []
+                        },
+                        "17610151945360d055a7": {
+                          "type": "$description",
+                          "settings": {
+                            "is_mobile_show": false,
+                            "text": "A natural oil extracted from the seeds of the jojoba plant,"
+                          },
+                          "blocks": {},
+                          "block_order": []
+                        }
+                      },
+                      "block_order": [
+                        "176101518166999a4891",
+                        "17610151945360d055a7",
+                        "176101518901405814f4"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760089594082dec5bb7"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760089594082db385e7",
+                "1760089594082655e772"
+              ]
+            }
+          },
+          "block_order": [
+            "17600895940827b357d9",
+            "1760089594082caf39b8",
+            "17600895940829a50f84",
+            "1760089594082a6f04a2",
+            "1760089594082a9fa0f9"
+          ]
+        },
+        "1760089594082c84ddd3": {
+          "type": "text",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "@media (--mobile)": {
+                "padding-block-end": "20px",
+                "padding-block-start": "0px",
+                "padding-inline-end": "20px",
+                "padding-inline-start": "20px"
+              },
+              "padding-block-end": "40px",
+              "padding-block-start": "0px",
+              "padding-inline-end": "0px",
+              "padding-inline-start": "0px"
+            },
+            "text": "\u003cdiv\u003e\u0026nbsp;\u003c/div\u003e\nA water-attracting synthetic compound. It helps boost hydration levels without disrupting the skin barrier.",
+            "text_align": "center",
+            "typography": "typography-default"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17600895940826ab1955",
+        "1760089594082c84ddd3",
+        "1760089594082b12d716"
+      ],
+      "name": "t:sections.shopping_video.presets.presets_0.name"
+    },
+    "1760090181566f967b08": {
+      "type": "image-with-text",
+      "settings": {
+        "color_scheme": "scheme-2",
+        "layout": {
+          "@media (--mobile)": {
+            "align-items": "flex-start",
+            "column-gap": "10px",
+            "flex-direction": "column",
+            "flex-wrap": "nowrap",
+            "justify-content": "center",
+            "row-gap": "10px"
+          },
+          "align-items": "center",
+          "column-gap": "0",
+          "flex-direction": "row",
+          "flex-wrap": "nowrap",
+          "justify-content": "flex-end",
+          "row-gap": "50px"
+        },
+        "overlap": false,
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "20px",
+            "padding-block-start": "30px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17600901815678932768": {
+          "type": "$group",
+          "settings": {
+            "color_scheme": "scheme-1",
+            "layout": {
+              "@media (--mobile)": {
+                "column-gap": "8px",
+                "row-gap": "8px"
+              },
+              "align-items": "center",
+              "column-gap": "20px",
+              "flex-direction": "column",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": "20px"
+            }
+          },
+          "blocks": {
+            "17600901815671d979c7": {
+              "type": "rich-text",
+              "settings": {
+                "content": "Since 2014, we've been a small team tapping into new ways of doing coffee differently.\u003cbr\u003e\u003cbr\u003eLike most grad students, our co-founders Matt and Ben lived off of caffeine. But instead of just drinking cold brew, they obsessed over creating it.",
+                "text_align": "center"
+              },
+              "disabled": false,
+              "blocks": {}
+            },
+            "17600901815674b5bf0b": {
+              "type": "heading",
+              "settings": {
+                "text": "A MESSAGE FROM OUR FOUNDERS",
+                "typography": "title3"
+              },
+              "blocks": {}
+            },
+            "1760090181567624919a": {
+              "type": "subheading",
+              "settings": {
+                "subtitle": ""
+              },
+              "blocks": {}
+            },
+            "1760090181567b3b93fe": {
+              "type": "button",
+              "settings": {
+                "link": "",
+                "spacing": {
+                  "padding-block-end": "12px",
+                  "padding-block-start": "12px",
+                  "padding-inline-end": "20px",
+                  "padding-inline-start": "20px"
+                },
+                "text": "Learn more"
+              },
+              "blocks": {}
+            },
+            "176068483731000e2f2c": {
+              "type": "text",
+              "settings": {
+                "background_color": "rgba(0,0,0,0)",
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                },
+                "spacing": {
+                  "padding-bottom": "0px",
+                  "padding-left": "0px",
+                  "padding-right": "0px",
+                  "padding-top": "0px"
+                },
+                "text": "\u003ch1\u003ekelly+lily\u003c/h1\u003e",
+                "text_align": "center",
+                "typography": "typography-default"
+              },
+              "disabled": true,
+              "blocks": {},
+              "block_order": []
+            },
+            "1760685715646f822eab": {
+              "type": "text",
+              "settings": {
+                "background_color": "rgba(0,0,0,0)",
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                },
+                "spacing": {
+                  "padding-block-end": "0px",
+                  "padding-block-start": "0px",
+                  "padding-inline-end": "0px",
+                  "padding-inline-start": "0px"
+                },
+                "text": "kelly+lily",
+                "text_align": "center",
+                "typography": "body6"
+              },
+              "disabled": true,
+              "blocks": {},
+              "block_order": []
+            },
+            "1761035264517ad0303a": {
+              "type": "icon/icon",
+              "settings": {
+                "desktop_width": 220,
+                "icon": "checkbox",
+                "image": "shopline://shop_images/kelly+lily.png",
+                "mobile_width": 164,
+                "open_in_new_tab": true,
+                "size": {
+                  "height": "auto",
+                  "width": "auto"
+                },
+                "spacing": {
+                  "@media (--mobile)": {
+                    "padding-block-start": "10px"
+                  }
+                }
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "1760090181567624919a",
+            "17600901815674b5bf0b",
+            "17600901815671d979c7",
+            "1760685715646f822eab",
+            "1761035264517ad0303a",
+            "1760090181567b3b93fe",
+            "176068483731000e2f2c"
+          ]
+        },
+        "1760090181567beb5ed9": {
+          "type": "image/image",
+          "settings": {
+            "image": "shopline://shop_images/122.png",
+            "spacing": {
+              "@media (--mobile)": {
+                "padding-block-end": "10px",
+                "padding-block-start": "10px"
+              }
+            }
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17600901815678932768",
+        "1760090181567beb5ed9"
+      ],
+      "name": "t:sections.image_with_text.presets.presets_0.name"
+    },
+    "1760090666936f13d143": {
+      "type": "blog",
+      "settings": {
+        "blog": "68f5d09270d0a21bd9c585cc",
+        "color_scheme": "scheme-6",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "100px",
+          "padding-inline-start": "100px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17600906669372de2d0c": {
+          "type": "$articles",
+          "settings": {
+            "limit": 3
+          },
+          "blocks": {
+            "17600906669375ffb266": {
+              "type": "article/card",
+              "settings": {},
+              "blocks": {
+                "1760090666937af270d5": {
+                  "type": "article/_cover",
+                  "settings": {
+                    "aspect_ratio": "1/1",
+                    "border_radius": 16
+                  },
+                  "blocks": {}
+                },
+                "1760090666937c283af8": {
+                  "type": "article/_info",
+                  "settings": {},
+                  "blocks": {
+                    "17600906669374dc4faf": {
+                      "type": "article/_title",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "1760090666937a7fd61a": {
+                      "type": "article/_excerpt",
+                      "settings": {},
+                      "disabled": false,
+                      "blocks": {}
+                    },
+                    "1760090666937c5aaf77": {
+                      "type": "article/_date-author",
+                      "settings": {},
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17600906669374dc4faf",
+                    "1760090666937c5aaf77",
+                    "1760090666937a7fd61a"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760090666937af270d5",
+                "1760090666937c283af8"
+              ]
+            }
+          },
+          "block_order": [
+            "17600906669375ffb266"
+          ]
+        },
+        "17600906669373bf7c13": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "@media (--mobile)": {
+                "width": "200px"
+              },
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Blogs \u0026 Recipes",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17600906669373bf7c13",
+        "17600906669372de2d0c"
+      ],
+      "name": "t:sections.blog.presets.presets_0.name"
+    },
+    "1760149338663d97e747": {
+      "type": "shopline://apps/高阶组件库/sections/logo-list/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "alignment": "center",
+        "background_color": "#424cab",
+        "body_font_color": "#ffffff",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "card_border_color": "#000000",
+        "card_border_opacity": 10,
+        "card_border_radius": 0,
+        "card_border_thickness": 0,
+        "card_color": "#f8f8f8",
+        "card_shadow_blur": 5,
+        "card_shadow_color": "#000000",
+        "card_shadow_offset_x": 0,
+        "card_shadow_offset_y": 4,
+        "card_shadow_opacity": 0,
+        "card_style": false,
+        "container_config": {
+          "mobile": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "pc": {
+            "bottom": 30,
+            "left": 40,
+            "lock": true,
+            "right": 40,
+            "top": 30
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "horizontal_spacing": 22,
+        "icon_color": "#ffffff",
+        "icon_layout": "vertical",
+        "icon_width": 48,
+        "mb_horizontal_spacing": 8,
+        "mobile_rendermode": "scroll",
+        "title_font_color": "#ffffff",
+        "title_font_family": "Poppins:600",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 18,
+        "title_pc_font_size": 20
+      },
+      "disabled": true,
+      "blocks": {
+        "176014933866455712b1": {
+          "type": "$icon",
+          "settings": {
+            "icon": "none",
+            "image": "shopline://shop_images/Highest Quality THC  Magic Mushroom Products - TRĒ House 1.png",
+            "sub_title": "60-Day Guarantee",
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "1760149338664941c163": {
+          "type": "$icon",
+          "settings": {
+            "icon": "pay",
+            "image": "shopline://shop_images/c v.png",
+            "sub_title": "Munchies Guaranteed",
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "1760149338664b6e9db4": {
+          "type": "$icon",
+          "settings": {
+            "icon": "package",
+            "image": "shopline://shop_images/b.png",
+            "sub_title": "2018 Farm Bill Compliant",
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "1760149338664d72ac46": {
+          "type": "$icon",
+          "settings": {
+            "icon": "customer",
+            "image": "shopline://shop_images/x.png",
+            "sub_title": "Verified Potency",
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "17601495597308987f03": {
+          "type": "$icon",
+          "settings": {
+            "icon": "logistics",
+            "image": "shopline://shop_images/n.png",
+            "sub_title": "Made in USA",
+            "title": ""
+          },
+          "blocks": {},
+          "block_order": []
+        }
+      },
+      "block_order": [
+        "176014933866455712b1",
+        "1760149338664d72ac46",
+        "1760149338664941c163",
+        "1760149338664b6e9db4",
+        "17601495597308987f03"
+      ],
+      "name": "t:sections.logo-list.presets_0.name"
+    },
+    "1760150983185d6d6f0e": {
+      "type": "shopline://apps/高阶组件库/sections/gallery/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "bg_color": "",
+        "body_font_color": "#000000",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "container_bg_color_gradient": "",
+        "container_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1920,
+        "desc": "",
+        "desc_width": 100,
+        "image_border_color": "#000000",
+        "image_border_opacity": 100,
+        "image_border_radius": 0,
+        "image_border_thickness": 0,
+        "image_gap": 0,
+        "image_round": 0,
+        "image_shadow_blur": 5,
+        "image_shadow_color": "#000000",
+        "image_shadow_offset_x": 0,
+        "image_shadow_offset_y": 4,
+        "image_shadow_opacity": 0,
+        "is_full_screen": true,
+        "is_hover_scale": true,
+        "is_mobile_scroll": false,
+        "is_show_navigation_button": false,
+        "m_cols": 1,
+        "mb_image_gap": 0,
+        "mb_img_height": 150,
+        "mb_show": true,
+        "pc_img_height": 500,
+        "pc_show": true,
+        "slider_color": "#111",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:600",
+        "sub_title_letter_spacing": 0,
+        "sub_title_line_height": 1.2,
+        "sub_title_m_font_size": 18,
+        "sub_title_pc_font_size": 20,
+        "text_align": "bottomLeft",
+        "text_show_type": "fixed",
+        "title": "",
+        "title_align": "left",
+        "title_font_color": "#000000",
+        "title_font_family": "Poppins:600",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 32
+      },
+      "disabled": false,
+      "blocks": {
+        "17601509831860f1c5c8": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "",
+            "image": "shopline://shop_images/e d d d d d d.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "1760150983186101f479": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "",
+            "image": "shopline://shop_images/s s s s s s s_7211242477444943680.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "17601509831865e72bd5": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "",
+            "image": "shopline://shop_images/x x x x x.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": ""
+          },
+          "blocks": {}
+        },
+        "1760150983186be88551": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "",
+            "image": "shopline://shop_images/w w w w w w.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": ""
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17601509831865e72bd5",
+        "1760150983186be88551",
+        "1760150983186101f479",
+        "17601509831860f1c5c8"
+      ],
+      "name": "t:sections.gallery.name"
+    },
+    "17601770517426060152": {
+      "type": "text-columns-with-image",
+      "settings": {
+        "color_scheme": "scheme-4",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "30px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "30px"
+        },
+        "show_card_background": "hidden",
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px"
+          },
+          "padding-block-end": "40px",
+          "padding-block-start": "40px",
+          "padding-inline-end": "20px",
+          "padding-inline-start": "20px"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "17601770517440e9513b": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Text columns with images",
+            "text_align": "left",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760177051744882b6d1": {
+          "type": "$view-more",
+          "settings": {},
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760177051744a86e2e9": {
+          "type": "$card-group",
+          "settings": {
+            "desktop_columns": "5",
+            "enable_mobile_scroll": true,
+            "image_aspect_ratio": "1/1",
+            "image_width": "50%"
+          },
+          "blocks": {
+            "1760177051744d9dadd9": {
+              "type": "$card",
+              "settings": {
+                "button_text": "",
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "8px",
+                    "row-gap": "8px"
+                  },
+                  "align-items": "center",
+                  "column-gap": "16px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "flex-start",
+                  "row-gap": "16px"
+                }
+              },
+              "blocks": {
+                "17601770517441e80362": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/Highest Quality THC  Magic Mushroom Products - TRĒ House 1.png"
+                  },
+                  "blocks": {}
+                },
+                "1760177166643d698520": {
+                  "type": "$text",
+                  "settings": {
+                    "text": "\u003cspan style=\"font-size: 12px;\"\u003e60-Day Guarantee\u003c/span\u003e"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17601770517441e80362",
+                "1760177166643d698520"
+              ]
+            },
+            "176017709721092910e3": {
+              "type": "$card",
+              "settings": {
+                "button_text": "",
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "8px",
+                    "row-gap": "8px"
+                  },
+                  "align-items": "center",
+                  "column-gap": "16px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "flex-start",
+                  "row-gap": "16px"
+                }
+              },
+              "blocks": {
+                "17601770972080ef32ec": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/x.png"
+                  },
+                  "blocks": {}
+                },
+                "17601772190082d9c59f": {
+                  "type": "$text",
+                  "settings": {
+                    "text": "\u003cspan style=\"font-size: 12px;\"\u003eVerified Potency\u003c/span\u003e"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17601770972080ef32ec",
+                "17601772190082d9c59f"
+              ]
+            },
+            "17601770998091afacf5": {
+              "type": "$card",
+              "settings": {
+                "button_text": "",
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "8px",
+                    "row-gap": "8px"
+                  },
+                  "align-items": "center",
+                  "column-gap": "16px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "flex-start",
+                  "row-gap": "16px"
+                }
+              },
+              "blocks": {
+                "1760177099808729f6d8": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/c v.png"
+                  },
+                  "blocks": {}
+                },
+                "17601773462768c3beb0": {
+                  "type": "$text",
+                  "settings": {
+                    "text": "\u003cspan style=\"font-size: 12px;\"\u003eMunchies Guaranteed\u003c/span\u003e"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760177099808729f6d8",
+                "17601773462768c3beb0"
+              ]
+            },
+            "17601771043110dbd385": {
+              "type": "$card",
+              "settings": {
+                "button_text": "",
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "8px",
+                    "row-gap": "8px"
+                  },
+                  "align-items": "center",
+                  "column-gap": "16px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "center",
+                  "row-gap": "16px"
+                }
+              },
+              "blocks": {
+                "17601771043107c7bd5e": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/b.png"
+                  },
+                  "blocks": {}
+                },
+                "176017735269235e3ce8": {
+                  "type": "$text",
+                  "settings": {
+                    "text": "\u003cspan style=\"font-size: 12px;\"\u003e2018 Farm Bill Compliant\u003c/span\u003e"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17601771043107c7bd5e",
+                "176017735269235e3ce8"
+              ]
+            },
+            "1760177110777f0c17a3": {
+              "type": "$card",
+              "settings": {
+                "button_text": "",
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "8px",
+                    "row-gap": "8px"
+                  },
+                  "align-items": "center",
+                  "column-gap": "16px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "flex-start",
+                  "row-gap": "16px"
+                }
+              },
+              "blocks": {
+                "1760177110776251301e": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/n.png"
+                  },
+                  "blocks": {}
+                },
+                "1760177358592863e0bf": {
+                  "type": "$text",
+                  "settings": {
+                    "text": "\u003cspan style=\"font-size: 12px;\"\u003eMade in USA\u003c/span\u003e"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760177110776251301e",
+                "1760177358592863e0bf"
+              ]
+            },
+            "1760177114178376b512": {
+              "type": "$card",
+              "settings": {
+                "button_text": ""
+              },
+              "disabled": true,
+              "blocks": {
+                "17601771141778903707": {
+                  "type": "$title",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "17601771141779501b4f": {
+                  "type": "image/image",
+                  "settings": {},
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17601771141779501b4f",
+                "17601771141778903707"
+              ]
+            }
+          },
+          "block_order": [
+            "1760177051744d9dadd9",
+            "176017709721092910e3",
+            "17601770998091afacf5",
+            "17601771043110dbd385",
+            "1760177110777f0c17a3",
+            "1760177114178376b512"
+          ]
+        }
+      },
+      "block_order": [
+        "17601770517440e9513b",
+        "1760177051744a86e2e9",
+        "1760177051744882b6d1"
+      ],
+      "name": "t:sections.text_columns_with_image.presets.presets_0.name"
+    },
+    "17606730224185049435": {
+      "type": "shopline://apps/高阶组件库/sections/image-with-text/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "autoplay": false,
+        "autoplay_speed": 3,
+        "body_font_color": "#ffffff",
+        "body_font_family": "Poppins",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "btn_background": "#ffffff",
+        "btn_border_color": "rgba(0,0,0,0)",
+        "btn_border_opacity": 100,
+        "btn_border_radius": 0,
+        "btn_border_thickness": 1,
+        "btn_font_color": "#fd7ad4",
+        "btn_font_family": "Poppins:800",
+        "btn_hover_animation": "1",
+        "btn_letter_spacing": 0,
+        "btn_line_height": 1.6,
+        "btn_m_font_size": 12,
+        "btn_pc_font_size": 13,
+        "btn_shadow_blur": 5,
+        "btn_shadow_color": "#000000",
+        "btn_shadow_offset_x": 0,
+        "btn_shadow_offset_y": 4,
+        "btn_shadow_opacity": 0,
+        "btn_style": "primary",
+        "button_text1": "Subscribe \u0026 Save",
+        "button_text2": "Build Your Own Bundle",
+        "container_bg_color": "#fd7ad4",
+        "container_config": {
+          "mobile": {
+            "bottom": 40,
+            "left": 20,
+            "right": 20,
+            "top": 40
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 40,
+            "right": 40,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "jump_link1": "",
+        "jump_link2": "",
+        "mb_show": true,
+        "pc_image_width": "medium",
+        "pc_show": true,
+        "product_sales_layout": "list",
+        "product_sales_point_1": "Change  your flavours whenever",
+        "product_sales_point_1_icon": "checkmark",
+        "product_sales_point_2": "Skip or cancel delivery anytime",
+        "product_sales_point_2_icon": "checkmark",
+        "product_sales_point_3": "25% savings + exclusive deals",
+        "product_sales_point_3_icon": "checkmark",
+        "product_sales_point_4": "Early access to new flavours",
+        "product_sales_point_4_icon": "checkmark",
+        "show_divider": false,
+        "sub_title": "Subscribe \u0026 SAVE",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:400",
+        "sub_title_letter_spacing": 300,
+        "sub_title_line_height": 1.6,
+        "sub_title_m_font_size": 14,
+        "sub_title_pc_font_size": 16,
+        "text": "15% OFF every time when you Subscribe to get your favourite bold brews \u0026amp; snack-time classics delivered monthly — fresh, fun, and full of flavour.",
+        "text_position": "right",
+        "title": "Subscribe and Sip, Save, Repeat.",
+        "title_font_color": "#ffffff",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.2,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 46,
+        "title_tag_name": "h2"
+      },
+      "disabled": false,
+      "blocks": {
+        "176067302241925967d8": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760673022419539b735": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "176067302241954637e5": {
+          "type": "$image",
+          "settings": {
+            "image": "shopline://shop_images/图文模块.png"
+          },
+          "blocks": {}
+        },
+        "17606730224196492c83": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "176067302241954637e5",
+        "176067302241925967d8",
+        "17606730224196492c83",
+        "1760673022419539b735"
+      ],
+      "custom_css": [
+        ".advc-btn {border-radius: 24px !important;}",
+        ".advc-btn:nth-of-type(2) {color: #ffffff !important; background-color: #fd7ad4 !important; border: 2px solid #ffffff !important;}"
+      ],
+      "name": "t:sections.image-with-text.presets_0.name"
+    },
+    "17606896581334c9daea": {
+      "type": "featured-collection",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "24px",
+            "padding-top": "24px"
+          },
+          "padding-bottom": "60px",
+          "padding-top": "60px"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "176068965813319763af": {
+          "type": "$tabs",
+          "settings": {
+            "tab_active_background_color": "#424cab",
+            "tab_active_color": "#ffffff",
+            "tab_background_color": "rgba(0,0,0,0)",
+            "tab_color": "#424cab"
+          },
+          "blocks": {
+            "1760689658133ba2e037": {
+              "type": "$collection",
+              "settings": {
+                "collection": "12272100531391262971802470",
+                "tab_title": "Seltzer \u0026 Sparkling Water"
+              },
+              "disabled": false,
+              "blocks": {
+                "176068965813309af0d0": {
+                  "type": "product-card/card",
+                  "settings": {
+                    "product": ""
+                  },
+                  "blocks": {
+                    "1760689658133e2f94fc": {
+                      "type": "product-image",
+                      "settings": {
+                        "aspect_ratio": "1/1"
+                      },
+                      "blocks": {
+                        "17606896581334b14662": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "flex-wrap": "nowrap"
+                            }
+                          },
+                          "blocks": {
+                            "176068965813313aaee0": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "disabled": true,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "176068965813313aaee0"
+                          ]
+                        },
+                        "176068965813367d6aff": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "1760689658134a386d8d": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "1760689658134a386d8d"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "17606896581334b14662",
+                        "176068965813367d6aff"
+                      ]
+                    },
+                    "17606896581344147f57": {
+                      "type": "product-card/_info",
+                      "settings": {
+                        "color_scheme": "scheme-2",
+                        "inherit_color_scheme": false
+                      },
+                      "disabled": false,
+                      "blocks": {
+                        "176068965813405c7ebc": {
+                          "type": "product-title",
+                          "settings": {
+                            "product": "16072100589687055403022470"
+                          },
+                          "blocks": {}
+                        },
+                        "17606896581346971ec1": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "176068965813492d7c0c": {
+                          "type": "product-buy-button",
+                          "settings": {
+                            "product": "16072100582744140489332470"
+                          },
+                          "disabled": false,
+                          "blocks": {}
+                        },
+                        "1760689658134b5ac5e5": {
+                          "type": "product-card/_description",
+                          "settings": {
+                            "description": "\u003cdiv\u003e\u0026nbsp;\u003c/div\u003e\nLow sugar, no sweeteners. Made from real fruit, live cultures \u0026amp; fibre."
+                          },
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "176068965813405c7ebc",
+                        "1760689658134b5ac5e5",
+                        "17606896581346971ec1",
+                        "176068965813492d7c0c"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760689658133e2f94fc",
+                    "17606896581344147f57"
+                  ]
+                }
+              },
+              "block_order": [
+                "176068965813309af0d0"
+              ]
+            },
+            "1760689658134036cee1": {
+              "type": "$collection",
+              "settings": {
+                "tab_title": "Spirits"
+              },
+              "blocks": {
+                "17606896581346a272ef": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "17606896581342b8cad0": {
+                      "type": "product-image",
+                      "settings": {},
+                      "blocks": {
+                        "176068965813410bd0d1": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "featured-collection__tabs__collection-2__card__image__layer-1__discount-tag": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": []
+                        },
+                        "1760689658134d3d32e1": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "featured-collection__tabs__collection-2__card__image__layer-2__quick-add": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": []
+                        }
+                      },
+                      "block_order": [
+                        "176068965813410bd0d1",
+                        "1760689658134d3d32e1"
+                      ]
+                    },
+                    "17606896581348717b49": {
+                      "type": "product-card/_info",
+                      "settings": {},
+                      "blocks": {
+                        "1760689658134088611b": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17606896581340bddb9f": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658134a38a728": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658134bab72cf": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760689658134a38a728",
+                        "17606896581340bddb9f",
+                        "1760689658134088611b",
+                        "1760689658134bab72cf"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17606896581342b8cad0",
+                    "17606896581348717b49"
+                  ]
+                }
+              },
+              "block_order": [
+                "17606896581346a272ef"
+              ]
+            },
+            "17606896581348f1c81a": {
+              "type": "$collection",
+              "settings": {
+                "tab_title": "Wine"
+              },
+              "blocks": {
+                "1760689658134e378c6a": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "1760689658134518a176": {
+                      "type": "product-card/_info",
+                      "settings": {},
+                      "blocks": {
+                        "1760689658134028f7f1": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658134b2fdd5c": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658134b47ef14": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658134c82d8f6": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760689658134028f7f1",
+                        "1760689658134b47ef14",
+                        "1760689658134c82d8f6",
+                        "1760689658134b2fdd5c"
+                      ]
+                    },
+                    "1760689658134d714746": {
+                      "type": "product-image",
+                      "settings": {},
+                      "blocks": {
+                        "17606896581340379bff": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "featured-collection__tabs__collection-3__card__image__layer-1__discount-tag": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": []
+                        },
+                        "176068965813412d976d": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "1760689658134fccf08e": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "1760689658134fccf08e"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "17606896581340379bff",
+                        "176068965813412d976d"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760689658134d714746",
+                    "1760689658134518a176"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760689658134e378c6a"
+              ]
+            },
+            "1760689658135aad26b6": {
+              "type": "$collection",
+              "settings": {
+                "tab_title": "Bundles \u0026 Samplers"
+              },
+              "blocks": {
+                "176068965813504d5deb": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "1760689658135850c45d": {
+                      "type": "product-card/_info",
+                      "settings": {},
+                      "blocks": {
+                        "176068965813526a1a25": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17606896581353b67b98": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17606896581358edad14": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760689658135a5ee050": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "176068965813526a1a25",
+                        "17606896581353b67b98",
+                        "17606896581358edad14",
+                        "1760689658135a5ee050"
+                      ]
+                    },
+                    "1760689658135c272a33": {
+                      "type": "product-image",
+                      "settings": {},
+                      "blocks": {
+                        "17606896581350f3b1bd": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "1760689658135d0aaaa5": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "1760689658135d0aaaa5"
+                          ]
+                        },
+                        "176068965813554ddcc1": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "17606896581351133e98": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "17606896581351133e98"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "17606896581350f3b1bd",
+                        "176068965813554ddcc1"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760689658135c272a33",
+                    "1760689658135850c45d"
+                  ]
+                }
+              },
+              "block_order": [
+                "176068965813504d5deb"
+              ]
+            }
+          },
+          "block_order": [
+            "1760689658133ba2e037",
+            "1760689658134036cee1",
+            "17606896581348f1c81a",
+            "1760689658135aad26b6"
+          ]
+        },
+        "1760689658133a3c183f": {
+          "type": "heading",
+          "settings": {
+            "text": "Best Sellers"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1760689658133a3c183f",
+        "176068965813319763af"
+      ]
+    },
+    "176095481609397ec2d9": {
+      "type": "shopline://apps/高阶组件库/sections/gallery/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "bg_color": "",
+        "body_font_color": "#000000",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "container_bg_color_gradient": "",
+        "container_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 10,
+            "lock": true,
+            "right": 10,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "lock": true,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": -30,
+            "left": 0,
+            "lock": true,
+            "right": 0,
+            "top": -30
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "desc": "",
+        "desc_width": 100,
+        "image_border_color": "#000000",
+        "image_border_opacity": 100,
+        "image_border_radius": 0,
+        "image_border_thickness": 0,
+        "image_gap": 40,
+        "image_round": 20,
+        "image_shadow_blur": 10,
+        "image_shadow_color": "#000000",
+        "image_shadow_offset_x": 0,
+        "image_shadow_offset_y": 4,
+        "image_shadow_opacity": 25,
+        "is_full_screen": true,
+        "is_hover_scale": true,
+        "is_mobile_scroll": true,
+        "is_show_navigation_button": true,
+        "m_cols": "1",
+        "mb_image_gap": 0,
+        "mb_img_height": 332,
+        "mb_show": true,
+        "pc_img_height": 332,
+        "pc_show": true,
+        "slider_color": "#111111",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:600",
+        "sub_title_letter_spacing": 0,
+        "sub_title_line_height": 1.2,
+        "sub_title_m_font_size": 18,
+        "sub_title_pc_font_size": 20,
+        "text_align": "bottomRight",
+        "text_show_type": "hover",
+        "title": "",
+        "title_align": "center",
+        "title_font_color": "#000000",
+        "title_font_family": "Poppins:600",
+        "title_letter_spacing": 0,
+        "title_line_height": 1,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 32
+      },
+      "disabled": false,
+      "blocks": {
+        "1760954816094463f77f": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.",
+            "image": "shopline://shop_images/e d d d d d d.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": "The title"
+          },
+          "blocks": {}
+        },
+        "17609548160944b118bd": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.",
+            "image": "shopline://shop_images/x x x x x.png",
+            "link": "",
+            "mask_opacity": 16,
+            "title": "The title"
+          },
+          "blocks": {}
+        },
+        "1760954816094b0ebc67": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.",
+            "image": "shopline://shop_images/w w w w w w.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": "The title"
+          },
+          "blocks": {}
+        },
+        "1760954816094d04aa96": {
+          "type": "$image",
+          "settings": {
+            "background_position": "center",
+            "description": "Use this section to explain a set of product features, to link to a series of pages, or to answer common questions about your products. Add images for emphasis.",
+            "image": "shopline://shop_images/s s s s s s s.png",
+            "link": "",
+            "mask_opacity": 20,
+            "title": "The title"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17609548160944b118bd",
+        "1760954816094b0ebc67",
+        "1760954816094d04aa96",
+        "1760954816094463f77f"
+      ],
+      "name": "t:sections.gallery.name"
+    },
+    "176095512311634cd35d": {
+      "type": "shopline://apps/高阶组件库/sections/scroll-banner/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "container_bg_color": "#d2d6ff",
+        "container_bg_color_gradient": "",
+        "enabel_scroll": true,
+        "icon": "line",
+        "icon_color": "#ffffff",
+        "image": "shopline://shop_images/可乐_cola 4.png",
+        "mb_height": 36,
+        "mb_scroll_interval": 5,
+        "mb_show": true,
+        "pc_height": 102,
+        "pc_scroll_interval": 12,
+        "pc_show": true,
+        "title1": "25% OFF",
+        "title1_style_type": "solid_font",
+        "title2": "Free Delivery",
+        "title2_style_type": "hollow_font",
+        "title3": "25% OFF",
+        "title3_style_type": "solid_font",
+        "title4": "Free Delivery",
+        "title4_style_type": "hollow_font",
+        "title_font_color": "#424cab",
+        "title_font_family": "Poppins:900",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.3,
+        "title_m_font_size": 20,
+        "title_pc_font_size": 38
+      },
+      "disabled": false,
+      "blocks": {},
+      "name": "t:sections.scroll-banner.presets_0.name"
+    },
+    "1761286777927a1b2c13": {
+      "type": "shopline://apps/高阶组件库/sections/logo-list/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "alignment": "center",
+        "background_color": "#424cab",
+        "body_font_color": "#ffffff",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 25,
+        "body_line_height": 1.2,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "card_border_color": "#000000",
+        "card_border_opacity": 10,
+        "card_border_radius": 0,
+        "card_border_thickness": 0,
+        "card_color": "#f8f8f8",
+        "card_shadow_blur": 5,
+        "card_shadow_color": "#000000",
+        "card_shadow_offset_x": 0,
+        "card_shadow_offset_y": 4,
+        "card_shadow_opacity": 0,
+        "card_style": false,
+        "container_config": {
+          "mobile": {
+            "bottom": 20,
+            "left": 20,
+            "right": 20,
+            "top": 20
+          },
+          "pc": {
+            "bottom": 5,
+            "left": 45,
+            "lock": true,
+            "right": 45,
+            "top": 5
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "lock": true,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1800,
+        "horizontal_spacing": 18,
+        "icon_color": "#ffffff",
+        "icon_layout": "vertical",
+        "icon_width": 82,
+        "mb_horizontal_spacing": 8,
+        "mobile_rendermode": "scroll",
+        "title_font_color": "#ffffff",
+        "title_font_family": "Poppins:regular",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.2,
+        "title_m_font_size": 12,
+        "title_pc_font_size": 20
+      },
+      "disabled": false,
+      "blocks": {
+        "176128677792802dfdff": {
+          "type": "$icon",
+          "settings": {
+            "icon": "logistics",
+            "image": "shopline://shop_images/z.png",
+            "sub_title": "",
+            "title": "60-Day Guarantee"
+          },
+          "blocks": {}
+        },
+        "176128677792845886ad": {
+          "type": "$icon",
+          "settings": {
+            "icon": "customer",
+            "image": "shopline://shop_images/x.png",
+            "sub_title": "",
+            "title": "Verified Potency"
+          },
+          "blocks": {}
+        },
+        "176128677792877a40fb": {
+          "type": "$icon",
+          "settings": {
+            "icon": "pay",
+            "image": "shopline://shop_images/c v.png",
+            "sub_title": "",
+            "title": "Munchies Guaranteed"
+          },
+          "blocks": {}
+        },
+        "1761286777928ef6330c": {
+          "type": "$icon",
+          "settings": {
+            "icon": "package",
+            "image": "shopline://shop_images/b.png",
+            "sub_title": "",
+            "title": "2018 Farm Bill Compliant"
+          },
+          "blocks": {}
+        },
+        "17612895549933993ed8": {
+          "type": "$icon",
+          "settings": {
+            "icon": "logistics",
+            "image": "shopline://shop_images/n.png",
+            "sub_title": "",
+            "title": "Made in USA"
+          },
+          "blocks": {},
+          "block_order": []
+        }
+      },
+      "block_order": [
+        "176128677792802dfdff",
+        "176128677792845886ad",
+        "176128677792877a40fb",
+        "1761286777928ef6330c",
+        "17612895549933993ed8"
+      ],
+      "name": "t:sections.logo-list.presets_0.name"
+    },
+    "featured-collection-list": {
+      "type": "featured-collection-list",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "flex-direction": "column",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "justify-content": "center",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "24px",
+            "padding-left": "0px",
+            "padding-right": "0px",
+            "padding-top": "24px"
+          },
+          "padding-bottom": "24px",
+          "padding-left": "0px",
+          "padding-right": "0px",
+          "padding-top": "24px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "featured-collection-list__heading": {
+          "type": "heading",
+          "settings": {
+            "text": "Collection List"
+          },
+          "blocks": {}
+        },
+        "featured-collection-list__list": {
+          "type": "$list",
+          "settings": {},
+          "blocks": {
+            "featured-collection-list__list__collection-1": {
+              "type": "$collection",
+              "settings": {},
+              "blocks": {}
+            },
+            "featured-collection-list__list__collection-2": {
+              "type": "$collection",
+              "settings": {},
+              "blocks": {}
+            },
+            "featured-collection-list__list__collection-3": {
+              "type": "$collection",
+              "settings": {},
+              "blocks": {}
+            },
+            "featured-collection-list__list__collection-4": {
+              "type": "$collection",
+              "settings": {},
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "featured-collection-list__list__collection-1",
+            "featured-collection-list__list__collection-2",
+            "featured-collection-list__list__collection-3",
+            "featured-collection-list__list__collection-4"
+          ]
+        }
+      },
+      "block_order": [
+        "featured-collection-list__heading",
+        "featured-collection-list__list"
+      ]
+    },
+    "image-with-text": {
+      "type": "image-with-text",
+      "settings": {
+        "color_scheme": "scheme-3",
+        "layout": {
+          "@media (--mobile)": {
+            "align-items": "flex-start",
+            "column-gap": "10px",
+            "flex-direction": "column",
+            "flex-wrap": "nowrap",
+            "justify-content": "center",
+            "row-gap": "10px"
+          },
+          "align-items": "center",
+          "column-gap": "0",
+          "flex-direction": "row",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "50px"
+        },
+        "overlap": false,
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "20px",
+            "padding-block-start": "30px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "image-with-text__group": {
+          "type": "$group",
+          "settings": {},
+          "blocks": {
+            "image-with-text__group__button": {
+              "type": "button",
+              "settings": {
+                "spacing": {
+                  "padding-block-end": "12px",
+                  "padding-block-start": "12px",
+                  "padding-inline-end": "20px",
+                  "padding-inline-start": "20px"
+                },
+                "text": "Subscribe \u0026 Save"
+              },
+              "blocks": {}
+            },
+            "image-with-text__group__heading": {
+              "type": "heading",
+              "settings": {
+                "spacing": {
+                  "padding-block-end": "0",
+                  "padding-block-start": "0",
+                  "padding-inline-end": "0",
+                  "padding-inline-start": "0"
+                },
+                "text": "Subscribe and Sip, Save, Repeat.",
+                "text_align": "left"
+              },
+              "blocks": {}
+            },
+            "image-with-text__group__rich-text": {
+              "type": "rich-text",
+              "settings": {
+                "content": "\u003cdiv\u003e\u0026nbsp;\u003c/div\u003e\n15% OFF every time when you Subscribe to get your favourite bold brews \u0026amp; snack-time classics delivered monthly — fresh, fun, and full of flavour.",
+                "text_align": "left"
+              },
+              "blocks": {}
+            },
+            "image-with-text__group__subheading": {
+              "type": "subheading",
+              "settings": {
+                "size": {
+                  "height": "auto",
+                  "width": "80%"
+                },
+                "subtitle": "Subscribe \u0026 SAVE",
+                "text": "Subtitle",
+                "text_align": "left",
+                "text_tag": "div",
+                "typography": "typography-default"
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "image-with-text__group__subheading",
+            "image-with-text__group__heading",
+            "image-with-text__group__rich-text",
+            "image-with-text__group__button"
+          ]
+        },
+        "image-with-text__image": {
+          "type": "image/image",
+          "settings": {
+            "image": "shopline://shop_images/2221.png"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "image-with-text__image",
+        "image-with-text__group"
+      ]
+    },
+    "slideshow": {
+      "type": "slideshow",
+      "settings": {
+        "auto_switch": true,
+        "desktop_height": "fit-first-image",
+        "image_full_screen": true,
+        "mobile_height": "fit-first-image",
+        "mobile_text_layout": "text-in-image",
+        "pagination_style": "progress",
+        "switch_interval": 7
+      },
+      "disabled": true,
+      "blocks": {
+        "slideshow__image": {
+          "type": "$image",
+          "settings": {
+            "desktop_image": "shopline://shop_images/封面.png",
+            "image_mask_opacity": 0,
+            "mobile_image": "shopline://shop_images/Frame 1321317616.png",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            }
+          },
+          "blocks": {
+            "slideshow__image__group": {
+              "type": "$group",
+              "settings": {},
+              "disabled": true,
+              "blocks": {
+                "slideshow__image__group__button-group": {
+                  "type": "button-group",
+                  "settings": {},
+                  "blocks": {
+                    "slideshow__image__group__button-group__button1": {
+                      "type": "button",
+                      "settings": {
+                        "style": "secondary",
+                        "text": "Shop this"
+                      },
+                      "blocks": {}
+                    },
+                    "slideshow__image__group__button-group__button2": {
+                      "type": "button",
+                      "settings": {
+                        "style": "primary",
+                        "text": "Shop all"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "slideshow__image__group__button-group__button1",
+                    "slideshow__image__group__button-group__button2"
+                  ]
+                },
+                "slideshow__image__group__description": {
+                  "type": "text",
+                  "settings": {
+                    "text": "And optional subtext"
+                  },
+                  "disabled": true,
+                  "blocks": {}
+                },
+                "slideshow__image__group__subtitle": {
+                  "type": "text",
+                  "settings": {
+                    "text": "Subtitle"
+                  },
+                  "disabled": true,
+                  "blocks": {}
+                },
+                "slideshow__image__group__title": {
+                  "type": "heading",
+                  "settings": {
+                    "text": "Two Line\nTitle Slide"
+                  },
+                  "disabled": true,
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "slideshow__image__group__subtitle",
+                "slideshow__image__group__title",
+                "slideshow__image__group__description",
+                "slideshow__image__group__button-group"
+              ]
+            }
+          },
+          "block_order": [
+            "slideshow__image__group"
+          ]
+        }
+      },
+      "block_order": [
+        "slideshow__image"
+      ]
+    }
+  },
+  "order": [
+    "slideshow",
+    "176095512311634cd35d",
+    "17606896581334c9daea",
+    "image-with-text",
+    "17600872431722110ca1",
+    "17600895940805c59dff",
+    "17601770517426060152",
+    "1761286777927a1b2c13",
+    "1760090181566f967b08",
+    "1760090666936f13d143",
+    "176095481609397ec2d9"
+  ]
+}

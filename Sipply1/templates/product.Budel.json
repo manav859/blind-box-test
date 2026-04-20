@@ -1,0 +1,3628 @@
+{
+  "sections": {
+    "1760693639422f0592c2": {
+      "type": "text-columns-with-image",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "30px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "30px"
+        },
+        "show_card_background": "hidden",
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px"
+          },
+          "padding-block-end": "80px",
+          "padding-block-start": "80px",
+          "padding-inline-end": "0",
+          "padding-inline-start": "0"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "17606936394230ca0e90": {
+          "type": "$view-more",
+          "settings": {},
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760693639423de375ef": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Food Pairing Exploration",
+            "text_align": "left",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "1760693639423f00b247": {
+          "type": "$card-group",
+          "settings": {},
+          "blocks": {
+            "176069363942359f86c5": {
+              "type": "$card",
+              "settings": {},
+              "blocks": {
+                "1760693639423254e584": {
+                  "type": "$title",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "17606936394239e83ebe": {
+                  "type": "$text",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "1760693639423fa75411": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/图_7220340294402708752.png"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760693639423fa75411",
+                "1760693639423254e584",
+                "17606936394239e83ebe"
+              ]
+            },
+            "17606936394238071ee3": {
+              "type": "$card",
+              "settings": {},
+              "blocks": {
+                "17606936394238ba0178": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/图.png"
+                  },
+                  "blocks": {}
+                },
+                "1760693639423d79bb6f": {
+                  "type": "$title",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "1760693639423dd1e5e5": {
+                  "type": "$text",
+                  "settings": {},
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "17606936394238ba0178",
+                "1760693639423d79bb6f",
+                "1760693639423dd1e5e5"
+              ]
+            },
+            "1760693639423a84534e": {
+              "type": "$card",
+              "settings": {},
+              "blocks": {
+                "17606936394237f43d56": {
+                  "type": "$text",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "1760693639423959b40b": {
+                  "type": "image/image",
+                  "settings": {
+                    "image": "shopline://shop_images/图_7220340695143292110.png",
+                    "size": {
+                      "height": "auto",
+                      "width": "auto"
+                    }
+                  },
+                  "blocks": {}
+                },
+                "1760693639423e0fdda7": {
+                  "type": "$title",
+                  "settings": {
+                    "title": "Classic American BBQ"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760693639423959b40b",
+                "1760693639423e0fdda7",
+                "17606936394237f43d56"
+              ]
+            }
+          },
+          "block_order": [
+            "1760693639423a84534e",
+            "176069363942359f86c5",
+            "17606936394238071ee3"
+          ]
+        }
+      },
+      "block_order": [
+        "1760693639423de375ef",
+        "1760693639423f00b247",
+        "17606936394230ca0e90"
+      ],
+      "name": "t:sections.text_columns_with_image.presets.presets_0.name"
+    },
+    "17606970175690337722": {
+      "type": "shopline://apps/高阶组件库/sections/image-with-text/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "autoplay": false,
+        "autoplay_speed": 3,
+        "body_font_color": "#ffffff",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "btn_background": "#ffffff",
+        "btn_border_color": "rgba(0,0,0,0)",
+        "btn_border_opacity": 100,
+        "btn_border_radius": 0,
+        "btn_border_thickness": 1,
+        "btn_font_color": "#fd7ad4",
+        "btn_font_family": "Poppins:regular",
+        "btn_hover_animation": "1",
+        "btn_letter_spacing": -50,
+        "btn_line_height": 1.6,
+        "btn_m_font_size": 12,
+        "btn_pc_font_size": 13,
+        "btn_shadow_blur": 5,
+        "btn_shadow_color": "#000000",
+        "btn_shadow_offset_x": 0,
+        "btn_shadow_offset_y": 4,
+        "btn_shadow_opacity": 0,
+        "btn_style": "primary",
+        "button_text1": "Subscribe \u0026 Save",
+        "button_text2": "Build Your Own Bundle",
+        "container_bg_color": "#fd7ad4",
+        "container_config": {
+          "mobile": {
+            "bottom": 40,
+            "left": 20,
+            "right": 20,
+            "top": 40
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 40,
+            "right": 40,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "jump_link1": "",
+        "jump_link2": "",
+        "mb_show": true,
+        "pc_image_width": "medium",
+        "pc_show": true,
+        "product_sales_layout": "list",
+        "product_sales_point_1": "Change  your flavours whenever",
+        "product_sales_point_1_icon": "checkmark",
+        "product_sales_point_2": "Skip or cancel delivery anytime",
+        "product_sales_point_2_icon": "checkmark",
+        "product_sales_point_3": "25% savings + exclusive deals",
+        "product_sales_point_3_icon": "checkmark",
+        "product_sales_point_4": "Early access to new flavours",
+        "product_sales_point_4_icon": "checkmark",
+        "show_divider": false,
+        "sub_title": "Subscribe \u0026 SAVE",
+        "sub_title_font_color": "#ffffff",
+        "sub_title_font_family": "Poppins:400",
+        "sub_title_letter_spacing": 300,
+        "sub_title_line_height": 1.6,
+        "sub_title_m_font_size": 14,
+        "sub_title_pc_font_size": 16,
+        "text": "15% OFF every time when you Subscribe to get your favourite bold brews \u0026amp; snack-time classics delivered monthly — fresh, fun, and full of flavour.",
+        "text_position": "right",
+        "title": "Subscribe and Sip, Save, Repeat.",
+        "title_font_color": "#ffffff",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 25,
+        "title_line_height": 1.2,
+        "title_m_font_size": 26,
+        "title_pc_font_size": 44,
+        "title_tag_name": "h2"
+      },
+      "disabled": false,
+      "blocks": {
+        "17606970175711ea25c0": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "17606970175713494f83": {
+          "type": "$image",
+          "settings": {
+            "image": "shopline://shop_images/image_7220404934532941257.png"
+          },
+          "blocks": {}
+        },
+        "176069701757175e446f": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760697017571b50f78c": {
+          "type": "$image",
+          "settings": {
+            "image": {}
+          },
+          "disabled": true,
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17606970175713494f83",
+        "176069701757175e446f",
+        "17606970175711ea25c0",
+        "1760697017571b50f78c"
+      ],
+      "custom_css": [
+        ".advc-btn {border-radius: 24px !important; }",
+        " .advc-btn:nth-of-type(2) {color: #ffffff !important; background-color: #FD7AD4 !important; border: 2px solid #ffffff !important; }",
+        " "
+      ],
+      "name": "t:sections.image-with-text.presets_0.name"
+    },
+    "1760924979210fce9714": {
+      "type": "featured-collection",
+      "settings": {
+        "color_scheme": "scheme-2",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "10px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "24px",
+            "padding-top": "24px"
+          },
+          "padding-bottom": "60px",
+          "padding-top": "60px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17609249792143b71c41": {
+          "type": "heading",
+          "settings": {
+            "text": "Best Sellers"
+          },
+          "blocks": {}
+        },
+        "176092497921481e17e2": {
+          "type": "$tabs",
+          "settings": {
+            "desktop_columns": 4,
+            "desktop_enable_slider": false,
+            "desktop_full_width": true,
+            "limit": 4,
+            "mobile_columns": 2,
+            "mobile_enable_slider": false,
+            "mobile_full_width": false,
+            "tab_active_background_color": "#424cab",
+            "tab_active_color": "#ffffff",
+            "tab_background_color": "#ffffff",
+            "tab_color": "#424cab",
+            "view_more_text": ""
+          },
+          "blocks": {
+            "1760924979214406d264": {
+              "type": "$collection",
+              "settings": {
+                "collection": "12272100313410767508042470",
+                "tab_title": "Wines"
+              },
+              "blocks": {
+                "17609249792147b43a14": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "17609249792140cf130f": {
+                      "type": "product-image",
+                      "settings": {
+                        "aspect_ratio": "1/1"
+                      },
+                      "blocks": {
+                        "1760924979214457f440": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "17609249792148e7faae": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "17609249792148e7faae"
+                          ]
+                        },
+                        "1760924979214bd52ee4": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "176092497921470d6411": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "disabled": true,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "176092497921470d6411"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "1760924979214457f440",
+                        "1760924979214bd52ee4"
+                      ]
+                    },
+                    "1760924979214f9d4ee7": {
+                      "type": "product-card/_info",
+                      "settings": {},
+                      "blocks": {
+                        "1760924979214452b7b3": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17609249792148b9206b": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760924979214b4d7923": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760924979214f59a4fc": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760924979214b4d7923",
+                        "1760924979214f59a4fc",
+                        "1760924979214452b7b3",
+                        "17609249792148b9206b"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17609249792140cf130f",
+                    "1760924979214f9d4ee7"
+                  ]
+                }
+              },
+              "block_order": [
+                "17609249792147b43a14"
+              ]
+            },
+            "1760924979214eb929fa": {
+              "type": "$collection",
+              "settings": {
+                "collection": "12272100308002967473902470",
+                "tab_title": "Seltzers \u0026 Sparkling Water"
+              },
+              "blocks": {
+                "1760924979214ff120c1": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "17609249792147f95a97": {
+                      "type": "product-image",
+                      "settings": {
+                        "aspect_ratio": "1/1"
+                      },
+                      "blocks": {
+                        "17609249792149f72fcd": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "176092497921404700b5": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "disabled": false,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "176092497921404700b5"
+                          ]
+                        },
+                        "1760924979214b69721b": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "17609249792149003758": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "disabled": true,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "17609249792149003758"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "17609249792149f72fcd",
+                        "1760924979214b69721b"
+                      ]
+                    },
+                    "176092497921486c207a": {
+                      "type": "product-card/_info",
+                      "settings": {
+                        "layer": false,
+                        "layout": {
+                          "@media (--mobile)": {
+                            "column-gap": "5px",
+                            "row-gap": "5px"
+                          },
+                          "column-gap": "8px",
+                          "flex-direction": "column",
+                          "flex-wrap": "nowrap",
+                          "row-gap": "8px"
+                        },
+                        "spacing": {
+                          "@media (--mobile)": {
+                            "padding-inline-end": "10px",
+                            "padding-inline-start": "10px"
+                          },
+                          "@media(--mobile)": {
+                            "padding-bottom": "10px",
+                            "padding-left": "8px",
+                            "padding-right": "8px",
+                            "padding-top": "10px"
+                          }
+                        }
+                      },
+                      "blocks": {
+                        "17609249792142f8f2c5": {
+                          "type": "product-buy-button",
+                          "settings": {
+                            "product": ""
+                          },
+                          "blocks": {}
+                        },
+                        "176092497921457052df": {
+                          "type": "product-card/_description",
+                          "settings": {
+                            "description": "Low sugar, no sweeteners. Made from real fruit, live cultures \u0026amp; fibre."
+                          },
+                          "blocks": {}
+                        },
+                        "1760924979214b189b9a": {
+                          "type": "product-title",
+                          "settings": {
+                            "product": ""
+                          },
+                          "blocks": {}
+                        },
+                        "1760924979214f64dee4": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760924979214b189b9a",
+                        "176092497921457052df",
+                        "1760924979214f64dee4",
+                        "17609249792142f8f2c5"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17609249792147f95a97",
+                    "176092497921486c207a"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760924979214ff120c1"
+              ]
+            },
+            "1760924979214f4d9d7c": {
+              "type": "$collection",
+              "settings": {
+                "collection": "12272100278203276367112470",
+                "tab_title": "Spirits"
+              },
+              "blocks": {
+                "1760924979214f10b1ce": {
+                  "type": "product-card/card",
+                  "settings": {},
+                  "blocks": {
+                    "176092497921484e5834": {
+                      "type": "product-image",
+                      "settings": {
+                        "aspect_ratio": "1/1"
+                      },
+                      "blocks": {
+                        "1760924979214e57feb0": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "176092497921471df639": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "disabled": true,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "176092497921471df639"
+                          ]
+                        },
+                        "1760924979214fb1f9fb": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "176092497921464acb62": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "176092497921464acb62"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "1760924979214fb1f9fb",
+                        "1760924979214e57feb0"
+                      ]
+                    },
+                    "1760924979214d668d1c": {
+                      "type": "product-card/_info",
+                      "settings": {
+                        "size": {
+                          "@media (--mobile)": {
+                            "height": "auto",
+                            "width": "auto"
+                          },
+                          "width": "100%"
+                        }
+                      },
+                      "blocks": {
+                        "17609249792141f536fe": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760924979214a2de064": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760924979214e0f6727": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760924979214fcf25bf": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "17609249792141f536fe",
+                        "1760924979214e0f6727",
+                        "1760924979214fcf25bf",
+                        "1760924979214a2de064"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "176092497921484e5834",
+                    "1760924979214d668d1c"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760924979214f10b1ce"
+              ]
+            },
+            "17611874724771796a68": {
+              "type": "$collection",
+              "settings": {
+                "collection": "12272202424625974513632470",
+                "tab_title": "Bundles \u0026 Samplers"
+              },
+              "blocks": {
+                "17611874724745d3d7e4": {
+                  "type": "product-card/card",
+                  "settings": {
+                    "product": null
+                  },
+                  "blocks": {
+                    "1761187472474beab5ed": {
+                      "type": "product-image",
+                      "settings": {
+                        "aspect_ratio": "1/1"
+                      },
+                      "blocks": {
+                        "176118747247452e9e06": {
+                          "type": "product-card/_layer",
+                          "settings": {
+                            "layout": {
+                              "justify-content": "flex-end"
+                            }
+                          },
+                          "blocks": {
+                            "17611874724748db6751": {
+                              "type": "product-card/_quick-add",
+                              "settings": {},
+                              "disabled": true,
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "17611874724748db6751"
+                          ]
+                        },
+                        "176118747247488125c3": {
+                          "type": "product-card/_layer",
+                          "settings": {},
+                          "blocks": {
+                            "17611874724746c06a23": {
+                              "type": "product-card/_discount-tag",
+                              "settings": {},
+                              "blocks": {}
+                            }
+                          },
+                          "block_order": [
+                            "17611874724746c06a23"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "176118747247488125c3",
+                        "176118747247452e9e06"
+                      ]
+                    },
+                    "17611874724750aaaf37": {
+                      "type": "product-card/_info",
+                      "settings": {},
+                      "blocks": {
+                        "17611874724755987590": {
+                          "type": "product-price",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17611874724757dead30": {
+                          "type": "product-buy-button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1761187472475eb4a82c": {
+                          "type": "product-card/_description",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1761187472475f06135c": {
+                          "type": "product-title",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1761187472475f06135c",
+                        "17611874724755987590",
+                        "1761187472475eb4a82c",
+                        "17611874724757dead30"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1761187472474beab5ed",
+                    "17611874724750aaaf37"
+                  ]
+                }
+              },
+              "block_order": [
+                "17611874724745d3d7e4"
+              ]
+            }
+          },
+          "block_order": [
+            "1760924979214eb929fa",
+            "1760924979214f4d9d7c",
+            "1760924979214406d264",
+            "17611874724771796a68"
+          ]
+        }
+      },
+      "block_order": [
+        "17609249792143b71c41",
+        "176092497921481e17e2"
+      ],
+      "name": "t:sections.featured_collection.presets.presets_0.name"
+    },
+    "1760925850380087216e": {
+      "type": "shopping-video",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "is_full_screen": false,
+        "layout": {
+          "align-items": "center",
+          "flex-direction": "column"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "40px",
+            "padding-block-start": "40px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "176092585038272364fe": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-block-end": "20px",
+              "padding-block-start": "0px",
+              "padding-inline-end": "0px",
+              "padding-inline-start": "0px"
+            },
+            "text": "As Seen on Social",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        },
+        "17609258503827b2bb21": {
+          "type": "$video-list-group",
+          "settings": {
+            "layout": {
+              "@media (--mobile)": {
+                "column-gap": "20px",
+                "row-gap": "0px"
+              },
+              "align-items": "center",
+              "column-gap": "40px",
+              "flex-direction": "column",
+              "row-gap": "40px"
+            }
+          },
+          "blocks": {
+            "1760925850382328b501": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "1760925850382258a1bc": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/e d d d d d d.png"
+                  },
+                  "blocks": {
+                    "17609258503822508a72": {
+                      "type": "$product-text-group",
+                      "settings": {},
+                      "disabled": true,
+                      "blocks": {
+                        "176092585038210c2a79": {
+                          "type": "$description",
+                          "settings": {
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "176092585038241c1d03": {
+                          "type": "$button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "1760925850382b3741aa": {
+                          "type": "$heading",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760925850382b3741aa",
+                        "176092585038210c2a79",
+                        "176092585038241c1d03"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17609258503822508a72"
+                  ]
+                },
+                "1760925850382c00fac5": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "17609258503827456db2": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072100556699693302012470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17609258503827456db2"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760925850382258a1bc",
+                "1760925850382c00fac5"
+              ]
+            },
+            "17609258503825cb3ead": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "1760925850382005cd3d": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "17609258503820045aa2": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072100556699693302012470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17609258503820045aa2"
+                  ]
+                },
+                "17609258503825660332": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/f f f.png"
+                  },
+                  "blocks": {
+                    "1760925850382afa5352": {
+                      "type": "$product-text-group",
+                      "settings": {},
+                      "disabled": true,
+                      "blocks": {
+                        "176092585038288d4ee5": {
+                          "type": "$button",
+                          "settings": {},
+                          "disabled": true,
+                          "blocks": {}
+                        },
+                        "1760925850382b323737": {
+                          "type": "$description",
+                          "settings": {
+                            "text_align": "left"
+                          },
+                          "disabled": true,
+                          "blocks": {}
+                        },
+                        "1760925850382bbfc8a7": {
+                          "type": "$heading",
+                          "settings": {},
+                          "disabled": true,
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "1760925850382bbfc8a7",
+                        "1760925850382b323737",
+                        "176092585038288d4ee5"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760925850382afa5352"
+                  ]
+                }
+              },
+              "block_order": [
+                "17609258503825660332",
+                "1760925850382005cd3d"
+              ]
+            },
+            "17609258503826c26e1f": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "1760925850382813b1c2": {
+                  "type": "$product-card-group",
+                  "settings": {
+                    "position": "under-video",
+                    "product_card_expand": false,
+                    "show_expand_button": true
+                  },
+                  "blocks": {
+                    "1760925850382771c4bb": {
+                      "type": "$product-card",
+                      "settings": {
+                        "inherit_color_scheme": false,
+                        "product": "16072242656034601118062470",
+                        "show_original_price": true
+                      },
+                      "blocks": {}
+                    },
+                    "176119004286379eb74e": {
+                      "type": "$product-card",
+                      "settings": {
+                        "inherit_color_scheme": false,
+                        "product": "16072259805771066262452470",
+                        "show_original_price": true
+                      },
+                      "blocks": {},
+                      "block_order": []
+                    },
+                    "17611900473741df2867": {
+                      "type": "$product-card",
+                      "settings": {
+                        "inherit_color_scheme": false,
+                        "product": "16072100556699693302012470",
+                        "show_original_price": true
+                      },
+                      "blocks": {},
+                      "block_order": []
+                    }
+                  },
+                  "block_order": [
+                    "1760925850382771c4bb",
+                    "176119004286379eb74e",
+                    "17611900473741df2867"
+                  ]
+                },
+                "1760925850382e4d5b16": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/s s s s s s s.png"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                }
+              },
+              "block_order": [
+                "1760925850382e4d5b16",
+                "1760925850382813b1c2"
+              ]
+            },
+            "17609258503826c2f71b": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "176092585038264cf156": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/image_7224258809643935091.png"
+                  },
+                  "blocks": {
+                    "17609258503826df5f90": {
+                      "type": "$product-text-group",
+                      "settings": {},
+                      "blocks": {
+                        "17609258503821311261": {
+                          "type": "$description",
+                          "settings": {
+                            "text": "",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "17609258503826a18224": {
+                          "type": "$heading",
+                          "settings": {
+                            "text": ""
+                          },
+                          "blocks": {}
+                        },
+                        "1760925850382bf2828a": {
+                          "type": "$button",
+                          "settings": {
+                            "text": ""
+                          },
+                          "disabled": true,
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "17609258503826a18224",
+                        "17609258503821311261",
+                        "1760925850382bf2828a"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "17609258503826df5f90"
+                  ]
+                },
+                "1760925850382a55d7c0": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "1760925850382ac6ef69": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072100556699693302012470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "1760925850382ac6ef69"
+                  ]
+                }
+              },
+              "block_order": [
+                "176092585038264cf156",
+                "1760925850382a55d7c0"
+              ]
+            },
+            "17609258503827ac8064": {
+              "type": "$video-group",
+              "settings": {},
+              "blocks": {
+                "1760925850382655b66e": {
+                  "type": "$product-card-group",
+                  "settings": {},
+                  "blocks": {
+                    "17609258503829f63cca": {
+                      "type": "$product-card",
+                      "settings": {
+                        "product": "16072100582744140489332470"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17609258503829f63cca"
+                  ]
+                },
+                "1760925850382859c023": {
+                  "type": "$video",
+                  "settings": {
+                    "cover_image": "shopline://shop_images/x x x x x.png"
+                  },
+                  "blocks": {
+                    "1760925850382f4a6735": {
+                      "type": "$product-text-group",
+                      "settings": {},
+                      "disabled": true,
+                      "blocks": {
+                        "176092585038212a9d4c": {
+                          "type": "$description",
+                          "settings": {
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "17609258503825e326bc": {
+                          "type": "$button",
+                          "settings": {},
+                          "blocks": {}
+                        },
+                        "17609258503828a10ff6": {
+                          "type": "$heading",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "17609258503828a10ff6",
+                        "176092585038212a9d4c",
+                        "17609258503825e326bc"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "1760925850382f4a6735"
+                  ]
+                }
+              },
+              "block_order": [
+                "1760925850382859c023",
+                "1760925850382655b66e"
+              ]
+            }
+          },
+          "block_order": [
+            "17609258503826c2f71b",
+            "17609258503825cb3ead",
+            "17609258503826c26e1f",
+            "1760925850382328b501",
+            "17609258503827ac8064"
+          ]
+        }
+      },
+      "block_order": [
+        "176092585038272364fe",
+        "17609258503827b2bb21"
+      ],
+      "name": "t:sections.shopping_video.presets.presets_0.name"
+    },
+    "17609298594481211a27": {
+      "type": "map",
+      "settings": {
+        "color_scheme": "scheme-5",
+        "google_api_secret_key": "",
+        "is_map_jump": false,
+        "latitude_longitude": "51.30,0.7",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "10px",
+            "row-gap": "10px"
+          },
+          "align-items": "center",
+          "column-gap": "20px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "20px"
+        },
+        "size": {
+          "height": "100%",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "0px",
+            "padding-block-start": "40px",
+            "padding-inline-end": "0px",
+            "padding-inline-start": "0px"
+          },
+          "padding-block-end": "0px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "0px",
+          "padding-inline-start": "0px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "17609298594503c9b9a2": {
+          "type": "$bottom-content",
+          "settings": {
+            "layout": {
+              "@media (--mobile)": {
+                "column-gap": "px",
+                "flex-direction": "column",
+                "row-gap": "px"
+              },
+              "column-gap": 0,
+              "flex-direction": "row",
+              "flex-wrap": "nowrap",
+              "justify-content": "center",
+              "row-gap": 0
+            },
+            "size": {
+              "@media (--mobile)": {
+                "height": "100%",
+                "width": "100%"
+              },
+              "height": "100%",
+              "width": "100%"
+            },
+            "spacing": {
+              "@media (--mobile)": {
+                "padding-block-end": "0px",
+                "padding-block-start": "0px",
+                "padding-inline-end": "0px",
+                "padding-inline-start": "0px"
+              },
+              "padding-block-end": 0,
+              "padding-block-start": "20px",
+              "padding-inline-end": 0,
+              "padding-inline-start": 0
+            }
+          },
+          "blocks": {
+            "1760929859450559fbc3": {
+              "type": "$text-content",
+              "settings": {
+                "color_scheme": "scheme-4",
+                "inherit_color_scheme": false,
+                "layout": {
+                  "@media (--mobile)": {
+                    "column-gap": "10px",
+                    "flex-direction": "column",
+                    "row-gap": "10px"
+                  },
+                  "column-gap": "20px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "center",
+                  "row-gap": "20px"
+                },
+                "size": {
+                  "@media (--mobile)": {
+                    "height": "100%",
+                    "width": "100%"
+                  },
+                  "height": "30%",
+                  "width": "50%"
+                },
+                "spacing": {
+                  "@media (--mobile)": {
+                    "padding-block-end": "20px",
+                    "padding-block-start": "20px",
+                    "padding-inline-end": "20px",
+                    "padding-inline-start": "20px"
+                  },
+                  "padding-block-end": "40px",
+                  "padding-block-start": "40px",
+                  "padding-inline-end": "40px",
+                  "padding-inline-start": "40px"
+                }
+              },
+              "blocks": {
+                "176092985945018c4237": {
+                  "type": "$btn-group",
+                  "settings": {
+                    "layout": {
+                      "@media (--mobile)": {
+                        "column-gap": "8px",
+                        "flex-direction": "row",
+                        "flex-wrap": "nowrap",
+                        "justify-content": "space-between",
+                        "row-gap": "8px"
+                      },
+                      "align-items": "center",
+                      "column-gap": "20px",
+                      "flex-direction": "row",
+                      "flex-wrap": "wrap",
+                      "justify-content": "flex-start",
+                      "row-gap": "20px"
+                    },
+                    "size": {
+                      "@media (--mobile)": {
+                        "height": "auto",
+                        "width": "auto"
+                      },
+                      "height": "auto",
+                      "width": "auto"
+                    },
+                    "spacing": {
+                      "@media (--mobile)": {
+                        "padding-block-end": "20px",
+                        "padding-block-start": "20px",
+                        "padding-inline-end": "20px",
+                        "padding-inline-start": "0px"
+                      },
+                      "padding-block-end": 0,
+                      "padding-block-start": 0,
+                      "padding-inline-end": 0,
+                      "padding-inline-start": 0
+                    }
+                  },
+                  "blocks": {
+                    "176092985945007feec9": {
+                      "type": "$custom-btn",
+                      "settings": {
+                        "link": "",
+                        "text": "Get direcions"
+                      },
+                      "blocks": {}
+                    },
+                    "17609298594507350802": {
+                      "type": "$custom-btn",
+                      "settings": {
+                        "is_show_pushpin": false,
+                        "style": "secondary",
+                        "text": "LEARN MORE"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "176092985945007feec9",
+                    "17609298594507350802"
+                  ]
+                },
+                "176092985945041609f1": {
+                  "type": "text",
+                  "settings": {
+                    "spacing": {
+                      "@media (--mobile)": {
+                        "padding-block-end": "0px",
+                        "padding-block-start": "0px"
+                      },
+                      "padding-block-end": 0,
+                      "padding-block-start": 0
+                    },
+                    "text": "DEMURE",
+                    "text_align": "left"
+                  },
+                  "blocks": {}
+                },
+                "17609298594505b0fbe0": {
+                  "type": "heading",
+                  "settings": {
+                    "spacing": {
+                      "padding-bottom": 0,
+                      "padding-top": 0
+                    },
+                    "text": "OUR STORE",
+                    "text_align": "left"
+                  },
+                  "blocks": {}
+                },
+                "17609298594506ca2e53": {
+                  "type": "text",
+                  "settings": {
+                    "spacing": {
+                      "@media (--mobile)": {
+                        "padding-block-end": "0px",
+                        "padding-block-start": "30px"
+                      },
+                      "padding-block-end": 0,
+                      "padding-block-start": "168px"
+                    },
+                    "text": "\u003cdiv\u003e\n\u003cdiv\u003eLondon, UK\u003c/div\u003e\n\u003cdiv\u003eMon - Fri, 10am - 9pm\u003c/div\u003e\n\u003cdiv\u003eSaturday, 10am - 9pm\u003c/div\u003e\n\u003cdiv\u003eSunday, 11am - 5pm\u003c/div\u003e\n\u003c/div\u003e",
+                    "text_align": "left",
+                    "typography": "body6"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "176092985945041609f1",
+                "17609298594505b0fbe0",
+                "17609298594506ca2e53",
+                "176092985945018c4237"
+              ]
+            },
+            "17609298594506632bd9": {
+              "type": "$map-style",
+              "settings": {
+                "layout": {
+                  "@media (--mobile)": {
+                    "align-items": "center",
+                    "column-gap": "0px",
+                    "flex-direction": "column",
+                    "row-gap": "0px"
+                  },
+                  "column-gap": "20px",
+                  "flex-direction": "row",
+                  "flex-wrap": "nowrap",
+                  "justify-content": "center",
+                  "row-gap": "20px"
+                },
+                "mobile_image": "shopline://shop_images/美国1.png",
+                "pc_image": "shopline://shop_images/美国2.png",
+                "size": {
+                  "@media (--mobile)": {
+                    "height": "100%",
+                    "width": "100%"
+                  },
+                  "height": "505px",
+                  "width": "50%"
+                }
+              },
+              "disabled": false,
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "1760929859450559fbc3",
+            "17609298594506632bd9"
+          ]
+        },
+        "17609298594508b0a36c": {
+          "type": "text",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "100%"
+            },
+            "spacing": {
+              "padding-bottom": 0,
+              "padding-top": 0
+            },
+            "text": "A water-attracting synthetic compound. It helps boost hydration levels without disrupting the skin barrier.",
+            "text_align": "center",
+            "typography": "typography-default"
+          },
+          "blocks": {}
+        },
+        "1760929859450d7a4624": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-bottom": 0,
+              "padding-left": 0,
+              "padding-right": 0,
+              "padding-top": 0
+            },
+            "text": "Our Store",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "1760929859450d7a4624",
+        "17609298594508b0a36c",
+        "17609298594503c9b9a2"
+      ],
+      "name": "t:sections.map.presets.presets_0.name"
+    },
+    "1760931408732af6b319": {
+      "type": "brand-list",
+      "settings": {
+        "color_scheme": "scheme-5",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "0px"
+        },
+        "size": {},
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px"
+          },
+          "padding-block-end": "0px",
+          "padding-block-start": "0px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "1760931408733cf5135c": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Popular brands",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "1760931408733e775307": {
+          "type": "$list",
+          "settings": {
+            "mobile_full_screen": false
+          },
+          "blocks": {
+            "1760931408733594c009": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版3.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            },
+            "17609314087337b2a24e": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版4.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            },
+            "1760931408733837d64d": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版6.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            },
+            "1760931408733af7601c": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版1.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            },
+            "1760931408733afcc4ed": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版5.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            },
+            "1760931408733e8f07ce": {
+              "type": "$item",
+              "settings": {
+                "image": "shopline://shop_images/高清第六版2.png",
+                "jump_link": ""
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "1760931408733af7601c",
+            "1760931408733e8f07ce",
+            "1760931408733594c009",
+            "17609314087337b2a24e",
+            "1760931408733afcc4ed",
+            "1760931408733837d64d"
+          ]
+        }
+      },
+      "block_order": [
+        "1760931408733cf5135c",
+        "1760931408733e775307"
+      ],
+      "name": "t:sections.brand_list.presets.presets_0.name"
+    },
+    "17609399525235e11cb6": {
+      "type": "blog",
+      "settings": {
+        "blog": "68f5d09270d0a21bd9c585cc",
+        "color_scheme": "scheme-3",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "100px",
+          "padding-inline-start": "100px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "176093995252528b2068": {
+          "type": "$articles",
+          "settings": {
+            "desktop_columns": "3",
+            "limit": 3
+          },
+          "blocks": {
+            "1760939952525604eeb5": {
+              "type": "article/card",
+              "settings": {},
+              "blocks": {
+                "176093995252564a16d3": {
+                  "type": "article/_cover",
+                  "settings": {
+                    "aspect_ratio": "unset",
+                    "border_radius": 20
+                  },
+                  "blocks": {}
+                },
+                "1760939952525a91513e": {
+                  "type": "article/_info",
+                  "settings": {},
+                  "blocks": {
+                    "17609399525250020582": {
+                      "type": "article/_title",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "1760939952525459d398": {
+                      "type": "article/_excerpt",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "17609399525256583860": {
+                      "type": "article/_date-author",
+                      "settings": {},
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "17609399525250020582",
+                    "17609399525256583860",
+                    "1760939952525459d398"
+                  ]
+                }
+              },
+              "block_order": [
+                "176093995252564a16d3",
+                "1760939952525a91513e"
+              ]
+            }
+          },
+          "block_order": [
+            "1760939952525604eeb5"
+          ]
+        },
+        "17609399525252ef5d3d": {
+          "type": "button",
+          "settings": {
+            "link": "",
+            "open_in_new_tab": true,
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-block-end": "10px",
+              "padding-block-start": "10px",
+              "padding-inline-end": "20px",
+              "padding-inline-start": "20px"
+            },
+            "style": "primary",
+            "text": "View all"
+          },
+          "disabled": true,
+          "blocks": {}
+        },
+        "17609399525253df15b1": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "@media (--mobile)": {
+                "width": "400px"
+              },
+              "height": "auto",
+              "width": "auto"
+            },
+            "text": "Blog \u0026 Recipes",
+            "text_align": "center",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17609399525253df15b1",
+        "176093995252528b2068",
+        "17609399525252ef5d3d"
+      ],
+      "name": "t:sections.blog.presets.presets_0.name"
+    },
+    "17610121213778eff4de": {
+      "type": "shopline://apps/高阶组件库/sections/text-columns-with-images/01405986-ae6f-4fcc-adaa-2a21f14efc9f",
+      "settings": {
+        "best_mobile_style": true,
+        "body_font_color": "#424cab",
+        "body_font_family": "Montserrat:400",
+        "body_letter_spacing": 0,
+        "body_line_height": 1.6,
+        "body_m_font_size": 14,
+        "body_pc_font_size": 16,
+        "btn_background": "#111111",
+        "btn_border_color": "#111111",
+        "btn_border_opacity": 100,
+        "btn_border_radius": 0,
+        "btn_border_thickness": 1,
+        "btn_font_color": "#000000",
+        "btn_font_family": "Montserrat:500",
+        "btn_hover_animation": "1",
+        "btn_letter_spacing": 0,
+        "btn_line_height": 1.6,
+        "btn_m_font_size": 14,
+        "btn_pc_font_size": 16,
+        "btn_shadow_blur": 5,
+        "btn_shadow_color": "#000000",
+        "btn_shadow_offset_x": 0,
+        "btn_shadow_offset_y": 4,
+        "btn_shadow_opacity": 0,
+        "btn_style": "arrow-link",
+        "container_bg_color": "",
+        "container_bg_color_gradient": "",
+        "container_config": {
+          "mobile": {
+            "bottom": 40,
+            "left": 20,
+            "right": 20,
+            "top": 40
+          },
+          "pc": {
+            "bottom": 60,
+            "left": 80,
+            "lock": true,
+            "right": 80,
+            "top": 60
+          }
+        },
+        "container_margin_config": {
+          "mobile": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          },
+          "pc": {
+            "bottom": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0
+          }
+        },
+        "container_max_width": 1420,
+        "enable_pause": false,
+        "enable_scroll": false,
+        "image_ratio": "auto",
+        "image_width": "100%",
+        "mb_horizontal_spacing": 30,
+        "mb_scroll_interval": 5,
+        "mb_show": true,
+        "mb_vertical_spacing": 20,
+        "md_cols": "1",
+        "pc_cols": 3,
+        "pc_horizontal_spacing": 40,
+        "pc_scroll_interval": 12,
+        "pc_show": true,
+        "pc_vertical_spacing": 30,
+        "scroll_direction": "left_to_right",
+        "show_block_bg": false,
+        "show_touch": true,
+        "sub_title_font_color": "#424cab",
+        "sub_title_font_family": "Bagel Fat One",
+        "sub_title_letter_spacing": 0,
+        "sub_title_line_height": 1.2,
+        "sub_title_m_font_size": 20,
+        "sub_title_pc_font_size": 24,
+        "text_align": "left",
+        "title": "Food Pairing Exploration",
+        "title_align": "center",
+        "title_font_color": "#424cab",
+        "title_font_family": "Bagel Fat One",
+        "title_letter_spacing": 0,
+        "title_line_height": 1.2,
+        "title_m_font_size": 24,
+        "title_pc_font_size": 44
+      },
+      "disabled": false,
+      "blocks": {
+        "17610121213786085fa6": {
+          "type": "$item",
+          "settings": {
+            "button_text": "",
+            "description": "This pairs well with a variety of pizza flavors, particularly meat lovers, providing a pleasant, unsweetened balance.",
+            "image": "shopline://shop_images/图.png",
+            "jump_link": "",
+            "title": "Pizza Night Perfected"
+          },
+          "blocks": {}
+        },
+        "176101212137883585fe": {
+          "type": "$item",
+          "settings": {
+            "button_text": "",
+            "description": "The rich, smoky flavor of grilled meats combines with the refreshing sweetness of Red Wine for the perfect balance.",
+            "image": "shopline://shop_images/图_7220340695143292110.png",
+            "jump_link": "",
+            "title": "Classic American BBQ"
+          },
+          "blocks": {}
+        },
+        "1761012121378f0b0093": {
+          "type": "$item",
+          "settings": {
+            "button_text": "",
+            "description": "The vibrant fizz instantly refreshes your palate, making every bite of the fried chicken even more enjoyable.",
+            "image": "shopline://shop_images/图_7220340294402708752.png",
+            "jump_link": "",
+            "title": "Crispy Fried Delights"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "176101212137883585fe",
+        "1761012121378f0b0093",
+        "17610121213786085fa6"
+      ],
+      "name": "t:sections.text-columns-with-images.presets_0.name"
+    },
+    "1761015928092e792918": {
+      "type": "apps",
+      "settings": {
+        "sync_margins_with_theme": false
+      },
+      "disabled": true,
+      "blocks": {
+        "176101592809381200a3": {
+          "type": "shopline://apps/商品评价/blocks/comment-list/bd4a09d9-7542-4e11-931c-19fe441576aa",
+          "settings": {
+            "head_text_align": "left",
+            "hide_component": false,
+            "mb_comment_num": "6",
+            "mb_header_size": "3",
+            "mb_turn_page": "2",
+            "mobile_sort_type": "1",
+            "padding_config": {
+              "mobile": {
+                "bottom": 0,
+                "left": 0,
+                "right": 0,
+                "top": 0
+              },
+              "pc": {
+                "bottom": 0,
+                "left": 250,
+                "lock": true,
+                "right": 250,
+                "top": 0
+              }
+            },
+            "pc_comment_num": "4",
+            "pc_header_size": "3",
+            "pc_turn_page": "2",
+            "sort_by": "1"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "176101592809381200a3"
+      ]
+    },
+    "1761016093288742a673": {
+      "type": "faq",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "container_background_color": "#eee",
+        "expand_first_label": false,
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "30px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "40px"
+        },
+        "layout_style": "none",
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "24px",
+            "padding-block-start": "24px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "30px",
+          "padding-inline-start": "30px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "1761016093291098751e": {
+          "type": "$group",
+          "settings": {},
+          "blocks": {
+            "1761016093291d48b6d6": {
+              "type": "$collapsible-group",
+              "settings": {},
+              "blocks": {
+                "17610160932911ec3a4a": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "\u003cspan style=\"font-size: 16px;\"\u003eAll of our cans are 330ml, so you're getting more bang for your buck.\u003c/span\u003e",
+                    "title": "How big are the cans?"
+                  },
+                  "blocks": {}
+                },
+                "17611888067577ed61dd": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "We offer standard (5-7 business days) and express (2-3 business days) shipping within the country. All orders over $50 qualify for free standard shipping.",
+                    "icon": "none",
+                    "title": "What are the shipping options?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761188813872c232ce7": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "\u003csection class=\"ybc-p\"\u003eYes, we ship to over 30 countries worldwide! International delivery times and costs are calculated at checkout based on your location.\u003c/section\u003e\n\u003csection class=\"ybc-p\"\u003eThese answers maintain the same helpful, customer-focused tone while providing clear and practical information.\u003c/section\u003e",
+                    "icon": "none",
+                    "title": "Do you offer international shipping?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761188832156fe8ef74": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "We offer a range of shipping options to meet your needs. Standard shipping (5-7 business days) is free on orders over $50. For faster delivery, we provide expedited shipping (2-3 business days) and express shipping (1 business day) for an additional fee.",
+                    "icon": "none",
+                    "title": "What are the shipping options?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761188842388fa725de": {
+                  "type": "$collapsible-panel",
+                  "settings": {
+                    "content": "Yes, we ship to a wide range of international destinations. Shipping costs and delivery times vary depending on the location and are calculated automatically at checkout. Please note that customers are responsible for any applicable customs duties or import taxes.",
+                    "icon": "none",
+                    "title": "Do you offer international shipping?"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                }
+              },
+              "block_order": [
+                "17610160932911ec3a4a",
+                "17611888067577ed61dd",
+                "1761188813872c232ce7",
+                "1761188832156fe8ef74",
+                "1761188842388fa725de"
+              ]
+            },
+            "176101611103810d8f65": {
+              "type": "image/image",
+              "settings": {
+                "aspect_ratio": "unset",
+                "border_radius": 0,
+                "image": "shopline://shop_images/内容_7225716658630828478.png",
+                "mask_opacity": 0,
+                "size": {
+                  "height": "auto",
+                  "width": "100%"
+                }
+              },
+              "blocks": {},
+              "block_order": []
+            }
+          },
+          "block_order": [
+            "176101611103810d8f65",
+            "1761016093291d48b6d6"
+          ]
+        },
+        "17610160932918a0226e": {
+          "type": "heading",
+          "settings": {
+            "background_color": "rgba(0,0,0,0)",
+            "size": {
+              "height": "auto",
+              "width": "auto"
+            },
+            "spacing": {
+              "padding-block-end": "0",
+              "padding-block-start": "0"
+            },
+            "text": "FAQs",
+            "text_align": "left",
+            "text_tag": "h2",
+            "typography": "title3"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17610160932918a0226e",
+        "1761016093291098751e"
+      ],
+      "name": "t:sections.faq.presets.presets_0.name"
+    },
+    "17612079071653e712b3": {
+      "type": "apps",
+      "settings": {
+        "sync_margins_with_theme": true
+      },
+      "disabled": false,
+      "blocks": {
+        "176120790716677ab50c": {
+          "type": "shopline://apps/商品评价/blocks/comment-group/bd4a09d9-7542-4e11-931c-19fe441576aa",
+          "settings": {
+            "head_text_align": "left",
+            "isOpen_store_comment": false,
+            "isShow_btnWrite": true,
+            "isShow_productLink": true,
+            "mb_comment_num": "4",
+            "mb_header_size": "3",
+            "mb_turn_page": "2",
+            "padding_config": {
+              "mobile": {
+                "bottom": 50,
+                "left": 0,
+                "lock": true,
+                "right": 0,
+                "top": 50
+              },
+              "pc": {
+                "bottom": 80,
+                "left": 250,
+                "lock": true,
+                "right": 250,
+                "top": 80
+              }
+            },
+            "pc_comment_num": "8",
+            "pc_header_size": "3",
+            "pc_turn_page": "2"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "176120790716677ab50c"
+      ]
+    },
+    "17612964038694e5b51d": {
+      "type": "custom-section",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "32px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "32px"
+        },
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-start": "40px"
+          }
+        }
+      },
+      "disabled": false,
+      "blocks": {},
+      "name": "t:sections.custom_section.presets.presets_0.name"
+    },
+    "17612964519393c58aa0": {
+      "type": "custom-section",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "align-items": "center",
+          "column-gap": "32px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "32px"
+        },
+        "size": {
+          "height": "auto",
+          "width": "100%"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-start": "40px"
+          }
+        }
+      },
+      "disabled": false,
+      "blocks": {},
+      "name": "t:sections.custom_section.presets.presets_0.name"
+    },
+    "1761818718126fd70071": {
+      "type": "apps",
+      "settings": {
+        "sync_margins_with_theme": true
+      },
+      "disabled": true,
+      "blocks": {
+        "17618187181274c88cf9": {
+          "type": "shopline://apps/订阅式电商/blocks/bundle/dc7225ea-8d91-400c-9a0c-7a168bb9ec98",
+          "settings": {
+            "addToCartButtonText": "Add To Cart",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#D7DBE7",
+            "borderRadius": 40,
+            "borderSize": 1,
+            "buttonBackgroundColor": "#424cab",
+            "buttonBorderColor": "#424cab",
+            "buttonSelectorSelectedBackgroundColor": "#424cab",
+            "buttonSelectorSelectedBorderColor": "#424cab",
+            "buttonSelectorSelectedTextColor": "#FFFFFF",
+            "buttonSelectorUnselectedBackgroundColor": "#FFFFFF",
+            "buttonSelectorUnselectedBorderColor": "#424cab",
+            "buttonSelectorUnselectedTextColor": "#424cab",
+            "buttonTextColor": "#FFFFFF",
+            "cardBackgroundColor": "#FFFFFF",
+            "descriptionText": "",
+            "isBoldDiscountFont": true,
+            "oneTimePurchaseText": "One-time Purchase",
+            "primaryTextColor": "#424cab",
+            "productAddButtonText": "Add",
+            "productCardBorderRadius": 0,
+            "productCardColumn": 3,
+            "productPriceFontSize": 22,
+            "purchaseType": "subscribe",
+            "secondaryTextColor": "#424cab",
+            "selectedProductBorderRadius": 0,
+            "selectedProductBorderSize": 1,
+            "skuButtonText": "Select flavor",
+            "subscribeAndSaveText": "Subscribe \u0026 Save",
+            "subscriptionBenefitText": "",
+            "titleFontSize": 70,
+            "titleText": "Build Your Box"
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "17618187181274c88cf9"
+      ]
+    },
+    "ingredient-display": {
+      "type": "ingredient-display",
+      "settings": {
+        "color_scheme": "scheme-4",
+        "layout": {
+          "@media (--mobile)": {
+            "row-gap": "10px"
+          },
+          "align-items": "center",
+          "column-gap": "0px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "justify-content": "center",
+          "row-gap": "20px"
+        },
+        "size": {
+          "height": "auto",
+          "width": "auto"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "40px",
+            "padding-block-start": "40px",
+            "padding-inline-end": "20px",
+            "padding-inline-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px",
+          "padding-inline-end": "80px",
+          "padding-inline-start": "80px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "ingredient-display__description": {
+          "type": "text",
+          "settings": {
+            "spacing": {
+              "@media (--mobile)": {
+                "padding-block-end": "10px",
+                "padding-block-start": "10px",
+                "padding-inline-end": "10px",
+                "padding-inline-start": "10px"
+              },
+              "padding-block-start": "0px"
+            },
+            "text": "\u003cspan style=\"font-size: 14px;\"\u003eA water-attracting synthetic compound. It helps boost hydration levels without disrupting the skin barrier.\u003c/span\u003e"
+          },
+          "blocks": {}
+        },
+        "ingredient-display__heading": {
+          "type": "heading",
+          "settings": {
+            "text": "INGREDIENTS"
+          },
+          "blocks": {}
+        },
+        "ingredient-display__image-text-area": {
+          "type": "$image-text-area",
+          "settings": {},
+          "blocks": {
+            "ingredient-display__card-group1": {
+              "type": "$image-text-card-group",
+              "settings": {},
+              "blocks": {
+                "ingredient-display__image-text-card1": {
+                  "type": "$image-text-card",
+                  "settings": {},
+                  "blocks": {
+                    "ingredient-display__card-image1": {
+                      "type": "image/image",
+                      "settings": {
+                        "image": "shopline://shop_images/image_7220330084393033154.png"
+                      },
+                      "blocks": {}
+                    },
+                    "ingredient-display__card-text-group1": {
+                      "type": "$image-text-card-text-group",
+                      "settings": {},
+                      "blocks": {
+                        "ingredient-display__card-desc1": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-block-end": "10px",
+                                "padding-block-start": "10px"
+                              },
+                              "padding-block-end": "0px",
+                              "padding-block-start": "0px"
+                            },
+                            "text": "\u003cspan style=\"font-size: 14px;\"\u003eA natural oil extracted from the seeds of the jojoba plant, rich in vitamins and fatty .\u003c/span\u003e",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__card-heading1": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-bottom": "0px",
+                                "padding-top": "0px"
+                              },
+                              "padding-bottom": "0px",
+                              "padding-top": "0px"
+                            },
+                            "text": "\u003cstrong\u003eCaramel Ice Cream\u003c/strong\u003e",
+                            "text_align": "left",
+                            "typography": "title6"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__popup-link1": {
+                          "type": "popup-with-link",
+                          "settings": {
+                            "button_style": "link"
+                          },
+                          "disabled": true,
+                          "blocks": {
+                            "ingredient-display__modal-group1": {
+                              "type": "group",
+                              "settings": {
+                                "layout": {
+                                  "@media (--mobile)": {
+                                    "column-gap": "0px",
+                                    "flex-direction": "column",
+                                    "row-gap": "0px"
+                                  },
+                                  "align-items": "stretch",
+                                  "column-gap": "20px",
+                                  "flex-direction": "row",
+                                  "flex-wrap": "nowrap",
+                                  "justify-content": "flex-start",
+                                  "row-gap": "0px"
+                                },
+                                "size": {
+                                  "width": "733px"
+                                },
+                                "spacing": {
+                                  "@media (--mobile)": {
+                                    "padding-bottom": "0px",
+                                    "padding-left": "0px",
+                                    "padding-right": "0px",
+                                    "padding-top": "0px"
+                                  },
+                                  "padding-bottom": "0px",
+                                  "padding-left": "0px",
+                                  "padding-right": "0px",
+                                  "padding-top": "0px"
+                                }
+                              },
+                              "blocks": {
+                                "ingredient-display__modal-content1": {
+                                  "type": "group",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "75%",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "57%"
+                                    },
+                                    "spacing": {
+                                      "@media (--mobile)": {
+                                        "padding-bottom": "20px",
+                                        "padding-left": "20px",
+                                        "padding-right": "20px",
+                                        "padding-top": "20px"
+                                      },
+                                      "padding-bottom": "40px",
+                                      "padding-left": "0px",
+                                      "padding-right": "40px",
+                                      "padding-top": "40px"
+                                    }
+                                  },
+                                  "blocks": {
+                                    "modal-desc1": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "4px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "10px"
+                                        },
+                                        "text": "Discover the key ingredients behind our formula. Each selected with purpose, purity, and proven results.",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    },
+                                    "modal-heading1": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "0px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "0px"
+                                        },
+                                        "text": "\u003cstrong style='font-size: 22px'\u003eJojoba Oil\u003c/strong\u003e",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    }
+                                  },
+                                  "block_order": [
+                                    "modal-heading1",
+                                    "modal-desc1"
+                                  ]
+                                },
+                                "ingredient-display__modal-image1": {
+                                  "type": "image/image",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "136px",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "43%"
+                                    }
+                                  },
+                                  "blocks": {}
+                                }
+                              },
+                              "block_order": [
+                                "ingredient-display__modal-image1",
+                                "ingredient-display__modal-content1"
+                              ]
+                            }
+                          },
+                          "block_order": [
+                            "ingredient-display__modal-group1"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "ingredient-display__card-heading1",
+                        "ingredient-display__card-desc1",
+                        "ingredient-display__popup-link1"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "ingredient-display__card-image1",
+                    "ingredient-display__card-text-group1"
+                  ]
+                },
+                "ingredient-display__image-text-card2": {
+                  "type": "$image-text-card",
+                  "settings": {},
+                  "blocks": {
+                    "ingredient-display__card-image2": {
+                      "type": "image/image",
+                      "settings": {
+                        "image": "shopline://shop_images/image_7220329413220506338.png"
+                      },
+                      "blocks": {}
+                    },
+                    "ingredient-display__card-text-group2": {
+                      "type": "$image-text-card-text-group",
+                      "settings": {},
+                      "blocks": {
+                        "ingredient-display__card-desc2": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-block-end": "10px",
+                                "padding-block-start": "10px"
+                              },
+                              "padding-block-end": "0px",
+                              "padding-block-start": "0px"
+                            },
+                            "text": "A natural oil extracted from the seeds of the jojoba plant, rich in vitamins and fatty .",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__card-heading2": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-bottom": "0px",
+                                "padding-top": "0px"
+                              },
+                              "padding-bottom": "0px",
+                              "padding-top": "0px"
+                            },
+                            "text": "Vanilla",
+                            "text_align": "left",
+                            "typography": "title6"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__popup-link2": {
+                          "type": "popup-with-link",
+                          "settings": {
+                            "button_style": "link"
+                          },
+                          "disabled": true,
+                          "blocks": {
+                            "ingredient-display__modal-group2": {
+                              "type": "group",
+                              "settings": {
+                                "layout": {
+                                  "@media (--mobile)": {
+                                    "column-gap": "0px",
+                                    "flex-direction": "column",
+                                    "row-gap": "0px"
+                                  },
+                                  "align-items": "stretch",
+                                  "column-gap": "20px",
+                                  "flex-direction": "row",
+                                  "flex-wrap": "nowrap",
+                                  "justify-content": "flex-start",
+                                  "row-gap": "0px"
+                                },
+                                "size": {
+                                  "width": "733px"
+                                },
+                                "spacing": {
+                                  "@media (--mobile)": {
+                                    "padding-bottom": "0px",
+                                    "padding-left": "0px",
+                                    "padding-right": "0px",
+                                    "padding-top": "0px"
+                                  },
+                                  "padding-bottom": "0px",
+                                  "padding-left": "0px",
+                                  "padding-right": "0px",
+                                  "padding-top": "0px"
+                                }
+                              },
+                              "blocks": {
+                                "ingredient-display__modal-content2": {
+                                  "type": "group",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "75%",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "57%"
+                                    },
+                                    "spacing": {
+                                      "@media (--mobile)": {
+                                        "padding-bottom": "20px",
+                                        "padding-left": "20px",
+                                        "padding-right": "20px",
+                                        "padding-top": "20px"
+                                      },
+                                      "padding-bottom": "40px",
+                                      "padding-left": "0px",
+                                      "padding-right": "40px",
+                                      "padding-top": "40px"
+                                    }
+                                  },
+                                  "blocks": {
+                                    "ingredient-display__modal-desc2": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "4px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "10px"
+                                        },
+                                        "text": "Discover the key ingredients behind our formula. Each selected with purpose, purity, and proven results.",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    },
+                                    "ingredient-display__modal-heading2": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "0px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "0px"
+                                        },
+                                        "text": "\u003cstrong style='font-size: 22px'\u003eJojoba Oil\u003c/strong\u003e",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    }
+                                  },
+                                  "block_order": [
+                                    "ingredient-display__modal-heading2",
+                                    "ingredient-display__modal-desc2"
+                                  ]
+                                },
+                                "ingredient-display__modal-image2": {
+                                  "type": "image/image",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "136px",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "43%"
+                                    }
+                                  },
+                                  "blocks": {}
+                                }
+                              },
+                              "block_order": [
+                                "ingredient-display__modal-image2",
+                                "ingredient-display__modal-content2"
+                              ]
+                            }
+                          },
+                          "block_order": [
+                            "ingredient-display__modal-group2"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "ingredient-display__card-heading2",
+                        "ingredient-display__card-desc2",
+                        "ingredient-display__popup-link2"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "ingredient-display__card-image2",
+                    "ingredient-display__card-text-group2"
+                  ]
+                }
+              },
+              "block_order": [
+                "ingredient-display__image-text-card1",
+                "ingredient-display__image-text-card2"
+              ]
+            },
+            "ingredient-display__card-group2": {
+              "type": "$image-text-card-group",
+              "settings": {},
+              "blocks": {
+                "ingredient-display__image-text-card3": {
+                  "type": "$image-text-card",
+                  "settings": {},
+                  "blocks": {
+                    "ingredient-display__card-image3": {
+                      "type": "image/image",
+                      "settings": {
+                        "image": "shopline://shop_images/image_7220328665728424425.png"
+                      },
+                      "blocks": {}
+                    },
+                    "ingredient-display__card-text-group3": {
+                      "type": "$image-text-card-text-group",
+                      "settings": {},
+                      "blocks": {
+                        "ingredient-display__card-desc3": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-block-end": "10px",
+                                "padding-block-start": "10px"
+                              },
+                              "padding-block-end": "0px",
+                              "padding-block-start": "0px"
+                            },
+                            "text": "A natural oil extracted from the seeds of the jojoba plant, rich in vitamins and fatty .",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__card-heading3": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-bottom": "0px",
+                                "padding-top": "0px"
+                              },
+                              "padding-bottom": "0px",
+                              "padding-top": "0px"
+                            },
+                            "text": "Ginger",
+                            "text_align": "left",
+                            "typography": "title6"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__popup-link3": {
+                          "type": "popup-with-link",
+                          "settings": {
+                            "button_style": "link"
+                          },
+                          "disabled": true,
+                          "blocks": {
+                            "ingredient-display__modal-group3": {
+                              "type": "group",
+                              "settings": {
+                                "layout": {
+                                  "@media (--mobile)": {
+                                    "column-gap": "0px",
+                                    "flex-direction": "column",
+                                    "row-gap": "0px"
+                                  },
+                                  "align-items": "stretch",
+                                  "column-gap": "20px",
+                                  "flex-direction": "row",
+                                  "flex-wrap": "nowrap",
+                                  "justify-content": "flex-start",
+                                  "row-gap": "0px"
+                                },
+                                "size": {
+                                  "width": "733px"
+                                },
+                                "spacing": {
+                                  "@media (--mobile)": {
+                                    "padding-bottom": "0px",
+                                    "padding-left": "0px",
+                                    "padding-right": "0px",
+                                    "padding-top": "0px"
+                                  },
+                                  "padding-bottom": "0px",
+                                  "padding-left": "0px",
+                                  "padding-right": "0px",
+                                  "padding-top": "0px"
+                                }
+                              },
+                              "blocks": {
+                                "ingredient-display__modal-content3": {
+                                  "type": "group",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "75%",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "57%"
+                                    },
+                                    "spacing": {
+                                      "@media (--mobile)": {
+                                        "padding-bottom": "20px",
+                                        "padding-left": "20px",
+                                        "padding-right": "20px",
+                                        "padding-top": "20px"
+                                      },
+                                      "padding-bottom": "40px",
+                                      "padding-left": "0px",
+                                      "padding-right": "40px",
+                                      "padding-top": "40px"
+                                    }
+                                  },
+                                  "blocks": {
+                                    "ingredient-display__modal-desc3": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "4px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "10px"
+                                        },
+                                        "text": "Discover the key ingredients behind our formula. Each selected with purpose, purity, and proven results.",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    },
+                                    "ingredient-display__modal-heading3": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "0px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "0px"
+                                        },
+                                        "text": "\u003cstrong style='font-size: 22px'\u003eJojoba Oil\u003c/strong\u003e",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    }
+                                  },
+                                  "block_order": [
+                                    "ingredient-display__modal-heading3",
+                                    "ingredient-display__modal-desc3"
+                                  ]
+                                },
+                                "ingredient-display__modal-image3": {
+                                  "type": "image/image",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "136px",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "43%"
+                                    }
+                                  },
+                                  "blocks": {}
+                                }
+                              },
+                              "block_order": [
+                                "ingredient-display__modal-image3",
+                                "ingredient-display__modal-content3"
+                              ]
+                            }
+                          },
+                          "block_order": [
+                            "ingredient-display__modal-group3"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "ingredient-display__card-heading3",
+                        "ingredient-display__card-desc3",
+                        "ingredient-display__popup-link3"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "ingredient-display__card-image3",
+                    "ingredient-display__card-text-group3"
+                  ]
+                },
+                "ingredient-display__image-text-card4": {
+                  "type": "$image-text-card",
+                  "settings": {},
+                  "blocks": {
+                    "ingredient-display__card-image4": {
+                      "type": "image/image",
+                      "settings": {
+                        "image": "shopline://shop_images/image_7220327492631925015.png"
+                      },
+                      "blocks": {}
+                    },
+                    "ingredient-display__card-text-group4": {
+                      "type": "$image-text-card-text-group",
+                      "settings": {},
+                      "blocks": {
+                        "ingredient-display__card-desc4": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-block-end": "10px",
+                                "padding-block-start": "10px"
+                              },
+                              "padding-block-end": "0px",
+                              "padding-block-start": "0px"
+                            },
+                            "text": "A natural oil extracted from the seeds of the jojoba plant, rich in vitamins and fatty .",
+                            "text_align": "left"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__card-heading4": {
+                          "type": "text",
+                          "settings": {
+                            "spacing": {
+                              "@media (--mobile)": {
+                                "padding-bottom": "0px",
+                                "padding-top": "0px"
+                              },
+                              "padding-bottom": "0px",
+                              "padding-top": "0px"
+                            },
+                            "text": "Star Anise",
+                            "text_align": "left",
+                            "typography": "title6"
+                          },
+                          "blocks": {}
+                        },
+                        "ingredient-display__popup-link4": {
+                          "type": "popup-with-link",
+                          "settings": {
+                            "button_style": "link"
+                          },
+                          "disabled": true,
+                          "blocks": {
+                            "ingredient-display__modal-group4": {
+                              "type": "group",
+                              "settings": {
+                                "layout": {
+                                  "@media (--mobile)": {
+                                    "column-gap": "0px",
+                                    "flex-direction": "column",
+                                    "row-gap": "0px"
+                                  },
+                                  "align-items": "stretch",
+                                  "column-gap": "20px",
+                                  "flex-direction": "row",
+                                  "flex-wrap": "nowrap",
+                                  "justify-content": "flex-start",
+                                  "row-gap": "0px"
+                                },
+                                "size": {
+                                  "width": "733px"
+                                },
+                                "spacing": {
+                                  "@media (--mobile)": {
+                                    "padding-bottom": "0px",
+                                    "padding-left": "0px",
+                                    "padding-right": "0px",
+                                    "padding-top": "0px"
+                                  },
+                                  "padding-bottom": "0px",
+                                  "padding-left": "0px",
+                                  "padding-right": "0px",
+                                  "padding-top": "0px"
+                                }
+                              },
+                              "blocks": {
+                                "ingredient-display__modal-content4": {
+                                  "type": "group",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "75%",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "57%"
+                                    },
+                                    "spacing": {
+                                      "@media (--mobile)": {
+                                        "padding-bottom": "20px",
+                                        "padding-left": "20px",
+                                        "padding-right": "20px",
+                                        "padding-top": "20px"
+                                      },
+                                      "padding-bottom": "40px",
+                                      "padding-left": "0px",
+                                      "padding-right": "40px",
+                                      "padding-top": "40px"
+                                    }
+                                  },
+                                  "blocks": {
+                                    "ingredient-display__modal-desc4": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "4px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "10px"
+                                        },
+                                        "text": "Discover the key ingredients behind our formula. Each selected with purpose, purity, and proven results.",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    },
+                                    "ingredient-display__modal-heading4": {
+                                      "type": "text",
+                                      "settings": {
+                                        "spacing": {
+                                          "@media (--mobile)": {
+                                            "padding-bottom": "0px",
+                                            "padding-top": "0px"
+                                          },
+                                          "padding-bottom": "0px",
+                                          "padding-top": "0px"
+                                        },
+                                        "text": "\u003cstrong style='font-size: 22px'\u003eJojoba Oil\u003c/strong\u003e",
+                                        "text_align": "left"
+                                      },
+                                      "blocks": {}
+                                    }
+                                  },
+                                  "block_order": [
+                                    "ingredient-display__modal-heading4",
+                                    "ingredient-display__modal-desc4"
+                                  ]
+                                },
+                                "ingredient-display__modal-image4": {
+                                  "type": "image/image",
+                                  "settings": {
+                                    "size": {
+                                      "@media (--mobile)": {
+                                        "height": "136px",
+                                        "width": "auto"
+                                      },
+                                      "height": "auto",
+                                      "width": "43%"
+                                    }
+                                  },
+                                  "blocks": {}
+                                }
+                              },
+                              "block_order": [
+                                "ingredient-display__modal-image4",
+                                "ingredient-display__modal-content4"
+                              ]
+                            }
+                          },
+                          "block_order": [
+                            "ingredient-display__modal-group4"
+                          ]
+                        }
+                      },
+                      "block_order": [
+                        "ingredient-display__card-heading4",
+                        "ingredient-display__card-desc4",
+                        "ingredient-display__popup-link4"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "ingredient-display__card-image4",
+                    "ingredient-display__card-text-group4"
+                  ]
+                }
+              },
+              "block_order": [
+                "ingredient-display__image-text-card3",
+                "ingredient-display__image-text-card4"
+              ]
+            },
+            "ingredient-display__image": {
+              "type": "image/image",
+              "settings": {
+                "image": "shopline://shop_images/image_7220330746841407120.png",
+                "size": {
+                  "height": "100%"
+                }
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "ingredient-display__card-group1",
+            "ingredient-display__image",
+            "ingredient-display__card-group2"
+          ]
+        }
+      },
+      "block_order": [
+        "ingredient-display__heading",
+        "ingredient-display__description",
+        "ingredient-display__image-text-area"
+      ]
+    },
+    "main-product-info": {
+      "type": "main-product",
+      "settings": {
+        "color_scheme": "scheme-2",
+        "has_default_variant": true,
+        "hide_other_variants": false,
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "column-gap": "60px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "row-gap": "20px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-block-end": "20px",
+            "padding-block-start": "20px"
+          },
+          "padding-block-end": "60px",
+          "padding-block-start": "60px"
+        }
+      },
+      "disabled": false,
+      "blocks": {
+        "main": {
+          "type": "$product-main",
+          "settings": {},
+          "blocks": {
+            "info": {
+              "type": "$product-info",
+              "settings": {
+                "layout": {
+                  "column-gap": "20px",
+                  "flex-direction": "column",
+                  "flex-wrap": "nowrap",
+                  "row-gap": "20px"
+                }
+              },
+              "blocks": {
+                "1760943105357fc00c5a": {
+                  "type": "shopline://apps/商品评价/blocks/comment-start/bd4a09d9-7542-4e11-931c-19fe441576aa",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "17610396356653da3ea7": {
+                  "type": "text",
+                  "settings": {
+                    "background_color": "rgba(0,0,0,0)",
+                    "size": {
+                      "height": "auto",
+                      "width": "100%"
+                    },
+                    "spacing": {
+                      "padding-bottom": "0px",
+                      "padding-left": "0px",
+                      "padding-right": "0px",
+                      "padding-top": "0px"
+                    },
+                    "text": "\u003cp style=\"line-height: 1.5;\"\u003eSipply Root Beer is a unique blend of classic and innovative flavors. We carefully select natural ingredients and combine traditional brewing techniques with modern tastes to bring you an unprecedented taste experience. This non-alcoholic Root Beer is refreshing and thirst-quenching, boasting a distinctive root botanical aroma and a long-lasting finish. Whether enjoyed alone or shared with friends and family, Sipply Root Beer is your ideal choice for an everyday beverage.\u003c/p\u003e",
+                    "text_align": "left",
+                    "typography": "body4"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761039816628c6610ca": {
+                  "type": "text",
+                  "settings": {
+                    "background_color": "rgba(0,0,0,0)",
+                    "size": {
+                      "height": "auto",
+                      "width": "100%"
+                    },
+                    "spacing": {
+                      "padding-bottom": "0px",
+                      "padding-left": "0px",
+                      "padding-right": "0px",
+                      "padding-top": "0px"
+                    },
+                    "text": "\u003cp style=\"line-height: 1;\"\u003e• Serving Size: 1 Can (330ml)\u003c/p\u003e\n\u003cp style=\"line-height: 1;\"\u003e• ABV (Alcohol by Volume): 0.0% (Non-alcoholic)\u003c/p\u003e\n\u003cp style=\"line-height: 1;\"\u003e• Calories per serving: 120 kcal\u003c/p\u003e",
+                    "text_align": "left",
+                    "typography": "body6"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "176104029056738f6983": {
+                  "type": "product/_detail-dividing-line",
+                  "settings": {
+                    "desktop_dividing_line_height": 1,
+                    "dividing_line_color": "#edeefa",
+                    "dividing_line_height": 1,
+                    "dividing_line_style": "padding_inline",
+                    "show_mobile_line": true,
+                    "show_pc_line": true
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "17610404645410ce2624": {
+                  "type": "product/_detail-dividing-line",
+                  "settings": {
+                    "desktop_dividing_line_height": 1,
+                    "dividing_line_color": "#edeefa",
+                    "dividing_line_height": 1,
+                    "dividing_line_style": "padding_inline",
+                    "show_mobile_line": true,
+                    "show_pc_line": true
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "176104279471104dfeaf": {
+                  "type": "product/_detail-additional",
+                  "settings": {
+                    "custom_page": "",
+                    "description": "\u003cspan style=\"font-size: 12px;\"\u003e• Aroma: Rich, sweet notes of natural vanilla and caramel, complemented by subtle herbal hints of anise and wintergreen.\u003c/span\u003e\u003cbr\u003e\u003cspan style=\"font-size: 12px;\"\u003e• Palate: Smooth on the tongue with a balanced sweetness and fine carbonation. Vibrant root botanical flavors unfold, including licorice, star anise, and a touch of ginger spice.\u003c/span\u003e\u003cbr\u003e\u003cspan style=\"font-size: 12px;\"\u003e• Finish: Clean and lingering, with an earthy freshness and a hint of coolness that leaves a memorable aftertaste.\u003c/span\u003e",
+                    "enabled_fold": true,
+                    "icon": "none",
+                    "title": "Tasting Notes"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761182829045207792e": {
+                  "type": "product/_detail-sell-info",
+                  "settings": {
+                    "direction": "horizontal"
+                  },
+                  "blocks": {
+                    "1761182829046224a980": {
+                      "type": "product/_detail-sell-info-row",
+                      "settings": {
+                        "custom_info_icon": "shopline://shop_images/Mask group_7228559013226486424.png",
+                        "info_icon": "checkmark",
+                        "info_text": "Vanilla"
+                      },
+                      "blocks": {}
+                    },
+                    "17611828290463b01a73": {
+                      "type": "product/_detail-sell-info-row",
+                      "settings": {
+                        "custom_info_icon": "shopline://shop_images/Mask group_7228559237940517532.png",
+                        "info_icon": "leaf",
+                        "info_text": "Star Anise"
+                      },
+                      "blocks": {}
+                    },
+                    "1761182829046cfbc61e": {
+                      "type": "product/_detail-sell-info-row",
+                      "settings": {
+                        "custom_info_icon": "shopline://shop_images/Mask group.png",
+                        "info_icon": "globe",
+                        "info_text": "Caramel"
+                      },
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "1761182829046cfbc61e",
+                    "1761182829046224a980",
+                    "17611828290463b01a73"
+                  ]
+                },
+                "176118414455628703f1": {
+                  "type": "product/_detail-dividing-line",
+                  "settings": {
+                    "desktop_dividing_line_height": 1,
+                    "dividing_line_color": "#edeefa",
+                    "dividing_line_height": 1,
+                    "dividing_line_style": "padding_inline",
+                    "show_mobile_line": true,
+                    "show_pc_line": true
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761185167624178a384": {
+                  "type": "product/_detail-additional",
+                  "settings": {
+                    "custom_page": "",
+                    "description": "\u003cspan style=\"font-size: 12px;\"\u003eFiltered Water, Cane Sugar, Natural Flavors (including Vanilla Extract, Licorice Extract, Anise Extract, Wintergreen Extract, Ginger Extract), Caramel Color, Citric Acid, Sodium Bicarbonate, Potassium Sorbate (Preservative).\u003c/span\u003e",
+                    "enabled_fold": true,
+                    "icon": "none",
+                    "title": "Ingredients"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "1761185214174d0cb7f8": {
+                  "type": "product/_detail-additional",
+                  "settings": {
+                    "custom_page": "",
+                    "description": "\u003cspan style=\"font-size: 12px;\"\u003eShipping across Canada.\u003c/span\u003e\u003cbr\u003e\u003cspan style=\"font-size: 12px;\"\u003eAllow 2-3 business days in processing time and 5-8 business days for delivery after your product has shipped.\u003c/span\u003e",
+                    "enabled_fold": true,
+                    "icon": "none",
+                    "title": "Shipping"
+                  },
+                  "blocks": {},
+                  "block_order": []
+                },
+                "176118622732892d4f4f": {
+                  "type": "shopline://apps/组合销售/blocks/bundle-products/23a516e0-73c0-4bee-abea-2054ab3b348c",
+                  "settings": {},
+                  "disabled": false,
+                  "blocks": {}
+                },
+                "1761213854683e87d032": {
+                  "type": "shopline://apps/款式组合/blocks/product-group/71ffdfcb-410c-4633-8396-7f808ecd60b9",
+                  "settings": {},
+                  "disabled": true,
+                  "blocks": {}
+                },
+                "buy-buttons": {
+                  "type": "product/_detail-buy-buttons",
+                  "settings": {
+                    "button_position": "embed"
+                  },
+                  "blocks": {}
+                },
+                "description": {
+                  "type": "product-description",
+                  "settings": {
+                    "content": "",
+                    "is_fold": false,
+                    "product": "16072242656034601118062470"
+                  },
+                  "blocks": {}
+                },
+                "price": {
+                  "type": "product/_detail-price",
+                  "settings": {
+                    "discount_style": "number",
+                    "layout_template": "sale origin",
+                    "origin_price_desktop_font_size": "body2",
+                    "sale_price_desktop_font_size": "title5",
+                    "save_style": "button"
+                  },
+                  "blocks": {}
+                },
+                "quantity-selector": {
+                  "type": "product/_detail-quantity-selector",
+                  "settings": {
+                    "layout_direction": "column",
+                    "width": "half"
+                  },
+                  "blocks": {}
+                },
+                "share": {
+                  "type": "share",
+                  "settings": {},
+                  "blocks": {}
+                },
+                "title": {
+                  "type": "product/_detail-heading",
+                  "settings": {
+                    "desktop_font_size": "title3",
+                    "heading": "",
+                    "mobile_font_size": "mobile-title3"
+                  },
+                  "blocks": {}
+                },
+                "variant-picker": {
+                  "type": "product/_detail-variant-picker",
+                  "settings": {
+                    "color_swatch_type": "round-corner",
+                    "desktop_layout_direction": "column",
+                    "size": "medium"
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "1760943105357fc00c5a",
+                "17610404645410ce2624",
+                "title",
+                "17610396356653da3ea7",
+                "1761039816628c6610ca",
+                "176104029056738f6983",
+                "variant-picker",
+                "quantity-selector",
+                "price",
+                "buy-buttons",
+                "share",
+                "176104279471104dfeaf",
+                "1761182829045207792e",
+                "176118414455628703f1",
+                "description",
+                "1761185167624178a384",
+                "1761185214174d0cb7f8",
+                "176118622732892d4f4f",
+                "1761213854683e87d032"
+              ]
+            },
+            "media-group": {
+              "type": "$product-media-group",
+              "settings": {
+                "size": {
+                  "@media (--mobile)": {
+                    "width": "auto"
+                  },
+                  "height": "auto",
+                  "width": "50%"
+                }
+              },
+              "blocks": {
+                "media": {
+                  "type": "$product-media",
+                  "settings": {
+                    "desktop_image_fill_type": "contain",
+                    "desktop_image_ratio": "original",
+                    "desktop_layout": "stacked",
+                    "desktop_thumbnail_position": "bottom",
+                    "desktop_thumbnail_size": "large",
+                    "image_quality": "100",
+                    "mobile_image_fill_type": "cover",
+                    "mobile_image_ratio": "1/1",
+                    "mobile_layout": "hide-thumbnail",
+                    "mobile_thumbnail_size": "large"
+                  },
+                  "blocks": {
+                    "media-layer": {
+                      "type": "$product-media-layer",
+                      "settings": {},
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "media-layer"
+                  ]
+                }
+              },
+              "block_order": [
+                "media"
+              ]
+            }
+          },
+          "block_order": [
+            "media-group",
+            "info"
+          ]
+        }
+      },
+      "block_order": [
+        "main"
+      ]
+    },
+    "recommended-product": {
+      "type": "recommended-product",
+      "settings": {
+        "color_scheme": "scheme-1",
+        "layout": {
+          "@media (--mobile)": {
+            "column-gap": "20px",
+            "row-gap": "20px"
+          },
+          "column-gap": "40px",
+          "flex-direction": "column",
+          "flex-wrap": "nowrap",
+          "row-gap": "40px"
+        },
+        "spacing": {
+          "@media (--mobile)": {
+            "padding-bottom": "20px",
+            "padding-top": "20px"
+          },
+          "padding-bottom": "60px",
+          "padding-top": "60px"
+        }
+      },
+      "disabled": true,
+      "blocks": {
+        "recommended-product__heading": {
+          "type": "heading",
+          "settings": {
+            "text": "best sellers",
+            "text_align": "center"
+          },
+          "blocks": {}
+        },
+        "recommended-product__list": {
+          "type": "product-list/list",
+          "settings": {
+            "desktop_columns": 4,
+            "desktop_enable_slider": true,
+            "mobile_columns": 2,
+            "mobile_enable_slider": true,
+            "page_size": 5
+          },
+          "blocks": {
+            "recommended-product__list__card": {
+              "type": "product-card/card",
+              "settings": {},
+              "blocks": {
+                "recommended-product__list__card__image": {
+                  "type": "product-image",
+                  "settings": {},
+                  "blocks": {
+                    "recommended-product__list__card__image__layer-1": {
+                      "type": "product-card/_layer",
+                      "settings": {},
+                      "blocks": {
+                        "recommended-product__list__card__image__layer-1__discount-tag": {
+                          "type": "product-card/_discount-tag",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "recommended-product__list__card__image__layer-1__discount-tag"
+                      ]
+                    },
+                    "recommended-product__list__card__image__layer-2": {
+                      "type": "product-card/_layer",
+                      "settings": {
+                        "layout": {
+                          "justify-content": "flex-end"
+                        }
+                      },
+                      "blocks": {
+                        "recommended-product__list__card__image__layer-2__quick-add": {
+                          "type": "product-card/_quick-add",
+                          "settings": {},
+                          "blocks": {}
+                        }
+                      },
+                      "block_order": [
+                        "recommended-product__list__card__image__layer-2__quick-add"
+                      ]
+                    }
+                  },
+                  "block_order": [
+                    "recommended-product__list__card__image__layer-1",
+                    "recommended-product__list__card__image__layer-2"
+                  ]
+                },
+                "recommended-product__list__card__info": {
+                  "type": "product-card/_info",
+                  "settings": {},
+                  "blocks": {
+                    "recommended-product__list__card__info__buy-button": {
+                      "type": "product-buy-button",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "recommended-product__list__card__info__description": {
+                      "type": "product-card/_description",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "recommended-product__list__card__info__price": {
+                      "type": "product-price",
+                      "settings": {},
+                      "blocks": {}
+                    },
+                    "recommended-product__list__card__info__title": {
+                      "type": "product-title",
+                      "settings": {},
+                      "blocks": {}
+                    }
+                  },
+                  "block_order": [
+                    "recommended-product__list__card__info__title",
+                    "recommended-product__list__card__info__price",
+                    "recommended-product__list__card__info__description",
+                    "recommended-product__list__card__info__buy-button"
+                  ]
+                }
+              },
+              "block_order": [
+                "recommended-product__list__card__image",
+                "recommended-product__list__card__info"
+              ]
+            }
+          },
+          "block_order": [
+            "recommended-product__list__card"
+          ]
+        }
+      },
+      "block_order": [
+        "recommended-product__heading",
+        "recommended-product__list"
+      ]
+    }
+  },
+  "order": [
+    "main-product-info",
+    "1761818718126fd70071",
+    "ingredient-display",
+    "1760693639422f0592c2",
+    "17610121213778eff4de",
+    "17606970175690337722",
+    "recommended-product",
+    "1760924979210fce9714",
+    "1760925850380087216e",
+    "17609298594481211a27",
+    "1760931408732af6b319",
+    "17612964038694e5b51d",
+    "17612079071653e712b3",
+    "17612964519393c58aa0",
+    "1761015928092e792918",
+    "17609399525235e11cb6",
+    "1761016093288742a673"
+  ]
+}

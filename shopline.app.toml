@@ -11,4 +11,4 @@ subPathPrefix = "apps"
 proxyUrl = ""
 
 [access_scopes]
-scopes = "write_products,read_products,read_inventory,read_location,write_inventory"
+scopes = "write_products,read_products,read_inventory,read_location,write_inventory,read_orders"

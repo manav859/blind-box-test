@@ -4,6 +4,10 @@ import shopline from './shopline';
 import { readFileSync } from 'fs';
 import serveStatic from 'serve-static';
 import { webhooksController } from './controller/webhook';
+// Blind-box storefront API controller (product status for theme extension block)
+import { createBlindBoxStorefrontRouter } from './controller/storefront/blind-box';
+// Blind-box admin API controller (pool CRUD, assignment queries, debug endpoints)
+import { createBlindBoxAdminRouter } from './controller/admin/blind-box';
 import { initializeBlindBoxPersistence } from './db/client';
 import { logger } from './lib/logger';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
@@ -37,6 +41,17 @@ async function start() {
   app.get(shopline.config.auth.callbackPath, shopline.auth.callback(), shopline.redirectToAppHome());
   app.post('/api/webhooks', express.text({ type: '*/*' }), webhooksController());
 
+  // Blind-box admin API — requires authenticated SHOPLINE session
+  app.use(
+    '/api/blind-box',
+    shopline.validateAuthentication(),
+    express.json(),
+    createBlindBoxAdminRouter()
+  );
+
+  // Blind-box storefront API — public, no auth required
+  app.use('/api/storefront/blind-box', createBlindBoxStorefrontRouter());
+
   app.use(shopline.cspHeaders());
   app.use(serveStatic(STATIC_PATH, { index: false }));
 
@@ -47,7 +62,7 @@ async function start() {
       .send(readFileSync(join(STATIC_PATH, 'index.html')));
   });
 
-  app.listen(resolvedPort.port, () => {
+  app.listen(resolvedPort.port, '0.0.0.0', () => {
     logger.info('SHOPLINE backend started', {
       port: resolvedPort.port,
       portSource: resolvedPort.source,

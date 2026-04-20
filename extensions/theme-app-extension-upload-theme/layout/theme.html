@@ -57,9 +57,11 @@
         font-weight: 700;
       }
     </style>
-    {{#content "header" /}}
-    <link href="{{`theme.css` | asset_url()}}" rel="stylesheet">
-    <script src="{{`blind-box-theme-core.js` | asset_url()}}" defer></script>
+    {{#content "header"}}{{/content}}
+    <link href="{{ "theme.css" | asset_url() }}" rel="stylesheet">
+    <link href="{{ "blind-box-product-shell.css" | asset_url() }}" rel="stylesheet">
+    <script src="{{ "blind-box-theme-core.js" | asset_url() }}" defer></script>
+    <script src="{{ "blind-box-product-shell.js" | asset_url() }}" defer></script>
     <script>
       window.routes = {
         cart_change_url: "{{ routes.cart_change_url }}",
@@ -69,13 +71,13 @@
   </head>
   <body class="layout-{{ layout.name }}">
     <div class="store-shell">
-      {{#section "storefront-header" /}}
+      {{#section "storefront-header"}}{{/section}}
       <main class="store-shell__main">
-        {{#content "layout" /}}
+        {{#content "layout"}}{{/content}}
       </main>
-      {{#section "storefront-footer" /}}
+      {{#section "storefront-footer"}}{{/section}}
     </div>
-    <script src="{{`theme-interactions.js` | asset_url()}}" defer></script>
-    {{#content "footer" /}}
+    <script src="{{ "theme-interactions.js" | asset_url() }}" defer></script>
+    {{#content "footer"}}{{/content}}
   </body>
 </html>

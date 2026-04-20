@@ -1,5 +1,3 @@
-{{#var paginate = collection | get_product_pagination(24) /}}
-
 <section class="theme-page collection-page catalog-page">
   <div class="theme-page__hero catalog-page__hero">
     <div class="theme-page__panel catalog-page__hero-copy">
@@ -64,7 +62,7 @@
     <div class="catalog-page__toolbar-copy">
       <span class="theme-page__kicker">Browse the assortment</span>
       <h2>Live product grid</h2>
-      <p>Every card below is rendered from the real collection listing, with pagination controlled by the live catalog.</p>
+      <p>Every card below is rendered from the real collection listing.</p>
     </div>
 
     <div class="catalog-page__toolbar-actions">
@@ -89,23 +87,15 @@
   </div>
 
   <div class="theme-page__product-grid catalog-page__grid">
-    {{#for paginate.list as |product_item|}}
-      {{#component
-        "product-card/product-card"
-        product=product_item
-        meta_label=collection.title
-        badge_text=section.settings.badge_text
-        show_quick_add="true"
-      /}}
+    {{#each collection.products as |product_item|}}
+      {{#component "product-card/product-card" product=product_item meta_label=collection.title badge_text=section.settings.badge_text show_quick_add="true" /}}
     {{else}}
       <div class="theme-page__empty">
         <h3>No products in this collection yet.</h3>
         <p>Add or publish products in SHOPLINE admin and this collection template will render them automatically.</p>
       </div>
-    {{/for}}
+    {{/each}}
   </div>
-
-  {{#component "pagination/pagination" paginate=paginate /}}
 </section>
 
 {{#schema}}

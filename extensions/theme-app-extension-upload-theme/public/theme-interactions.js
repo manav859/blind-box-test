@@ -121,6 +121,12 @@
 
     sectionRoot.setAttribute("data-selected-variant-available", isAvailable ? "true" : "false");
 
+    // Toggle the blind-box mystery product note based on tag detection
+    var blindBoxNote = sectionRoot.querySelector("[data-blind-box-note]");
+    if (blindBoxNote) {
+      blindBoxNote.hidden = !isBlindBox;
+    }
+
     var mediaId = selectedOption
       ? normalizeValue(selectedOption.getAttribute("data-media-id"))
       : normalizeValue(sectionRoot.getAttribute("data-initial-media-id"));
