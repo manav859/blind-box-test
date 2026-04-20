@@ -150,26 +150,8 @@ select {
 }
 
 /* Announcement bar ticker feel */
-.store-shell__announcement {
-  background: linear-gradient(135deg, #424cab 0%, #5a62c9 100%);
-}
 
 /* ═══════════════════════════════════════════════════════ */
-
-.store-shell {
-  min-height: 100vh;
-}
-
-.store-shell__announcement {
-  padding: 0.85rem 1rem;
-  text-align: center;
-  background: #424cab;
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
 
 .store-shell__header,
 .store-shell__footer,
