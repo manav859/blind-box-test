@@ -1,10 +1,10 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://everybody-hop-kruger-somebody.trycloudflare.com"
+appUrl = "https://blind-box-test.onrender.com"
 appSecret = "e4ecdf060c05e73e9c3e26acf921a6230f5186ca"
 appCallbackUrlList = [
-  "https://everybody-hop-kruger-somebody.trycloudflare.com/api/auth/callback"
+  "https://blind-box-test.onrender.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"

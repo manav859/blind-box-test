@@ -1,9 +1,9 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://participated-fan-athletes-amsterdam.trycloudflare.com"
+appUrl = "https://blind-box-test.onrender.com"
 appCallbackUrlList = [
-  "https://participated-fan-athletes-amsterdam.trycloudflare.com/api/auth/callback"
+  "https://blind-box-test.onrender.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"
