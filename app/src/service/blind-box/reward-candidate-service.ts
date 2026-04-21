@@ -2,6 +2,7 @@ import {
   getBlindBoxProductTags,
   hasBlindBoxCollectionTag,
   parseBlindBoxCollectionTag,
+  parseBlindBoxWeightTag,
 } from '../../domain/blind-box/product-detection';
 import { BlindBox, ExcludedRewardCandidate, RewardCandidate, RewardGroup } from '../../domain/blind-box/types';
 import { CatalogGatewayError } from '../../integration/shopline/catalog-gateway';
@@ -238,7 +239,7 @@ export class RewardCandidateService {
         productTitle: product.title,
         variantTitle: variantChoice.variant.title,
         inventoryQuantity: variantChoice.variant.inventoryQuantity,
-        selectionWeight: 1,
+        selectionWeight: parseBlindBoxWeightTag(Array.isArray(product.tags) ? product.tags : []),
         payloadJson: JSON.stringify({
           collectionId: collectionContext.collection.id,
           collectionHandle: collectionContext.collection.handle,
@@ -351,39 +352,16 @@ export class RewardCandidateService {
     if (hasBlindBoxCollectionTag(productTags)) {
       throw new RewardCandidateResolutionError(
         'BLIND_BOX_COLLECTION_TAG_INVALID',
-        'The blind-box product tag "blind-box-collection:" is present but does not contain a valid collection handle',
+        'The blind-box product has a "blind-box-collection:" tag but the collection handle is empty. ' +
+        'Fix the tag in SHOPLINE: e.g. "blind-box-collection:my-rewards".',
       );
     }
 
-    const link = await this.dependencies.rewardGroupLinkRepository.findByBlindBoxId(shop, blindBox.id);
-    if (!link) {
-      throw new RewardCandidateResolutionError(
-        'BLIND_BOX_COLLECTION_NOT_CONFIGURED',
-        'No reward collection is configured. Add a product tag like "blind-box-collection:anime-figures" or keep a fallback admin link.',
-      );
-    }
-
-    const rewardGroup = await this.dependencies.rewardGroupRepository.findById(shop, link.rewardGroupId);
-    if (!rewardGroup) {
-      throw new RewardCandidateResolutionError(
-        'BLIND_BOX_REWARD_GROUP_MISSING',
-        'The fallback linked reward group was not found',
-      );
-    }
-
-    const collection = await this.dependencies.catalogService.getCollection(shop, rewardGroup.shoplineCollectionId, {
-      accessToken: options.accessToken,
-    });
-
-    return {
-      rewardGroup,
-      collection: {
-        id: collection.id,
-        title: collection.title,
-        handle: collection.handle,
-      },
-      resolutionSource: 'reward_group_link',
-    };
+    throw new RewardCandidateResolutionError(
+      'BLIND_BOX_COLLECTION_NOT_CONFIGURED',
+      'No reward collection configured. Add tag "blind-box-collection:<handle>" to the blind-box product in SHOPLINE. ' +
+      'The handle is the collection URL slug (e.g. "blind-box-collection:anime-figures").',
+    );
   }
 
   private async validateCandidateOperationalReadiness(

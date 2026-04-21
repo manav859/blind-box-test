@@ -1091,13 +1091,27 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     const responseText = await response.text();
 
     if (!response.ok) {
+      const status = response.status;
+      const disposition: InventoryGatewayFailureDisposition =
+        status === 429 || status >= 500 ? 'indeterminate' : 'definitive';
+      const code =
+        status === 401
+          ? 'SHOPLINE_INVENTORY_AUTH_ERROR'
+          : status === 403
+          ? 'SHOPLINE_INVENTORY_FORBIDDEN'
+          : status === 429
+          ? 'SHOPLINE_INVENTORY_RATE_LIMITED'
+          : status >= 500
+          ? 'SHOPLINE_INVENTORY_SERVER_ERROR'
+          : 'SHOPLINE_INVENTORY_HTTP_ERROR';
+
       throw new InventoryGatewayError(
-        `SHOPLINE inventory request failed with ${response.status} ${response.statusText}`,
+        `SHOPLINE inventory request failed with ${status} ${response.statusText}`,
         {
-          code: 'SHOPLINE_INVENTORY_HTTP_ERROR',
-          disposition: 'definitive',
+          code,
+          disposition,
           details: {
-            status: response.status,
+            status,
             responseText,
             traceId,
           },

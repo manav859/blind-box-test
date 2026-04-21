@@ -49,6 +49,23 @@ export function getRuntimeConfig(): RuntimeConfig {
     return cachedConfig;
   }
 
+  const rawMode = (process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE || '').trim().toLowerCase();
+  if (rawMode !== 'execute' && rawMode !== 'deferred') {
+    throw new Error(
+      'BLIND_BOX_INVENTORY_EXECUTION_MODE is required and must be "execute" or "deferred". ' +
+      'Set this env var before starting the server.',
+    );
+  }
+
+  const executionMode = rawMode as RuntimeConfig['blindBoxInventoryExecutionMode'];
+
+  if (executionMode === 'execute' && !process.env.BLIND_BOX_SHOPLINE_LOCATION_ID) {
+    throw new Error(
+      'BLIND_BOX_SHOPLINE_LOCATION_ID is required when BLIND_BOX_INVENTORY_EXECUTION_MODE=execute. ' +
+      'Find your location ID in SHOPLINE admin → Settings → Locations.',
+    );
+  }
+
   cachedConfig = {
     blindBoxDatabasePath: process.env.BLIND_BOX_DATABASE_PATH || DEFAULT_BLIND_BOX_DATABASE_PATH,
     blindBoxDatabaseBusyTimeoutMs: readNumberEnv(
@@ -56,8 +73,7 @@ export function getRuntimeConfig(): RuntimeConfig {
       DEFAULT_SQLITE_BUSY_TIMEOUT_MS,
     ),
     logLevel: readLogLevelEnv(),
-    blindBoxInventoryExecutionMode:
-      process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE === 'execute' ? 'execute' : 'deferred',
+    blindBoxInventoryExecutionMode: executionMode,
     shoplineAdminApiVersion: process.env.SHOPLINE_ADMIN_API_VERSION || DEFAULT_SHOPLINE_ADMIN_API_VERSION,
     shoplineConfiguredScopes: readScopeListEnv(),
     blindBoxShoplineLocationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID || null,

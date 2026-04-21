@@ -10,6 +10,7 @@ import { createBlindBoxStorefrontRouter } from './controller/storefront/blind-bo
 import { createBlindBoxAdminRouter } from './controller/admin/blind-box';
 import { initializeBlindBoxPersistence } from './db/client';
 import { logger } from './lib/logger';
+import { getRuntimeConfig } from './lib/config';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
 
 const resolvedPort = resolveBackendPort();
@@ -19,7 +20,51 @@ const STATIC_PATH =
     ? `${process.cwd()}/../web/dist`
     : `${process.cwd()}/../web`;
 
+function validateStartupConfig(): void {
+  const cfg = getRuntimeConfig();
+
+  const sessionDbPath = process.env.SHOPLINE_SESSION_DB_PATH || `${process.cwd()}/database.sqlite`;
+  const isExecuteMode = cfg.blindBoxInventoryExecutionMode === 'execute';
+
+  const requiredScopes = ['read_products', 'read_inventory', 'read_location', 'write_inventory', 'read_orders'];
+  const missingScopes = requiredScopes.filter((s) => !cfg.shoplineConfiguredScopes.includes(s));
+
+  logger.info('Blind-box backend ready', {
+    environment: process.env.NODE_ENV || 'development',
+    executionMode: cfg.blindBoxInventoryExecutionMode,
+    inventoryLive: isExecuteMode,
+    locationId: cfg.blindBoxShoplineLocationId ?? '(not set)',
+    backendUrl: process.env.SHOPLINE_APP_URL ?? '(not set)',
+    adminApiVersion: cfg.shoplineAdminApiVersion,
+    configuredScopes: cfg.shoplineConfiguredScopes,
+    missingScopes: missingScopes.length ? missingScopes : 'none',
+    blindBoxDatabasePath: cfg.blindBoxDatabasePath,
+    sessionDatabasePath: sessionDbPath,
+    logLevel: cfg.logLevel,
+  });
+
+  if (!isExecuteMode) {
+    logger.warn(
+      'DEFERRED MODE — assignments will be created but SHOPLINE inventory will NOT be decremented. ' +
+      'Set BLIND_BOX_INVENTORY_EXECUTION_MODE=execute for production.',
+    );
+  }
+
+  if (!process.env.SHOPLINE_APP_SECRET) {
+    throw new Error('SHOPLINE_APP_SECRET is required. Set it in Render env vars from the SHOPLINE Partner Dashboard.');
+  }
+
+  if (!process.env.SHOPLINE_APP_URL && !process.env.SHOPLINE_APP_KEY) {
+    logger.warn('SHOPLINE_APP_URL or SHOPLINE_APP_KEY not set — app may fail to initialize');
+  }
+
+  if (missingScopes.length > 0) {
+    logger.warn('SCOPES env is missing required blind-box scopes — inventory execution may fail', { missingScopes });
+  }
+}
+
 async function start() {
+  validateStartupConfig();
   await initializeBlindBoxPersistence();
 
   if (resolvedPort.invalidSources.length > 0) {

@@ -3,7 +3,7 @@ import { SQLiteSessionStorage } from '@shoplineos/shopline-app-session-storage-s
 import 'dotenv/config';
 import { resolveShoplineAppConfig } from './lib/shopline-app-config';
 
-const DB_PATH = `${process.cwd()}/database.sqlite`;
+const DB_PATH = process.env.SHOPLINE_SESSION_DB_PATH || `${process.cwd()}/database.sqlite`;
 const appConfig = resolveShoplineAppConfig();
 
 const shopline = shoplineApp({

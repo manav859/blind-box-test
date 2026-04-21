@@ -25,7 +25,22 @@ export const webhooksController: () => RequestHandler = () => async (_req, res) 
     const data = await shopline.webhookAuthentication(_req);
     const { topic, session, payload } = data;
     const shop = session?.handle || getShopFromWebhookHeaders(_req.headers);
+
+    if (!shop) {
+      logger.warn('Webhook rejected: could not resolve shop from session or headers', { requestId, topic });
+      res.status(400).send({ success: false, error: { code: 'MISSING_SHOP', message: 'Could not resolve shop identity from this request' } });
+      return;
+    }
+
     const webhookEventService = await getWebhookEventService();
+    const explicitWebhookId =
+      (_req.headers['x-shopline-webhook-id'] as string | undefined) ||
+      (_req.headers['x-shopline-event-id'] as string | undefined);
+
+    if (!explicitWebhookId) {
+      logger.warn('Webhook received without explicit x-shopline-webhook-id — using payload fingerprint for deduplication', { requestId, shop, topic });
+    }
+
     const eventId = webhookEventService.buildEventId(_req.headers, shop, topic, payload);
 
     logger.info('Received verified webhook event', {

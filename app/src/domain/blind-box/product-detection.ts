@@ -1,5 +1,6 @@
 const SUPPORTED_BLIND_BOX_PRODUCT_TAGS = new Set(['blind-box', 'blind-box-active']);
 const BLIND_BOX_COLLECTION_TAG_PREFIX = 'blind-box-collection:';
+const BLIND_BOX_WEIGHT_TAG_PREFIX = 'blind-box-weight:';
 
 interface BlindBoxProductLike {
   tags?: string[] | string | null;
@@ -87,4 +88,16 @@ export function detectBlindBoxProduct(
 
 export function isBlindBoxProduct(product: BlindBoxProductLike | null | undefined): boolean {
   return detectBlindBoxProduct(product).isBlindBox;
+}
+
+export function parseBlindBoxWeightTag(tags: string[]): number {
+  const normalizedTags = normalizeProductTags(tags);
+  const weightTag = normalizedTags.find((tag) => tag.startsWith(BLIND_BOX_WEIGHT_TAG_PREFIX));
+  if (!weightTag) return 1;
+
+  const weightStr = weightTag.slice(BLIND_BOX_WEIGHT_TAG_PREFIX.length).trim();
+  const weight = Number(weightStr);
+  if (!Number.isFinite(weight) || weight <= 0) return 1;
+
+  return weight;
 }

@@ -381,18 +381,18 @@ export class PaidOrderAssignmentService {
     const usesCollectionLinkedRewards =
       Boolean(existingAssignment?.selectedRewardProductId) || Boolean(blindBox.shoplineProductId);
 
-    if (usesCollectionLinkedRewards) {
-      return this.processCollectionLinkedLine(
-        shop,
+    if (!usesCollectionLinkedRewards) {
+      return toAssignmentFailure(
+        blindBox.id,
+        lineItem.id,
         orderId,
-        blindBox,
-        lineItem,
-        existingAssignment,
-        assignmentIdempotencyKey,
+        'REWARD_COLLECTION_NOT_CONFIGURED',
+        'Blind-box product is missing a SHOPLINE product ID. ' +
+        'Ensure the product is tagged with "blind-box" and "blind-box-collection:<handle>" in SHOPLINE.',
       );
     }
 
-    return this.processLegacyManualPoolLine(
+    return this.processCollectionLinkedLine(
       shop,
       orderId,
       blindBox,
