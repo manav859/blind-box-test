@@ -1,6 +1,6 @@
 import express from 'express';
 import { join } from 'path';
-import shopline from './shopline';
+import shopline, { SESSION_DB_PATH } from './shopline';
 import { readFileSync } from 'fs';
 import serveStatic from 'serve-static';
 import { webhooksController } from './controller/webhook';
@@ -23,7 +23,7 @@ const STATIC_PATH =
 function validateStartupConfig(): void {
   const cfg = getRuntimeConfig();
 
-  const sessionDbPath = process.env.SHOPLINE_SESSION_DB_PATH || `${process.cwd()}/database.sqlite`;
+  const sessionDbPath = SESSION_DB_PATH;
   const isExecuteMode = cfg.blindBoxInventoryExecutionMode === 'execute';
 
   const requiredScopes = ['read_products', 'read_inventory', 'read_location', 'write_inventory', 'read_orders'];
@@ -88,7 +88,8 @@ async function start() {
       appUrl: process.env.SHOPLINE_APP_URL || 'missing',
       executionMode: process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE || 'missing',
       locationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID ? 'set' : 'missing',
-      sessionDb: process.env.SHOPLINE_SESSION_DB_PATH || '(default)',
+      sessionDb: SESSION_DB_PATH,
+      sessionPersistent: SESSION_DB_PATH.startsWith('/var/data'),
     });
   });
 

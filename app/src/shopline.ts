@@ -4,8 +4,15 @@ import 'dotenv/config';
 import { resolveShoplineAppConfig } from './lib/shopline-app-config';
 import { logger } from './lib/logger';
 
-const DB_PATH = process.env.SHOPLINE_SESSION_DB_PATH || `${process.cwd()}/database.sqlite`;
+export const SESSION_DB_PATH = process.env.SHOPLINE_SESSION_DB_PATH || `${process.cwd()}/database.sqlite`;
+
 const appConfig = resolveShoplineAppConfig();
+
+logger.info('Session storage initializing', {
+  sessionDbPath: SESSION_DB_PATH,
+  envVarSet: Boolean(process.env.SHOPLINE_SESSION_DB_PATH),
+  persistent: SESSION_DB_PATH.startsWith('/var/data'),
+});
 
 const shopline = shoplineApp({
   appKey: appConfig.appKey,
@@ -13,7 +20,7 @@ const shopline = shoplineApp({
   appUrl: appConfig.appUrl,
   authPathPrefix: '/api/auth',
   scopes: appConfig.scopes,
-  sessionStorage: new SQLiteSessionStorage(DB_PATH),
+  sessionStorage: new SQLiteSessionStorage(SESSION_DB_PATH),
   isEmbeddedApp: true,
   webhooks: {
     'apps/installed_uninstalled': {
@@ -25,6 +32,12 @@ const shopline = shoplineApp({
   },
   hooks: {
     afterAuth: async ({ session }) => {
+      logger.info('OAuth complete — session persisted', {
+        shop: session.handle,
+        sessionId: session.id,
+        sessionDbPath: SESSION_DB_PATH,
+        persistent: SESSION_DB_PATH.startsWith('/var/data'),
+      });
       try {
         await shopline.registerWebhooks({ session });
         logger.info('Webhooks registered after install', { shop: session.handle });
