@@ -39,7 +39,7 @@ function walkDir(dir, base) {
   return results;
 }
 
-const srcDir = path.join(__dirname, 'extensions', 'theme-app-extension-upload-theme');
+const srcDir = path.join(__dirname, 'Sipply1-extracted');
 const outFile = path.join(__dirname, 'sipply1-blind-box-theme.zip');
 
 const files = walkDir(srcDir, '');

@@ -2351,7 +2351,7 @@
           "type": "text",
           "id": "blind_box_backend_url",
           "label": "Backend URL",
-          "default": "https://participated-fan-athletes-amsterdam.trycloudflare.com",
+          "default": "https://blind-box-test.onrender.com",
           "info": "URL of the blind box backend (Render or Cloudflare tunnel). Update when backend URL changes."
         }
       ]

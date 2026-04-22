@@ -2,7 +2,7 @@
 
 <script>
   window.blindBoxAppUrl = "{{ section.settings.backend_url }}";
-  window.blindBoxShop = "{{ shop.permanent_domain | remove('.myshopline.com') }}";
+  window.blindBoxShop = "{{ shop.permanent_domain }}".replace(/\.myshopline\.com$/i, "");
 </script>
 
 {{#component "script" src="public/blind-box-theme-core.js" | asset_url() /}}

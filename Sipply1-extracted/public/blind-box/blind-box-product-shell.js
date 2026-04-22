@@ -152,7 +152,7 @@
       }
     }
 
-    if (details.productId) {
+    if (details.productId && details.isEligible) {
       fetchBackendStatus(page, details.productId);
     }
   }
