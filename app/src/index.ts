@@ -81,6 +81,17 @@ async function start() {
 
   const app = express();
 
+  app.get('/api/health', (_req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      appKey: process.env.SHOPLINE_APP_KEY ? process.env.SHOPLINE_APP_KEY.slice(0, 8) + '...' : 'missing',
+      appUrl: process.env.SHOPLINE_APP_URL || 'missing',
+      executionMode: process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE || 'missing',
+      locationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID ? 'set' : 'missing',
+      sessionDb: process.env.SHOPLINE_SESSION_DB_PATH || '(default)',
+    });
+  });
+
   app.get(shopline.config.auth.path, shopline.auth.begin());
 
   app.get(shopline.config.auth.callbackPath, shopline.auth.callback(), shopline.redirectToAppHome());

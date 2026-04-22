@@ -22,9 +22,12 @@ function crc32(buf) {
 function u16(n) { const b = Buffer.alloc(2); b.writeUInt16LE(n, 0); return b; }
 function u32(n) { const b = Buffer.alloc(4); b.writeUInt32LE(n >>> 0, 0); return b; }
 
+const EXCLUDED_DIRS = new Set(['.git', 'node_modules', '.DS_Store']);
+
 function walkDir(dir, base) {
   const results = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (EXCLUDED_DIRS.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     const rel = base ? base + '/' + entry.name : entry.name;
     if (entry.isDirectory()) {
@@ -36,8 +39,8 @@ function walkDir(dir, base) {
   return results;
 }
 
-const srcDir = path.join(__dirname, 'Sipply1-extracted');
-const outFile = path.join(__dirname, 'Sipply1-new.zip');
+const srcDir = path.join(__dirname, 'extensions', 'theme-app-extension-upload-theme');
+const outFile = path.join(__dirname, 'sipply1-blind-box-theme.zip');
 
 const files = walkDir(srcDir, '');
 const localHeaders = [];

@@ -5,7 +5,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npx shopline *)",
       "Bash(node -e ' *)",
-      "Bash(powershell -command \"Expand-Archive -Path Sipply1.zip -DestinationPath Sipply1-extracted -Force\")"
+      "Bash(powershell -command \"Expand-Archive -Path Sipply1.zip -DestinationPath Sipply1-extracted -Force\")",
+      "Bash(npx tsc *)"
     ]
   }
 }
