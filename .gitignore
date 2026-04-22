@@ -2,6 +2,7 @@ node_modules
 dist/
 .env
 .env.*
+shopline.app.*.toml
 .DS_Store
 logs
 *.log

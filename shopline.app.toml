@@ -1,8 +1,7 @@
 
 appName = "blindbox-test-01"
-appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
+appKey = "78c0acfbdbe0f6d43be821f883152d61b13a6692"
 appUrl = "https://blind-box-test.onrender.com"
-appSecret = "e4ecdf060c05e73e9c3e26acf921a6230f5186ca"
 appCallbackUrlList = [
   "https://blind-box-test.onrender.com/api/auth/callback"
 ]

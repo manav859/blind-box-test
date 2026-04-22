@@ -27,6 +27,8 @@ services:
         value: execute
       - key: LOG_LEVEL
         value: info
+      - key: SHOPLINE_SESSION_DB_PATH
+        value: /var/data/sessions.sqlite
     disk:
       name: blindbox-data
       mountPath: /var/data

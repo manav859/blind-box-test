@@ -83,15 +83,6 @@ export const webhooksController: () => RequestHandler = () => async (_req, res) 
         });
         return;
       }
-      case 'products/create':
-        await webhookEventService.recordReceivedEvent({
-          shop,
-          topic,
-          eventId,
-          payload: JSON.stringify(payload || {}),
-        });
-        await webhookEventService.markIgnored(shop, eventId);
-        break;
       case 'customers/redact':
         await webhookEventService.recordReceivedEvent({
           shop,

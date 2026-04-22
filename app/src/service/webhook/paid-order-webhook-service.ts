@@ -63,6 +63,16 @@ export class PaidOrderWebhookService {
     payload: OrderPaidWebhookPayload,
   ): Promise<PaidOrderWebhookProcessingResult> {
     const shop = getShopFromHeaders(headers);
+    if (!shop) {
+      this.dependencies.logger.error('Rejected orders/paid webhook: missing x-shopline-shop-domain header');
+      return {
+        eventId: 'unknown',
+        status: 'failed',
+        shouldAcknowledge: false,
+        summary: { message: 'Missing shop identity in webhook headers' },
+      };
+    }
+
     const topic = 'orders/paid';
     const eventId = this.dependencies.webhookEventService.buildEventId(headers, shop, topic, payload);
     const existingEvent = await this.dependencies.webhookEventService.recordReceivedEvent({
