@@ -1,6 +1,6 @@
 import sqlite3 from 'sqlite3';
 import { dirname } from 'path';
-import { mkdirSync } from 'fs';
+import { existsSync, accessSync, mkdirSync, constants } from 'fs';
 import { getRuntimeConfig } from '../lib/config';
 import { logger } from '../lib/logger';
 import { runBlindBoxMigrations } from './migrations/run-migrations';
@@ -91,15 +91,61 @@ export class BlindBoxDatabase {
 
 let blindBoxDatabasePromise: Promise<BlindBoxDatabase> | null = null;
 
+function ensureBlindBoxDbDirectory(databasePath: string): void {
+  const parentDir = dirname(databasePath);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const parentExists = existsSync(parentDir);
+  const fileExists = parentExists && existsSync(databasePath);
+
+  logger.info('Blind-box DB pre-open check', {
+    databasePath,
+    parentDir,
+    parentExists,
+    fileExists,
+    isProduction,
+  });
+
+  if (!parentExists) {
+    if (isProduction) {
+      const msg =
+        `FATAL: Blind-box DB parent directory does not exist: ${parentDir}\n` +
+        `DB path: ${databasePath}\n` +
+        `Required fix:\n` +
+        `  1. Upgrade the Render service to a paid plan (free plan does not support persistent disks)\n` +
+        `  2. In the Render dashboard → blindbox-backend → Disks → Add disk:\n` +
+        `       Name: blindbox-data  Mount Path: ${parentDir}  Size: 1 GB\n` +
+        `  3. Set env var BLIND_BOX_DATABASE_PATH=${databasePath} in the Render dashboard → Environment\n` +
+        `  4. Redeploy`;
+      logger.error('Blind-box DB directory missing — persistent disk not mounted', { parentDir, databasePath });
+      throw new Error(msg);
+    }
+    mkdirSync(parentDir, { recursive: true });
+    logger.info('Blind-box DB directory created (development)', { parentDir });
+    return;
+  }
+
+  try {
+    accessSync(parentDir, constants.W_OK);
+  } catch {
+    const msg = `FATAL: Blind-box DB directory exists but is not writable: ${parentDir}`;
+    logger.error(msg, { databasePath });
+    throw new Error(msg);
+  }
+
+  logger.info('Blind-box DB directory ready', { parentDir, writable: true, fileExists });
+}
+
 function createDatabase(): Promise<BlindBoxDatabase> {
   const runtimeConfig = getRuntimeConfig();
   const databasePath = runtimeConfig.blindBoxDatabasePath;
-  mkdirSync(dirname(databasePath), { recursive: true });
+
+  ensureBlindBoxDbDirectory(databasePath);
 
   return new Promise((resolve, reject) => {
     const sqlite = sqlite3.verbose();
     const database = new sqlite.Database(databasePath, (err) => {
       if (err) {
+        logger.error('Failed to open blind-box database', { databasePath, error: String(err) });
         reject(err);
         return;
       }
@@ -107,8 +153,9 @@ function createDatabase(): Promise<BlindBoxDatabase> {
       database.exec('PRAGMA foreign_keys = ON;');
       database.configure('busyTimeout', runtimeConfig.blindBoxDatabaseBusyTimeoutMs);
 
-      logger.info('Opened blind-box database', {
+      logger.info('Blind-box database opened successfully', {
         databasePath,
+        persistent: databasePath.startsWith('/var/data'),
       });
 
       resolve(new BlindBoxDatabase(database));

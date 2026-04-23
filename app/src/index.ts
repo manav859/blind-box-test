@@ -39,7 +39,9 @@ function validateStartupConfig(): void {
     configuredScopes: cfg.shoplineConfiguredScopes,
     missingScopes: missingScopes.length ? missingScopes : 'none',
     blindBoxDatabasePath: cfg.blindBoxDatabasePath,
+    blindBoxDbPersistent: cfg.blindBoxDatabasePath.startsWith('/var/data'),
     sessionDatabasePath: sessionDbPath,
+    sessionDbPersistent: sessionDbPath.startsWith('/var/data'),
     logLevel: cfg.logLevel,
   });
 
@@ -82,6 +84,7 @@ async function start() {
   const app = express();
 
   app.get('/api/health', (_req, res) => {
+    const cfg = getRuntimeConfig();
     res.status(200).json({
       status: 'ok',
       appKey: process.env.SHOPLINE_APP_KEY ? process.env.SHOPLINE_APP_KEY.slice(0, 8) + '...' : 'missing',
@@ -89,7 +92,9 @@ async function start() {
       executionMode: process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE || 'missing',
       locationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID ? 'set' : 'missing',
       sessionDb: SESSION_DB_PATH,
-      sessionPersistent: SESSION_DB_PATH.startsWith('/var/data'),
+      sessionDbPersistent: SESSION_DB_PATH.startsWith('/var/data'),
+      blindBoxDb: cfg.blindBoxDatabasePath,
+      blindBoxDbPersistent: cfg.blindBoxDatabasePath.startsWith('/var/data'),
     });
   });
 
