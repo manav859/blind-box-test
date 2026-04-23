@@ -135,21 +135,56 @@ export interface HealthStatus {
   sessionMode: string;
 }
 
-export interface ApiError {
-  message: string;
-  code?: string;
+// ── App Bridge session token ──────────────────────────────────────────────────
+// Populated by App.tsx once App Bridge is initialized.
+let _getSessionToken: (() => Promise<string>) | null = null;
+
+export function initAppBridge(getToken: (() => Promise<string>) | null) {
+  _getSessionToken = getToken;
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!_getSessionToken) return {};
+  try {
+    const token = await _getSessionToken();
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    // Session token unavailable — fall through to cookie auth.
+  }
+  return {};
+}
+
+// ── Shop parameter ────────────────────────────────────────────────────────────
+function getShopParam(): string {
+  try {
+    return new URLSearchParams(window.location.search).get('shop') ?? '';
+  } catch {
+    return '';
+  }
 }
 
 // ── HTTP helper ───────────────────────────────────────────────────────────────
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const resp = await fetch(`/api/blind-box${path}`, {
+  const authHeaders = await getAuthHeaders();
+  const shop = getShopParam();
+  const sep = path.includes('?') ? '&' : '?';
+  const url = shop ? `/api/blind-box${path}${sep}shop=${encodeURIComponent(shop)}` : `/api/blind-box${path}`;
+
+  const resp = await fetch(url, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders,
       ...init.headers,
     },
+    credentials: 'include', // send session cookie as fallback
   });
+
+  // If we got a redirect to auth, that means session expired or missing
+  if (resp.redirected && resp.url.includes('/api/auth/begin')) {
+    throw new Error('Session expired — please reload the page in SHOPLINE Admin');
+  }
 
   const text = await resp.text();
   let body: Record<string, unknown> = {};
@@ -159,7 +194,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const message =
       (body as { error?: string; message?: string }).error ||
       (body as { error?: string; message?: string }).message ||
-      `HTTP ${resp.status}`;
+      `HTTP ${resp.status} ${resp.statusText}`;
     throw new Error(message);
   }
 
@@ -175,7 +210,7 @@ export const api = {
   },
 
   getHealth(): Promise<HealthStatus> {
-    return fetch('/api/health').then((r) => r.json());
+    return fetch('/api/health', { credentials: 'include' }).then((r) => r.json());
   },
 
   // Blind Boxes
@@ -260,7 +295,9 @@ export const api = {
   // Webhook Events
   listWebhookEvents(params?: { status?: string; topic?: string }): Promise<WebhookEvent[]> {
     const qs = params
-      ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => Boolean(v)) as [string, string][]).toString()
+      ? '?' + new URLSearchParams(
+          Object.entries(params).filter(([, v]) => Boolean(v)) as [string, string][],
+        ).toString()
       : '';
     return request<WebhookEvent[]>(`/webhook-events${qs}`);
   },

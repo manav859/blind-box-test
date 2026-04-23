@@ -1,36 +1,54 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
 import { DashboardPage } from './pages/DashboardPage';
 import { BlindBoxesPage } from './pages/BlindBoxesPage';
 import { BlindBoxDetailPage } from './pages/BlindBoxDetailPage';
 import { AssignmentsPage } from './pages/AssignmentsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { initAppBridge } from './lib/api';
 
+// ── App Bridge initializer ────────────────────────────────────────────────────
+// Must run once at the top of the React tree before any API calls are made.
 function AppBridgeInit() {
   useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const apiKey = (window as unknown as { SHOPLINE_API_KEY?: string }).SHOPLINE_API_KEY
-        ?? params.get('apiKey')
-        ?? '';
-      const host = params.get('host') ?? '';
+    // The SHOPLINE Admin passes ?host=<base64> and ?shop=<handle> when loading
+    // the embedded iframe. The app key is the public SHOPLINE_APP_KEY.
+    const params = new URLSearchParams(window.location.search);
+    const host = params.get('host') ?? '';
+    const appKey =
+      (import.meta.env.VITE_SHOPLINE_APP_KEY as string | undefined) ?? '';
 
-      if (!apiKey || !host) return;
+    if (!appKey || !host) {
+      // Running standalone (dev / direct browser access) — skip App Bridge.
+      // API calls will still work if the SHOPLINE session cookie is present.
+      return;
+    }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      import('@shoplinedev/appbridge').then((mod: any) => {
-        const createApp = mod.default ?? mod.createApp ?? mod;
-        if (typeof createApp === 'function') {
-          createApp({ apiKey, host });
-        }
-      }).catch(() => { /* not critical */ });
-    } catch { /* standalone dev mode */ }
+    // @shoplinedev/appbridge v1 — the config field is `appKey`, NOT `apiKey`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    import('@shoplinedev/appbridge').then((mod: any) => {
+      // The default export is the Client namespace; createApp lives on it.
+      const Client = mod.default ?? mod;
+      const createApp = Client?.createApp ?? mod.createApp;
+      if (typeof createApp !== 'function') return;
+
+      const app = createApp({ appKey, host });
+      // Expose getSessionToken so the API client can attach Bearer tokens.
+      const getToken = mod.shareUtil?.getSessionToken
+        ? () => mod.shareUtil.getSessionToken(app) as Promise<string>
+        : null;
+
+      initAppBridge(getToken);
+    }).catch(() => {
+      // App Bridge unavailable — standalone mode.
+    });
   }, []);
 
   return null;
 }
 
+// ── Root component ────────────────────────────────────────────────────────────
 export default function App() {
   return (
     <BrowserRouter>
