@@ -1,4 +1,5 @@
 import { CatalogGateway, ShoplineCatalogGateway, ShoplineCollection, ShoplineProduct } from '../../integration/shopline/catalog-gateway';
+export type { ShoplineCollection, ShoplineProduct } from '../../integration/shopline/catalog-gateway';
 import type { ShopAdminAccessTokenProvider } from '../../lib/shop-admin-access-token';
 import { Logger, logger } from '../../lib/logger';
 
@@ -153,6 +154,40 @@ export class ShoplineCatalogService {
       products,
       traceIds,
     };
+  }
+
+  async listAllCollections(
+    shop: string,
+    options: {
+      accessToken?: string;
+    } = {},
+  ): Promise<{
+    collections: ShoplineCollection[];
+    traceIds: string[];
+  }> {
+    const accessToken = await this.resolveAccessToken(shop, options.accessToken);
+    const collections: ShoplineCollection[] = [];
+    const traceIds: string[] = [];
+    let pageInfo: string | null = null;
+
+    do {
+      const page = await this.dependencies.catalogGateway.getCollectionsPage(shop, accessToken, {
+        pageInfo,
+      });
+
+      collections.push(...page.collections);
+      if (page.traceId) {
+        traceIds.push(page.traceId);
+      }
+      pageInfo = page.nextPageInfo;
+    } while (pageInfo);
+
+    this.dependencies.logger.info('Fetched SHOPLINE collections for blind-box configuration', {
+      shop,
+      collectionCount: collections.length,
+    });
+
+    return { collections, traceIds };
   }
 
   private async resolveAccessToken(shop: string, accessToken?: string): Promise<string> {

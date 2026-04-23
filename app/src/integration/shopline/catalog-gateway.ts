@@ -265,6 +265,12 @@ interface GraphqlRequestResult<T> {
   traceId: string | null;
 }
 
+export interface CollectionsPage {
+  collections: ShoplineCollection[];
+  nextPageInfo: string | null;
+  traceId: string | null;
+}
+
 export interface CatalogGateway {
   getProduct(shop: string, accessToken: string, productId: string): Promise<ShoplineProduct>;
   getCollection(shop: string, accessToken: string, collectionId: string): Promise<ShoplineCollection>;
@@ -286,6 +292,14 @@ export interface CatalogGateway {
       limit?: number;
     },
   ): Promise<CollectionProductsPage>;
+  getCollectionsPage(
+    shop: string,
+    accessToken: string,
+    options?: {
+      pageInfo?: string | null;
+      limit?: number;
+    },
+  ): Promise<CollectionsPage>;
 }
 
 export class ShoplineCatalogGateway implements CatalogGateway {
@@ -469,6 +483,54 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       products: extractProductRecords(response.data)
         .map(mapProductRecord)
         .filter((product): product is ShoplineProduct => Boolean(product)),
+      nextPageInfo: response.nextPageInfo,
+      traceId: response.traceId,
+    };
+  }
+
+  async getCollectionsPage(
+    shop: string,
+    accessToken: string,
+    options: {
+      pageInfo?: string | null;
+      limit?: number;
+    } = {},
+  ): Promise<CollectionsPage> {
+    const query = new URLSearchParams();
+    query.set('limit', String(Math.min(options.limit || 250, 250)));
+    if (options.pageInfo) {
+      query.set('page_info', options.pageInfo);
+    }
+
+    const response = await this.request<unknown>(
+      shop,
+      accessToken,
+      `/products/collections.json?${query.toString()}`,
+    );
+
+    const record = asRecord(response.data);
+    const collectionsArray =
+      asRecordArray(record?.collections) ||
+      asRecordArray((asRecord(record?.data))?.collections) ||
+      [];
+
+    const collections = collectionsArray
+      .map((collectionRecord): ShoplineCollection | null => {
+        const id = readStringField(collectionRecord, ['id', 'collection_id']);
+        if (!id) return null;
+        return {
+          id: normalizeShoplineResourceId(id) || id,
+          title: readStringField(collectionRecord, ['title', 'name']),
+          handle: readStringField(collectionRecord, ['handle']),
+          type: 'collection',
+          status: readStringField(collectionRecord, ['status']),
+          raw: collectionRecord,
+        };
+      })
+      .filter((c): c is ShoplineCollection => Boolean(c));
+
+    return {
+      collections,
       nextPageInfo: response.nextPageInfo,
       traceId: response.traceId,
     };

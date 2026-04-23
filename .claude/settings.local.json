@@ -6,7 +6,24 @@
       "Bash(npx shopline *)",
       "Bash(node -e ' *)",
       "Bash(powershell -command \"Expand-Archive -Path Sipply1.zip -DestinationPath Sipply1-extracted -Force\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(sqlite3 blind-box-domain.sqlite \".tables\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"SELECT * FROM blind_boxes;\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"SELECT * FROM blind_box_pool_items;\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"SELECT * FROM blind_box_product_mappings;\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"SELECT * FROM blind_box_assignments;\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"PRAGMA table_info\\(blind_boxes\\);\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"PRAGMA table_info\\(blind_box_pool_items\\);\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"PRAGMA table_info\\(blind_box_product_mappings\\);\")",
+      "Bash(sqlite3 blind-box-domain.sqlite \"PRAGMA table_info\\(webhook_events\\);\")",
+      "mcp__Neon__run_sql",
+      "mcp__Neon__run_sql_transaction",
+      "Bash(git -C .. status)",
+      "Bash(git -C .. diff --stat HEAD)",
+      "Bash(git *)",
+      "Bash(npm run *)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts', {}\\), indent=2\\)\\)\")",
+      "Bash(npm test *)"
     ]
   }
 }

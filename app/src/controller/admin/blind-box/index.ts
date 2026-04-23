@@ -25,6 +25,7 @@ import { requireShopSession } from '../../../lib/shop-session';
 import { getWebhookEventService } from '../../../service/webhook/webhook-event-service';
 import { ValidationError } from '../../../lib/errors';
 import { getShoplineCatalogService } from '../../../service/shopline/catalog-service';
+import { getBlindBoxDatabase } from '../../../db/client';
 
 async function validateStorefrontProductMappingInput(
   shop: string,
@@ -171,6 +172,162 @@ export function createBlindBoxAdminRouter(): express.Router {
       res.status(200).send({
         success: true,
         data,
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // ── Dashboard stats ────────────────────────────────────────────────────────
+  router.get('/stats', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop } = requireShopSession(res);
+      const db = await getBlindBoxDatabase();
+
+      const [blindBoxRows, assignmentRows, webhookRows, recentAssignments] = await Promise.all([
+        db.all<{ status: string; count: string }>(
+          'SELECT status, COUNT(*) as count FROM blind_boxes WHERE shop = ? GROUP BY status',
+          [shop],
+        ),
+        db.all<{ status: string; count: string }>(
+          'SELECT status, COUNT(*) as count FROM blind_box_assignments WHERE shop = ? GROUP BY status',
+          [shop],
+        ),
+        db.all<{ status: string; count: string }>(
+          'SELECT status, COUNT(*) as count FROM webhook_events WHERE shop = ? GROUP BY status',
+          [shop],
+        ),
+        db.all<{
+          id: string;
+          order_id: string;
+          status: string;
+          selected_reward_title_snapshot: string | null;
+          created_at: string;
+        }>(
+          'SELECT id, order_id, status, selected_reward_title_snapshot, created_at FROM blind_box_assignments WHERE shop = ? ORDER BY created_at DESC LIMIT 10',
+          [shop],
+        ),
+      ]);
+
+      const totalBlindBoxes = blindBoxRows.reduce((sum, r) => sum + parseInt(r.count, 10), 0);
+      const activeBlindBoxes = parseInt(blindBoxRows.find((r) => r.status === 'active')?.count ?? '0', 10);
+      const totalAssignments = assignmentRows.reduce((sum, r) => sum + parseInt(r.count, 10), 0);
+      const failedAssignments = parseInt(
+        assignmentRows.find((r) => r.status === 'inventory_failed')?.count ?? '0',
+        10,
+      );
+      const webhookProcessed = parseInt(webhookRows.find((r) => r.status === 'processed')?.count ?? '0', 10);
+      const webhookFailed = parseInt(webhookRows.find((r) => r.status === 'failed')?.count ?? '0', 10);
+
+      res.status(200).send({
+        success: true,
+        data: {
+          totalBlindBoxes,
+          activeBlindBoxes,
+          totalAssignments,
+          failedAssignments,
+          webhookProcessed,
+          webhookFailed,
+          recentAssignments: recentAssignments.map((r) => ({
+            id: r.id,
+            orderId: r.order_id,
+            status: r.status,
+            rewardTitle: r.selected_reward_title_snapshot,
+            createdAt: r.created_at,
+          })),
+        },
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // ── Catalog: products & collections for pickers ────────────────────────────
+  router.get('/catalog/products', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const catalogService = await getShoplineCatalogService();
+      const result = await catalogService.listAllProducts(shop, { accessToken });
+
+      res.status(200).send({
+        success: true,
+        data: result.products.map((p) => ({
+          id: p.id,
+          title: p.title,
+          status: p.status,
+          published: p.published,
+          tags: p.tags ?? [],
+          variantCount: p.variants.length,
+          variants: p.variants.map((v) => ({
+            id: v.id,
+            title: v.title,
+            sku: v.sku,
+            inventoryQuantity: v.inventoryQuantity,
+          })),
+        })),
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  router.get('/catalog/collections', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const catalogService = await getShoplineCatalogService();
+      const result = await catalogService.listAllCollections(shop, { accessToken });
+
+      res.status(200).send({
+        success: true,
+        data: result.collections.map((c) => ({
+          id: c.id,
+          title: c.title,
+          handle: c.handle,
+          status: c.status,
+        })),
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // ── Single blind box ───────────────────────────────────────────────────────
+  router.get('/pools/:blindBoxId', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop } = requireShopSession(res);
+      const blindBoxService = await getBlindBoxService();
+      const blindBoxRewardGroupLinkService = await getBlindBoxRewardGroupLinkService();
+      const rewardGroupService = await getRewardGroupService();
+
+      const blindBox = await blindBoxService.getBlindBox(shop, req.params.blindBoxId);
+      if (!blindBox) {
+        res.status(404).send({ success: false, error: 'Blind box not found' });
+        return;
+      }
+
+      const [links, rewardGroups] = await Promise.all([
+        blindBoxRewardGroupLinkService.listLinks(shop),
+        rewardGroupService.listRewardGroups(shop),
+      ]);
+
+      const link = links.find((l) => l.blindBoxId === blindBox.id);
+      const rewardGroup = link ? rewardGroups.find((g) => g.id === link.rewardGroupId) : null;
+
+      res.status(200).send({
+        success: true,
+        data: {
+          ...blindBox,
+          rewardGroupLink: link ?? null,
+          rewardGroup: rewardGroup ?? null,
+        },
       });
     } catch (error) {
       sendErrorResponse(res, error, context);
