@@ -165,10 +165,14 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return {};
 }
 
-// ── Shop parameter ────────────────────────────────────────────────────────────
-function getShopParam(): string {
+// ── Shop / handle parameter ───────────────────────────────────────────────────
+// SHOPLINE Admin injects ?shop=<handle> into the iframe URL.
+// The @shoplineos/shopline-app-express library expects ?handle=<handle> for
+// session fallback lookups, so we read "shop" but forward it as "handle".
+function getShopHandle(): string {
   try {
-    return new URLSearchParams(window.location.search).get('shop') ?? '';
+    const p = new URLSearchParams(window.location.search);
+    return p.get('shop') ?? p.get('handle') ?? '';
   } catch {
     return '';
   }
@@ -178,9 +182,10 @@ function getShopParam(): string {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const authHeaders = await getAuthHeaders();
-  const shop = getShopParam();
+  const handle = getShopHandle();
   const sep = path.includes('?') ? '&' : '?';
-  const url = shop ? `/api/blind-box${path}${sep}shop=${encodeURIComponent(shop)}` : `/api/blind-box${path}`;
+  // Send as "handle" — the param name shopline-app-express actually looks for
+  const url = handle ? `/api/blind-box${path}${sep}handle=${encodeURIComponent(handle)}` : `/api/blind-box${path}`;
 
   const resp = await fetch(url, {
     ...init,
@@ -193,9 +198,14 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     credentials: 'include', // send session cookie as fallback
   });
 
-  // opaqueredirect: auth middleware redirected to SHOPLINE OAuth (cross-origin).
-  // Following it would cause a CORS failure ("Failed to fetch"), so we intercept here.
-  if (resp.type === 'opaqueredirect' || (resp.redirected && resp.url.includes('/api/auth'))) {
+  // opaqueredirect = auth middleware issued a cross-origin redirect (e.g. exitIframe flow).
+  // 403 with X-SHOPLINE-API-Request-Failure-Reauthorize = appBridgeHeaderRedirect path
+  //   (Bearer token present but session not found — re-auth needed).
+  if (
+    resp.type === 'opaqueredirect' ||
+    (resp.redirected && resp.url.includes('/api/auth')) ||
+    resp.headers.get('X-SHOPLINE-API-Request-Failure-Reauthorize') === '1'
+  ) {
     throw new Error('Session expired — please reload the page in SHOPLINE Admin');
   }
 

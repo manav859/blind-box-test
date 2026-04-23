@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { DashboardPage } from './pages/DashboardPage';
 import { BlindBoxesPage } from './pages/BlindBoxesPage';
 import { BlindBoxDetailPage } from './pages/BlindBoxDetailPage';
@@ -59,14 +60,16 @@ export default function App() {
     <BrowserRouter>
       <ToastProvider>
         <AppBridgeInit />
-        <Routes>
-          <Route path="/" element={<DashboardPage />} />
-          <Route path="/blind-boxes" element={<BlindBoxesPage />} />
-          <Route path="/blind-boxes/:id" element={<BlindBoxDetailPage />} />
-          <Route path="/assignments" element={<AssignmentsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/blind-boxes" element={<BlindBoxesPage />} />
+            <Route path="/blind-boxes/:id" element={<BlindBoxDetailPage />} />
+            <Route path="/assignments" element={<AssignmentsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </ToastProvider>
     </BrowserRouter>
   );

@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'path';
 import shopline from './shopline';
 import { readFileSync } from 'fs';
@@ -80,6 +80,17 @@ async function start() {
   }
 
   const app = express();
+
+  // SHOPLINE Admin injects ?shop=<handle> into the iframe URL, but
+  // @shoplineos/shopline-app-express looks for req.query.handle everywhere
+  // (validateAuthentication, confirmInstallationStatus, redirectToAuth).
+  // This middleware aliases shop → handle so all library code finds what it needs.
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    if (req.query.shop && !req.query.handle) {
+      (req.query as Record<string, unknown>).handle = req.query.shop;
+    }
+    next();
+  });
 
   app.get('/api/health', (_req, res) => {
     const cfg = getRuntimeConfig();
