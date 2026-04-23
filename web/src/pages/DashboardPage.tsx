@@ -103,12 +103,19 @@ export function DashboardPage() {
       )}
 
       {error && !loading && (
-        <div className="alert alert-warning mb-6">
+        <div className="alert alert-warning mb-6" style={{ alignItems: 'center' }}>
           <span className="alert-icon">⚠</span>
           <div className="alert-body">
-            <div className="alert-title">Could not load stats</div>
-            {error}
+            <div className="alert-title">
+              {error.includes('Session expired') ? 'Session expired' : 'Could not load stats'}
+            </div>
+            {error.includes('Session expired')
+              ? 'Your SHOPLINE session is missing. Open this app from SHOPLINE Admin to authenticate.'
+              : error}
           </div>
+          <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={load}>
+            ↺ Retry
+          </button>
         </div>
       )}
 

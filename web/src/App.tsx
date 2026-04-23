@@ -21,7 +21,8 @@ function AppBridgeInit() {
 
     if (!appKey || !host) {
       // Running standalone (dev / direct browser access) — skip App Bridge.
-      // API calls will still work if the SHOPLINE session cookie is present.
+      // Signal immediately so API calls don't wait for the 1.5s fallback timeout.
+      initAppBridge(null);
       return;
     }
 
@@ -31,7 +32,10 @@ function AppBridgeInit() {
       // The default export is the Client namespace; createApp lives on it.
       const Client = mod.default ?? mod;
       const createApp = Client?.createApp ?? mod.createApp;
-      if (typeof createApp !== 'function') return;
+      if (typeof createApp !== 'function') {
+        initAppBridge(null);
+        return;
+      }
 
       const app = createApp({ appKey, host });
       // Expose getSessionToken so the API client can attach Bearer tokens.
@@ -41,7 +45,8 @@ function AppBridgeInit() {
 
       initAppBridge(getToken);
     }).catch(() => {
-      // App Bridge unavailable — standalone mode.
+      // App Bridge unavailable — signal so API calls don't wait.
+      initAppBridge(null);
     });
   }, []);
 

@@ -137,13 +137,24 @@ export interface HealthStatus {
 
 // ── App Bridge session token ──────────────────────────────────────────────────
 // Populated by App.tsx once App Bridge is initialized.
+// The ready-promise prevents a race where API calls fire before the dynamic
+// import of @shoplinedev/appbridge resolves, which would send requests without
+// a Bearer token, causing the auth middleware to redirect cross-origin and
+// trigger a CORS-blocked TypeError ("Failed to fetch").
 let _getSessionToken: (() => Promise<string>) | null = null;
+let _appBridgeReadyResolve: () => void = () => {};
+const _appBridgeReadyPromise = new Promise<void>((resolve) => {
+  _appBridgeReadyResolve = resolve;
+  setTimeout(resolve, 1500); // fallback: don't block forever if App Bridge never fires
+});
 
 export function initAppBridge(getToken: (() => Promise<string>) | null) {
   _getSessionToken = getToken;
+  _appBridgeReadyResolve();
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  await _appBridgeReadyPromise; // wait for App Bridge to init (or 1.5s timeout)
   if (!_getSessionToken) return {};
   try {
     const token = await _getSessionToken();
@@ -173,6 +184,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const resp = await fetch(url, {
     ...init,
+    redirect: 'manual', // don't follow redirects — they mean auth failed
     headers: {
       'Content-Type': 'application/json',
       ...authHeaders,
@@ -181,8 +193,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     credentials: 'include', // send session cookie as fallback
   });
 
-  // If we got a redirect to auth, that means session expired or missing
-  if (resp.redirected && resp.url.includes('/api/auth/begin')) {
+  // opaqueredirect: auth middleware redirected to SHOPLINE OAuth (cross-origin).
+  // Following it would cause a CORS failure ("Failed to fetch"), so we intercept here.
+  if (resp.type === 'opaqueredirect' || (resp.redirected && resp.url.includes('/api/auth'))) {
     throw new Error('Session expired — please reload the page in SHOPLINE Admin');
   }
 
