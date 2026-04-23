@@ -1,6 +1,6 @@
 import express from 'express';
 import { join } from 'path';
-import shopline, { SESSION_DB_PATH } from './shopline';
+import shopline from './shopline';
 import { readFileSync } from 'fs';
 import serveStatic from 'serve-static';
 import { webhooksController } from './controller/webhook';
@@ -23,8 +23,8 @@ const STATIC_PATH =
 function validateStartupConfig(): void {
   const cfg = getRuntimeConfig();
 
-  const sessionDbPath = SESSION_DB_PATH;
   const isExecuteMode = cfg.blindBoxInventoryExecutionMode === 'execute';
+  const dbHost = (() => { try { return new URL(cfg.databaseUrl).hostname; } catch { return '(unparseable)'; } })();
 
   const requiredScopes = ['read_products', 'read_inventory', 'read_location', 'write_inventory', 'read_orders'];
   const missingScopes = requiredScopes.filter((s) => !cfg.shoplineConfiguredScopes.includes(s));
@@ -38,10 +38,8 @@ function validateStartupConfig(): void {
     adminApiVersion: cfg.shoplineAdminApiVersion,
     configuredScopes: cfg.shoplineConfiguredScopes,
     missingScopes: missingScopes.length ? missingScopes : 'none',
-    blindBoxDatabasePath: cfg.blindBoxDatabasePath,
-    blindBoxDbPersistent: cfg.blindBoxDatabasePath.startsWith('/var/data'),
-    sessionDatabasePath: sessionDbPath,
-    sessionDbPersistent: sessionDbPath.startsWith('/var/data'),
+    databaseMode: 'postgres',
+    databaseHost: dbHost,
     logLevel: cfg.logLevel,
   });
 
@@ -85,16 +83,16 @@ async function start() {
 
   app.get('/api/health', (_req, res) => {
     const cfg = getRuntimeConfig();
+    const dbHost = (() => { try { return new URL(cfg.databaseUrl).hostname; } catch { return '(unparseable)'; } })();
     res.status(200).json({
       status: 'ok',
       appKey: process.env.SHOPLINE_APP_KEY ? process.env.SHOPLINE_APP_KEY.slice(0, 8) + '...' : 'missing',
       appUrl: process.env.SHOPLINE_APP_URL || 'missing',
       executionMode: process.env.BLIND_BOX_INVENTORY_EXECUTION_MODE || 'missing',
       locationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID ? 'set' : 'missing',
-      sessionDb: SESSION_DB_PATH,
-      sessionDbPersistent: SESSION_DB_PATH.startsWith('/var/data'),
-      blindBoxDb: cfg.blindBoxDatabasePath,
-      blindBoxDbPersistent: cfg.blindBoxDatabasePath.startsWith('/var/data'),
+      databaseMode: 'postgres',
+      databaseHost: dbHost,
+      sessionMode: 'postgres',
     });
   });
 

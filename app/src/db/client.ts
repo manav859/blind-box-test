@@ -1,187 +1,75 @@
-import sqlite3 from 'sqlite3';
-import { dirname } from 'path';
-import { existsSync, accessSync, mkdirSync, constants } from 'fs';
-import { getRuntimeConfig } from '../lib/config';
+import { PostgresDatabase, getPgPool, closePgPool, SqlParameters, DbRunResult } from './postgres-client';
 import { logger } from '../lib/logger';
 import { runBlindBoxMigrations } from './migrations/run-migrations';
 
-export type SqlParameters = unknown[] | Record<string, unknown>;
+// Re-export SqlParameters so repositories that import it from here continue to work
+export type { SqlParameters };
 
+// BlindBoxDatabase is now backed by Postgres. The class name is kept so that
+// all repositories (which import BlindBoxDatabase) compile without changes.
 export class BlindBoxDatabase {
-  constructor(private readonly database: sqlite3.Database) {}
+  private readonly pg: PostgresDatabase;
 
-  run(sql: string, params: SqlParameters = []): Promise<sqlite3.RunResult> {
-    return new Promise((resolve, reject) => {
-      this.database.run(sql, params, function onRun(err: Error | null) {
-        if (err) {
-          reject(err);
-          return;
-        }
+  constructor(pg: PostgresDatabase) {
+    this.pg = pg;
+  }
 
-        resolve(this);
-      });
-    });
+  run(sql: string, params: SqlParameters = []): Promise<DbRunResult> {
+    return this.pg.run(sql, params as unknown[]);
   }
 
   get<T>(sql: string, params: SqlParameters = []): Promise<T | undefined> {
-    return new Promise((resolve, reject) => {
-      this.database.get(sql, params, (err: Error | null, row: T) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(row);
-      });
-    });
+    return this.pg.get<T>(sql, params as unknown[]);
   }
 
   all<T>(sql: string, params: SqlParameters = []): Promise<T[]> {
-    return new Promise((resolve, reject) => {
-      this.database.all(sql, params, (err: Error | null, rows: T[]) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve(rows || []);
-      });
-    });
+    return this.pg.all<T>(sql, params as unknown[]);
   }
 
   exec(sql: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.database.exec(sql, (err: Error | null) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve();
-      });
-    });
+    return this.pg.exec(sql);
   }
 
-  async transaction<T>(work: (db: BlindBoxDatabase) => Promise<T>): Promise<T> {
-    await this.exec('BEGIN IMMEDIATE TRANSACTION');
-
-    try {
-      const result = await work(this);
-      await this.exec('COMMIT');
-      return result;
-    } catch (error) {
-      await this.exec('ROLLBACK');
-      throw error;
-    }
-  }
-
-  close(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.database.close((err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        resolve();
-      });
-    });
+  transaction<T>(work: (db: BlindBoxDatabase) => Promise<T>): Promise<T> {
+    return this.pg.transaction((txPg) => work(new BlindBoxDatabase(txPg)));
   }
 }
 
-let blindBoxDatabasePromise: Promise<BlindBoxDatabase> | null = null;
-
-function ensureBlindBoxDbDirectory(databasePath: string): void {
-  const parentDir = dirname(databasePath);
-  const isProduction = process.env.NODE_ENV === 'production';
-  const parentExists = existsSync(parentDir);
-  const fileExists = parentExists && existsSync(databasePath);
-
-  logger.info('Blind-box DB pre-open check', {
-    databasePath,
-    parentDir,
-    parentExists,
-    fileExists,
-    isProduction,
-  });
-
-  if (!parentExists) {
-    if (isProduction) {
-      const msg =
-        `FATAL: Blind-box DB parent directory does not exist: ${parentDir}\n` +
-        `DB path: ${databasePath}\n` +
-        `Required fix:\n` +
-        `  1. Upgrade the Render service to a paid plan (free plan does not support persistent disks)\n` +
-        `  2. In the Render dashboard → blindbox-backend → Disks → Add disk:\n` +
-        `       Name: blindbox-data  Mount Path: ${parentDir}  Size: 1 GB\n` +
-        `  3. Set env var BLIND_BOX_DATABASE_PATH=${databasePath} in the Render dashboard → Environment\n` +
-        `  4. Redeploy`;
-      logger.error('Blind-box DB directory missing — persistent disk not mounted', { parentDir, databasePath });
-      throw new Error(msg);
-    }
-    mkdirSync(parentDir, { recursive: true });
-    logger.info('Blind-box DB directory created (development)', { parentDir });
-    return;
-  }
-
-  try {
-    accessSync(parentDir, constants.W_OK);
-  } catch {
-    const msg = `FATAL: Blind-box DB directory exists but is not writable: ${parentDir}`;
-    logger.error(msg, { databasePath });
-    throw new Error(msg);
-  }
-
-  logger.info('Blind-box DB directory ready', { parentDir, writable: true, fileExists });
-}
+let dbPromise: Promise<BlindBoxDatabase> | null = null;
 
 function createDatabase(): Promise<BlindBoxDatabase> {
-  const runtimeConfig = getRuntimeConfig();
-  const databasePath = runtimeConfig.blindBoxDatabasePath;
-
-  ensureBlindBoxDbDirectory(databasePath);
-
   return new Promise((resolve, reject) => {
-    const sqlite = sqlite3.verbose();
-    const database = new sqlite.Database(databasePath, (err) => {
-      if (err) {
-        logger.error('Failed to open blind-box database', { databasePath, error: String(err) });
-        reject(err);
-        return;
-      }
-
-      database.exec('PRAGMA foreign_keys = ON;');
-      database.configure('busyTimeout', runtimeConfig.blindBoxDatabaseBusyTimeoutMs);
-
-      logger.info('Blind-box database opened successfully', {
-        databasePath,
-        persistent: databasePath.startsWith('/var/data'),
+    try {
+      const pool = getPgPool();
+      const pg = new PostgresDatabase(pool, pool);
+      const db = new BlindBoxDatabase(pg);
+      logger.info('Blind-box database connected (Postgres)', {
+        host: new URL(process.env.DATABASE_URL!).hostname,
+        persistent: true,
       });
-
-      resolve(new BlindBoxDatabase(database));
-    });
+      resolve(db);
+    } catch (err) {
+      logger.error('Failed to initialize Postgres connection', { error: String(err) });
+      reject(err);
+    }
   });
 }
 
 export async function getBlindBoxDatabase(): Promise<BlindBoxDatabase> {
-  if (!blindBoxDatabasePromise) {
-    blindBoxDatabasePromise = createDatabase();
+  if (!dbPromise) {
+    dbPromise = createDatabase();
   }
-
-  return blindBoxDatabasePromise;
+  return dbPromise;
 }
 
 export async function initializeBlindBoxPersistence(): Promise<void> {
-  const database = await getBlindBoxDatabase();
-  await runBlindBoxMigrations(database);
+  const db = await getBlindBoxDatabase();
+  // Verify connectivity before starting
+  await db.get<{ result: number }>('SELECT 1 AS result');
+  await runBlindBoxMigrations(db);
 }
 
 export async function resetBlindBoxDatabaseForTests(): Promise<void> {
-  if (!blindBoxDatabasePromise) {
-    return;
-  }
-
-  const database = await blindBoxDatabasePromise;
-  await database.close();
-  blindBoxDatabasePromise = null;
+  dbPromise = null;
+  await closePgPool();
 }
