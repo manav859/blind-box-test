@@ -18,7 +18,7 @@ const shopline = shoplineApp({
   appKey: appConfig.appKey,
   appSecret: appConfig.appSecret,
   appUrl: appConfig.appUrl,
-  authPathPrefix: '/api/auth',
+  authPathPrefix: '/auth',
   scopes: appConfig.scopes,
   sessionStorage,
   isEmbeddedApp: true,

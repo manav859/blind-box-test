@@ -123,6 +123,22 @@ async function start() {
   // Blind-box storefront API — public, no auth required
   app.use('/api/storefront/blind-box', createBlindBoxStorefrontRouter());
 
+  // After OAuth, the library redirects to /exit-iframe?redirectUri=<url>.
+  // This handler breaks out of the embedded iframe by navigating window.top.
+  app.get('/exit-iframe', (req: Request, res: Response) => {
+    const redirectUri = req.query.redirectUri as string | undefined;
+    const safe = redirectUri && /^https?:\/\//.test(redirectUri) ? redirectUri : '/';
+    res
+      .status(200)
+      .set('Content-Type', 'text/html')
+      .send(
+        `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>` +
+        `if(window.top===window){window.location.replace(${JSON.stringify(safe)});}` +
+        `else{window.top.location.replace(${JSON.stringify(safe)});}` +
+        `</script></body></html>`,
+      );
+  });
+
   app.use(shopline.cspHeaders());
   app.use(serveStatic(STATIC_PATH, { index: false }));
 
