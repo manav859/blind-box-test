@@ -63,6 +63,22 @@ function validateStartupConfig(): void {
   }
 }
 
+// ── Robust handle resolver ──────────────────────────────────────────────────
+// @shoplineos/shopline-app-express reads req.query.handle everywhere
+// (validateAuthentication, confirmInstallationStatus, redirectToAuth).
+// SHOPLINE Admin may inject the shop as ?shop=, ?handle=, or ?store=.
+// SHOPLINE_DEFAULT_HANDLE provides a dev fallback so the server can find a
+// session even when the Admin doesn't inject the param (e.g. direct access).
+function resolveHandle(req: Request): { handle: string; source: string } {
+  const q = req.query as Record<string, unknown>;
+  if (typeof q.handle === 'string' && q.handle) return { handle: q.handle, source: 'query.handle' };
+  if (typeof q.shop   === 'string' && q.shop)   return { handle: q.shop,   source: 'query.shop' };
+  if (typeof q.store  === 'string' && q.store)  return { handle: q.store,  source: 'query.store' };
+  const envHandle = process.env.SHOPLINE_DEFAULT_HANDLE;
+  if (envHandle) return { handle: envHandle, source: 'env.SHOPLINE_DEFAULT_HANDLE' };
+  return { handle: '', source: 'none' };
+}
+
 async function start() {
   validateStartupConfig();
   await initializeBlindBoxPersistence();
@@ -81,13 +97,19 @@ async function start() {
 
   const app = express();
 
-  // SHOPLINE Admin injects ?shop=<handle> into the iframe URL, but
-  // @shoplineos/shopline-app-express looks for req.query.handle everywhere
-  // (validateAuthentication, confirmInstallationStatus, redirectToAuth).
-  // This middleware aliases shop → handle so all library code finds what it needs.
+  // Resolve shop handle from all known sources and normalise to req.query.handle
+  // before any library middleware sees the request.
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (req.query.shop && !req.query.handle) {
-      (req.query as Record<string, unknown>).handle = req.query.shop;
+    const { handle, source } = resolveHandle(req);
+    if (handle) {
+      (req.query as Record<string, unknown>).handle = handle;
+      if (source !== 'query.handle') {
+        logger.debug('Handle resolved from alternate source', { path: req.path, handle, source });
+      }
+    } else {
+      logger.warn('No shop handle in request — will serve shell without session check', {
+        path: req.path,
+      });
     }
     next();
   });
@@ -142,12 +164,28 @@ async function start() {
   app.use(shopline.cspHeaders());
   app.use(serveStatic(STATIC_PATH, { index: false }));
 
-  app.use('/*', shopline.confirmInstallationStatus(), async (_req, res, _next) => {
-    return res
-      .status(200)
-      .set('Content-Type', 'text/html')
-      .send(readFileSync(join(STATIC_PATH, 'index.html')));
-  });
+  // If handle is present: let confirmInstallationStatus check the session.
+  //   - Valid session  → passes to next (serves React shell)
+  //   - No session     → library redirects to /auth?handle=<handle> (starts OAuth)
+  // If handle is absent (direct browser access with no params): skip the session
+  //   check and serve the React shell; the frontend shows an auth link.
+  const checkInstall = shopline.confirmInstallationStatus();
+  app.use(
+    '/*',
+    (req: Request, res: Response, next: NextFunction) => {
+      if ((req.query as Record<string, unknown>).handle) {
+        checkInstall(req, res, next);
+      } else {
+        next();
+      }
+    },
+    async (_req, res) => {
+      return res
+        .status(200)
+        .set('Content-Type', 'text/html')
+        .send(readFileSync(join(STATIC_PATH, 'index.html')));
+    },
+  );
 
   app.listen(resolvedPort.port, '0.0.0.0', () => {
     logger.info('SHOPLINE backend started', {

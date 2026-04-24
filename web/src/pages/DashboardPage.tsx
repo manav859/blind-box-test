@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
-import { api, DashboardStats, HealthStatus } from '../lib/api';
+import { api, DashboardStats, HealthStatus, getShopHandle } from '../lib/api';
 
 function formatDate(iso: string): string {
   try {
@@ -69,6 +69,61 @@ function HealthRow({
   );
 }
 
+// Full backend URL baked in at Vite build time; falls back to the known Render URL.
+// IMPORTANT: must be absolute — window.top is the SHOPLINE Admin domain, so a
+// relative /auth would resolve to testlive.myshopline.com/auth → 404.
+const APP_BACKEND_URL =
+  (import.meta.env.VITE_SHOPLINE_APP_URL as string | undefined)?.replace(/\/$/, '') ||
+  'https://blind-box-test.onrender.com';
+
+function SessionErrorBanner({ error, onRetry }: { error: string; onRetry: () => void }) {
+  const isSessionError = error.includes('Session expired');
+  const handle = getShopHandle() || 'testlive';
+  // Absolute URL to the Render backend's OAuth start route.
+  const authUrl = `${APP_BACKEND_URL}/auth?handle=${encodeURIComponent(handle)}`;
+
+  return (
+    <div className="alert alert-warning mb-6" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', width: '100%' }}>
+        <span className="alert-icon">⚠</span>
+        <div className="alert-body" style={{ flex: 1 }}>
+          <div className="alert-title">
+            {isSessionError ? 'Session expired' : 'Could not load stats'}
+          </div>
+          <div>
+            {isSessionError
+              ? 'Your SHOPLINE session is missing or expired. Click Re-authenticate to start OAuth.'
+              : error}
+          </div>
+        </div>
+        {isSessionError ? (
+          <button
+            className="btn btn-primary btn-sm"
+            style={{ flexShrink: 0 }}
+            onClick={() => {
+              // Navigate the top-level frame so OAuth has a real window to work in.
+              // window.top is the SHOPLINE Admin; we send it to the Render backend /auth.
+              (window.top ?? window).location.href = authUrl;
+            }}
+          >
+            Re-authenticate
+          </button>
+        ) : (
+          <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={onRetry}>
+            ↺ Retry
+          </button>
+        )}
+      </div>
+      {/* Debug panel — visible during integration testing */}
+      <div style={{ fontSize: '.75rem', color: 'var(--color-text-muted)', paddingLeft: '1.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+        <div>page: {window.location.href}</div>
+        <div>handle: {handle}</div>
+        <div>authUrl: {authUrl}</div>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -104,22 +159,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {error && !loading && (
-        <div className="alert alert-warning mb-6" style={{ alignItems: 'center' }}>
-          <span className="alert-icon">⚠</span>
-          <div className="alert-body">
-            <div className="alert-title">
-              {error.includes('Session expired') ? 'Session expired' : 'Could not load stats'}
-            </div>
-            {error.includes('Session expired')
-              ? 'Your SHOPLINE session is missing. Open this app from SHOPLINE Admin to authenticate.'
-              : error}
-          </div>
-          <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={load}>
-            ↺ Retry
-          </button>
-        </div>
-      )}
+      {error && !loading && <SessionErrorBanner error={error} onRetry={load} />}
 
       {stats && (
         <>

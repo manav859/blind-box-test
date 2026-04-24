@@ -169,10 +169,11 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 // SHOPLINE Admin injects ?shop=<handle> into the iframe URL.
 // The @shoplineos/shopline-app-express library expects ?handle=<handle> for
 // session fallback lookups, so we read "shop" but forward it as "handle".
-function getShopHandle(): string {
+// Exported so other modules can build auth redirect URLs.
+export function getShopHandle(): string {
   try {
     const p = new URLSearchParams(window.location.search);
-    return p.get('shop') ?? p.get('handle') ?? '';
+    return p.get('shop') ?? p.get('handle') ?? p.get('store') ?? '';
   } catch {
     return '';
   }
