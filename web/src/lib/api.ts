@@ -199,12 +199,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     credentials: 'include', // send session cookie as fallback
   });
 
-  // opaqueredirect = auth middleware issued a cross-origin redirect (e.g. exitIframe flow).
-  // 403 with X-SHOPLINE-API-Request-Failure-Reauthorize = appBridgeHeaderRedirect path
-  //   (Bearer token present but session not found — re-auth needed).
+  // opaqueredirect = auth middleware issued a cross-origin redirect (exitIframe flow).
+  // X-SHOPLINE-API-Request-Failure-Reauthorize: 1 = appBridgeHeaderRedirect (403).
+  // 401 from our requireShoplineSession middleware carries a JSON body with error/authUrl
+  //   and is handled below in the !resp.ok branch.
   if (
     resp.type === 'opaqueredirect' ||
-    (resp.redirected && resp.url.includes('/api/auth')) ||
+    (resp.redirected && resp.url.includes('/auth')) ||
     resp.headers.get('X-SHOPLINE-API-Request-Failure-Reauthorize') === '1'
   ) {
     throw new Error('Session expired — please reload the page in SHOPLINE Admin');

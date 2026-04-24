@@ -12,6 +12,7 @@ import { initializeBlindBoxPersistence } from './db/client';
 import { logger } from './lib/logger';
 import { getRuntimeConfig } from './lib/config';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
+import { requireShoplineSession } from './middleware/shopline-auth';
 
 const resolvedPort = resolveBackendPort();
 
@@ -134,10 +135,12 @@ async function start() {
   app.get(shopline.config.auth.callbackPath, shopline.auth.callback(), shopline.redirectToAppHome());
   app.post('/api/webhooks', express.text({ type: '*/*' }), webhooksController());
 
-  // Blind-box admin API — requires authenticated SHOPLINE session
+  // Blind-box admin API — requires authenticated SHOPLINE session.
+  // Uses offline-session lookup by handle instead of validateAuthentication()
+  // which requires an App Bridge JWT that is unavailable in some SHOPLINE builds.
   app.use(
     '/api/blind-box',
-    shopline.validateAuthentication(),
+    requireShoplineSession,
     express.json(),
     createBlindBoxAdminRouter()
   );
