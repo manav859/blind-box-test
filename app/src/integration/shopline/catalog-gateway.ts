@@ -233,13 +233,43 @@ function mapVariantRecord(variantRecord: Record<string, unknown>): ShoplineProdu
   };
 }
 
+/**
+ * Normalise tags from whatever shape SHOPLINE returns into a trimmed lowercase
+ * string array.  SHOPLINE has returned tags as:
+ *   - array of strings       ["blind-box", "sale"]
+ *   - comma-separated string "blind-box, sale"
+ *   - alternative field names: tagList, product_tags, labels, productTags
+ */
+export function normalizeTags(productRecord: Record<string, unknown>): string[] {
+  const raw =
+    productRecord.tags ??
+    productRecord.tagList ??
+    productRecord.tag_list ??
+    productRecord.product_tags ??
+    productRecord.labels ??
+    productRecord.productTags;
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((t) => String(t).trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  if (typeof raw === 'string' && raw.trim()) {
+    return raw
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function mapProductRecord(productRecord: Record<string, unknown>): ShoplineProduct | null {
   const id = readStringField(productRecord, ['id', 'product_id']);
   if (!id) {
     return null;
   }
-
-  const rawTags = productRecord.tags;
 
   return {
     id,
@@ -248,13 +278,7 @@ function mapProductRecord(productRecord: Record<string, unknown>): ShoplineProdu
     published:
       readBooleanField(productRecord, ['published', 'is_published', 'active', 'enabled']) ??
       null,
-    tags:
-      typeof rawTags === 'string'
-        ? rawTags
-            .split(',')
-            .map((tag) => tag.trim())
-            .filter((tag) => Boolean(tag))
-        : [],
+    tags: normalizeTags(productRecord),
     templatePath: readStringField(productRecord, ['template_path', 'templatePath']),
     productType: readStringField(productRecord, ['product_type', 'productType']),
     variants: extractVariantRecords(productRecord)

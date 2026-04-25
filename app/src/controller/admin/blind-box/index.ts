@@ -26,6 +26,8 @@ import { getWebhookEventService } from '../../../service/webhook/webhook-event-s
 import { ValidationError } from '../../../lib/errors';
 import { getShoplineCatalogService } from '../../../service/shopline/catalog-service';
 import { getBlindBoxDatabase } from '../../../db/client';
+import { normalizeTags } from '../../../integration/shopline/catalog-gateway';
+import { logger } from '../../../lib/logger';
 
 async function validateStorefrontProductMappingInput(
   shop: string,
@@ -253,6 +255,33 @@ export function createBlindBoxAdminRouter(): express.Router {
       const catalogService = await getShoplineCatalogService();
       const result = await catalogService.listAllProducts(shop, { accessToken });
 
+      const fetchedCount = result.products.length;
+      const detectedCount = result.products.filter((p) => (p.tags ?? []).includes('blind-box')).length;
+
+      // Log a raw sample (first product) so Render logs show the exact field shapes.
+      if (result.products.length > 0) {
+        const sample = result.products[0];
+        const rawSample = sample.raw as Record<string, unknown>;
+        logger.info('SHOPLINE product sample (first of page)', {
+          shop,
+          fetchedCount,
+          detectedCount,
+          sample: {
+            id: sample.id,
+            title: sample.title,
+            status: sample.status,
+            published: sample.published,
+            variantCount: sample.variants.length,
+            tagsNormalized: sample.tags,
+            tagsRaw: rawSample?.tags,
+            tagListRaw: rawSample?.tag_list ?? rawSample?.tagList,
+            labelsRaw: rawSample?.labels,
+          },
+        });
+      } else {
+        logger.warn('SHOPLINE returned 0 products', { shop });
+      }
+
       res.status(200).send({
         success: true,
         data: result.products.map((p) => ({
@@ -269,6 +298,7 @@ export function createBlindBoxAdminRouter(): express.Router {
             inventoryQuantity: v.inventoryQuantity,
           })),
         })),
+        debug: { fetchedCount, detectedCount },
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'CatalogGatewayError') {
@@ -285,6 +315,57 @@ export function createBlindBoxAdminRouter(): express.Router {
         });
         return;
       }
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // ── Debug: raw SHOPLINE product sample ────────────────────────────────────
+  // GET /api/blind-box/debug/shopline/products
+  // Returns sanitized raw data exactly as SHOPLINE sent it, before any mapping.
+  // Remove or gate behind an env flag before going to production.
+  router.get('/debug/shopline/products', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      if (!accessToken) {
+        res.status(401).json({ success: false, error: 'No access token in session' });
+        return;
+      }
+      const { ShoplineCatalogGateway } = await import('../../../integration/shopline/catalog-gateway');
+      const gateway = new ShoplineCatalogGateway();
+
+      // Fetch only the first page so this is fast.
+      const page = await gateway.getProductsPage(shop, accessToken, { limit: 20 });
+
+      const rawSamples = page.products.slice(0, 10).map((p) => {
+        const raw = p.raw as Record<string, unknown>;
+        const tags = normalizeTags(raw);
+        return {
+          id: p.id,
+          title: p.title,
+          handle: (raw?.handle as string | undefined) ?? null,
+          status: p.status,
+          published: p.published,
+          tagsRaw: raw?.tags,
+          tagListRaw: raw?.tag_list ?? raw?.tagList ?? null,
+          labelsRaw: raw?.labels ?? null,
+          normalizedTags: tags,
+          hasBlindBoxTag: tags.includes('blind-box'),
+          blindBoxCollectionHandle: tags
+            .filter((t) => t.startsWith('blind-box-collection:'))
+            .map((t) => t.replace('blind-box-collection:', '').trim()),
+        };
+      });
+
+      res.status(200).json({
+        success: true,
+        endpointUsed: '/products/list.json or /products.json',
+        fetchedCount: page.products.length,
+        detectedCount: page.products.filter((p) => (p.tags ?? []).includes('blind-box')).length,
+        rawSample: rawSamples,
+      });
+    } catch (error) {
       sendErrorResponse(res, error, context);
     }
   });
