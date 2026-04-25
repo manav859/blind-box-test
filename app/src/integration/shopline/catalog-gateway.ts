@@ -464,68 +464,155 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     } = {},
   ): Promise<CollectionProductsPage> {
     const pageSize = Math.min(options.limit || 250, 250);
-    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
+    // pageInfo carries the GraphQL endCursor from the previous page.
+    const after = options.pageInfo || null;
 
-    const query = new URLSearchParams();
-    query.set('page_size', String(pageSize));
-    query.set('page_no', String(pageNo));
+    // REST product listing endpoints (products.json, products/list.json) return
+    // 404 / 406 in SHOPLINE v20230901.  The GraphQL API is the only confirmed
+    // working approach — getCollectionByHandle already uses it successfully.
+    return this.getProductsPageViaGraphQL(shop, accessToken, pageSize, after);
+  }
 
-    // Try known SHOPLINE product list paths in order; log every failure so the
-    // Render logs show the exact status + response body for each attempt.
-    const candidatePaths = [
-      `/products/list.json?${query.toString()}`,
-      `/products.json?${query.toString()}`,
-    ];
-
-    for (const path of candidatePaths) {
-      let response: CatalogRequestResult<unknown>;
-      try {
-        response = await this.request<unknown>(shop, accessToken, path);
-      } catch (err) {
-        const details = err instanceof CatalogGatewayError ? err.details : {};
-        logger.warn('SHOPLINE products candidate path failed — trying next', {
-          shop,
-          path,
-          shoplineStatus: err instanceof CatalogGatewayError ? err.statusCode : null,
-          responsePreview: typeof details?.responseText === 'string'
-            ? details.responseText.slice(0, 400)
-            : null,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        continue;
-      }
-
-      const rawRecord = asRecord(response.data);
-      logger.info('SHOPLINE products response shape', {
-        shop,
-        path,
-        pageNo,
-        topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
-        traceId: response.traceId,
-      });
-
-      const products = extractProductRecords(response.data)
-        .map(mapProductRecord)
-        .filter((product): product is ShoplineProduct => Boolean(product));
-
-      const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
-      const hasMore = total !== null
-        ? pageNo * pageSize < total
-        : products.length === pageSize;
-
-      return {
-        products,
-        nextPageInfo: hasMore ? String(pageNo + 1) : null,
-        traceId: response.traceId,
+  private async getProductsPageViaGraphQL(
+    shop: string,
+    accessToken: string,
+    first: number,
+    after: string | null,
+  ): Promise<CollectionProductsPage> {
+    type GqlProductsResponse = {
+      data?: {
+        products?: {
+          edges?: Array<{
+            node?: {
+              id?: string;
+              title?: string;
+              status?: string;
+              tags?: string[] | string;
+              tag_list?: string[] | string;
+              handle?: string;
+              product_type?: string;
+              productType?: string;
+              variants?: {
+                edges?: Array<{
+                  node?: {
+                    id?: string;
+                    title?: string;
+                    sku?: string;
+                    inventoryQuantity?: number;
+                    inventory_quantity?: number;
+                  };
+                }>;
+              };
+            };
+          }>;
+          pageInfo?: {
+            hasNextPage?: boolean;
+            endCursor?: string | null;
+          };
+        };
       };
-    }
+    };
 
-    // All paths failed — return empty so the service loop stops cleanly.
-    logger.warn('SHOPLINE products endpoint unavailable — returning empty page', {
+    const gqlResponse = await this.graphqlRequest<GqlProductsResponse>(
       shop,
-      candidatePaths,
+      accessToken,
+      `
+        query GetProducts($first: Int!, $after: String) {
+          products(first: $first, after: $after) {
+            edges {
+              node {
+                id
+                title
+                status
+                tags
+                variants(first: 100) {
+                  edges {
+                    node {
+                      id
+                      title
+                      sku
+                      inventoryQuantity
+                    }
+                  }
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+      `,
+      { first, after },
+    );
+
+    const productsConn = gqlResponse.data?.data?.products;
+    const edges = productsConn?.edges ?? [];
+    const pageInfo = productsConn?.pageInfo;
+
+    logger.info('SHOPLINE GraphQL products response', {
+      shop,
+      edgeCount: edges.length,
+      hasNextPage: pageInfo?.hasNextPage,
+      endCursor: pageInfo?.endCursor ?? null,
+      // Log the raw node of the first product so we can see exact field shapes.
+      sampleNode: edges[0]?.node
+        ? {
+            id: edges[0].node.id,
+            title: edges[0].node.title,
+            status: edges[0].node.status,
+            tagsRaw: edges[0].node.tags,
+            variantEdges: edges[0].node.variants?.edges?.length,
+          }
+        : null,
     });
-    return { products: [], nextPageInfo: null, traceId: null };
+
+    const products: ShoplineProduct[] = edges
+      .map((edge) => {
+        const node = edge?.node;
+        if (!node?.id) return null;
+
+        const rawTags = node.tags ?? node.tag_list;
+        const tags = normalizeTags({ tags: rawTags });
+
+        const variants: ShoplineProductVariant[] = (node.variants?.edges ?? [])
+          .flatMap((ve): ShoplineProductVariant[] => {
+            const v = ve?.node;
+            if (!v?.id) return [];
+            return [{
+              id: normalizeShoplineResourceId(v.id) || v.id,
+              title: v.title ?? null,
+              sku: v.sku ?? null,
+              inventoryQuantity: v.inventoryQuantity ?? v.inventory_quantity ?? null,
+              tracked: null,
+              available: null,
+              raw: v,
+            }];
+          });
+
+        const product: ShoplineProduct = {
+          id: normalizeShoplineResourceId(node.id) || node.id,
+          title: node.title ?? null,
+          status: node.status ?? null,
+          published: node.status ? node.status.toLowerCase() === 'active' : null,
+          tags,
+          templatePath: null,
+          productType: node.product_type ?? node.productType ?? null,
+          variants,
+          raw: node,
+        };
+        return product;
+      })
+      .filter((p): p is ShoplineProduct => Boolean(p));
+
+    return {
+      products,
+      nextPageInfo: pageInfo?.hasNextPage && pageInfo.endCursor
+        ? pageInfo.endCursor
+        : null,
+      traceId: gqlResponse.traceId,
+    };
   }
 
   async getCollectionProductsPage(
