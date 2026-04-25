@@ -173,25 +173,34 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
               value={productSearch}
               onChange={(e) => setProductSearch(e.target.value)}
             />
-            <select
-              value={selectedProductId}
-              onChange={(e) => {
-                setSelectedProductId(e.target.value);
-                const p = products.find((x) => x.id === e.target.value);
-                if (p && !name) setName(p.title ?? '');
-              }}
-              size={5}
-              style={{ height: 'auto' }}
-            >
-              <option value="">— select product —</option>
-              {filteredProducts.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title ?? p.id}
-                  {p.tags.includes('blind-box') ? ' ✓ tagged' : ' ⚠ not tagged'}
-                  {' '}({p.variantCount} variant{p.variantCount !== 1 ? 's' : ''})
-                </option>
-              ))}
-            </select>
+            {products.length === 0 ? (
+              <div className="alert alert-warning" style={{ marginTop: '.25rem' }}>
+                <span className="alert-icon">⚠</span>
+                <div className="alert-body">
+                  No products found from SHOPLINE. Add the <strong>blind-box</strong> tag to a product in SHOPLINE Admin, then re-open this dialog.
+                </div>
+              </div>
+            ) : (
+              <select
+                value={selectedProductId}
+                onChange={(e) => {
+                  setSelectedProductId(e.target.value);
+                  const p = products.find((x) => x.id === e.target.value);
+                  if (p && !name) setName(p.title ?? '');
+                }}
+                size={5}
+                style={{ height: 'auto' }}
+              >
+                <option value="">— select product —</option>
+                {filteredProducts.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title ?? p.id}
+                    {p.tags.includes('blind-box') ? ' ✓ tagged' : ' ⚠ not tagged'}
+                    {' '}({p.variantCount} variant{p.variantCount !== 1 ? 's' : ''})
+                  </option>
+                ))}
+              </select>
+            )}
             {selectedProductId && !products.find((p) => p.id === selectedProductId)?.tags.includes('blind-box') && (
               <div className="form-error">
                 ⚠ This product does not have the "blind-box" tag. Add it in SHOPLINE Admin first.

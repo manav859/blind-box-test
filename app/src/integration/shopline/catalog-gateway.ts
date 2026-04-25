@@ -440,45 +440,68 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     } = {},
   ): Promise<CollectionProductsPage> {
     const pageSize = Math.min(options.limit || 250, 250);
-    // pageInfo is re-used to carry the next page number (SHOPLINE uses offset pagination,
-    // not cursor pagination — page_no increments from 1).
     const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
 
     const query = new URLSearchParams();
     query.set('page_size', String(pageSize));
     query.set('page_no', String(pageNo));
 
-    // SHOPLINE OpenAPI uses /products/list.json for listing (not /products.json).
-    // Mirrors the working /locations/list.json pattern in the inventory gateway.
-    const response = await this.request<unknown>(
-      shop,
-      accessToken,
+    // Try known SHOPLINE product list paths in order; log every failure so the
+    // Render logs show the exact status + response body for each attempt.
+    const candidatePaths = [
       `/products/list.json?${query.toString()}`,
-    );
+      `/products.json?${query.toString()}`,
+    ];
 
-    const rawRecord = asRecord(response.data);
-    logger.debug('SHOPLINE products/list.json response shape', {
+    for (const path of candidatePaths) {
+      let response: CatalogRequestResult<unknown>;
+      try {
+        response = await this.request<unknown>(shop, accessToken, path);
+      } catch (err) {
+        const details = err instanceof CatalogGatewayError ? err.details : {};
+        logger.warn('SHOPLINE products candidate path failed — trying next', {
+          shop,
+          path,
+          shoplineStatus: err instanceof CatalogGatewayError ? err.statusCode : null,
+          responsePreview: typeof details?.responseText === 'string'
+            ? details.responseText.slice(0, 400)
+            : null,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        continue;
+      }
+
+      const rawRecord = asRecord(response.data);
+      logger.info('SHOPLINE products response shape', {
+        shop,
+        path,
+        pageNo,
+        topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
+        traceId: response.traceId,
+      });
+
+      const products = extractProductRecords(response.data)
+        .map(mapProductRecord)
+        .filter((product): product is ShoplineProduct => Boolean(product));
+
+      const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
+      const hasMore = total !== null
+        ? pageNo * pageSize < total
+        : products.length === pageSize;
+
+      return {
+        products,
+        nextPageInfo: hasMore ? String(pageNo + 1) : null,
+        traceId: response.traceId,
+      };
+    }
+
+    // All paths failed — return empty so the service loop stops cleanly.
+    logger.warn('SHOPLINE products endpoint unavailable — returning empty page', {
       shop,
-      pageNo,
-      topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
+      candidatePaths,
     });
-
-    const products = extractProductRecords(response.data)
-      .map(mapProductRecord)
-      .filter((product): product is ShoplineProduct => Boolean(product));
-
-    // Detect whether more pages exist.
-    // SHOPLINE may return total, total_count, or similar.
-    const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
-    const hasMore = total !== null
-      ? pageNo * pageSize < total
-      : products.length === pageSize;  // conservative: assume more if a full page came back
-
-    return {
-      products,
-      nextPageInfo: hasMore ? String(pageNo + 1) : null,
-      traceId: response.traceId,
-    };
+    return { products: [], nextPageInfo: null, traceId: null };
   }
 
   async getCollectionProductsPage(

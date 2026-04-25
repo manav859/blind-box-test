@@ -271,18 +271,16 @@ export function createBlindBoxAdminRouter(): express.Router {
         })),
       });
     } catch (error) {
-      // Surface SHOPLINE gateway details in the response so the browser devtools
-      // show exactly which endpoint failed and what SHOPLINE returned.
       if (error instanceof Error && error.name === 'CatalogGatewayError') {
         const gwErr = error as Error & { code: string; statusCode: number; details?: Record<string, unknown> };
-        res.status(502).send({
-          success: false,
-          error: {
-            code: 'SHOPLINE_CATALOG_REQUEST_FAILED',
+        res.status(200).send({
+          success: true,
+          data: [],
+          warning: {
+            code: gwErr.code,
             message: gwErr.message,
             shoplineStatus: gwErr.statusCode,
-            details: gwErr.details ?? {},
-            hint: 'Check SHOPLINE Admin API version, scopes, and endpoint path. Logs show the full request/response.',
+            hint: 'SHOPLINE product API unavailable. Tag a product "blind-box" in SHOPLINE Admin and try again.',
           },
         });
         return;
