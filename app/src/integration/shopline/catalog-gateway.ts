@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import { getRuntimeConfig } from '../../lib/config';
+import { logger } from '../../lib/logger';
 
 export interface ShoplineCollection {
   id: string;
@@ -181,17 +182,26 @@ function extractProductRecords(payload: unknown): Record<string, unknown>[] {
     return [];
   }
 
-  const directProducts = asRecordArray(record.products);
-  if (directProducts.length > 0) {
-    return directProducts;
+  // Try direct top-level keys first (SHOPLINE returns { products: [...] } or { list: [...] })
+  const direct =
+    asRecordArray(record.products) ||
+    asRecordArray(record.list) ||
+    asRecordArray(record.items);
+  if (direct.length > 0) {
+    return direct;
   }
 
+  // Try nested under a "data" wrapper
   const dataRecord = asRecord(record.data);
   if (!dataRecord) {
     return [];
   }
 
-  return asRecordArray(dataRecord.products) || asRecordArray(dataRecord.items);
+  return (
+    asRecordArray(dataRecord.products) ||
+    asRecordArray(dataRecord.list) ||
+    asRecordArray(dataRecord.items)
+  );
 }
 
 function extractVariantRecords(productRecord: Record<string, unknown> | null): Record<string, unknown>[] {
@@ -429,23 +439,44 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       limit?: number;
     } = {},
   ): Promise<CollectionProductsPage> {
-    const query = new URLSearchParams();
-    query.set('limit', String(Math.min(options.limit || 250, 250)));
-    if (options.pageInfo) {
-      query.set('page_info', options.pageInfo);
-    }
+    const pageSize = Math.min(options.limit || 250, 250);
+    // pageInfo is re-used to carry the next page number (SHOPLINE uses offset pagination,
+    // not cursor pagination — page_no increments from 1).
+    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
 
+    const query = new URLSearchParams();
+    query.set('page_size', String(pageSize));
+    query.set('page_no', String(pageNo));
+
+    // SHOPLINE OpenAPI uses /products/list.json for listing (not /products.json).
+    // Mirrors the working /locations/list.json pattern in the inventory gateway.
     const response = await this.request<unknown>(
       shop,
       accessToken,
-      `/products.json?${query.toString()}`,
+      `/products/list.json?${query.toString()}`,
     );
 
+    const rawRecord = asRecord(response.data);
+    logger.debug('SHOPLINE products/list.json response shape', {
+      shop,
+      pageNo,
+      topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
+    });
+
+    const products = extractProductRecords(response.data)
+      .map(mapProductRecord)
+      .filter((product): product is ShoplineProduct => Boolean(product));
+
+    // Detect whether more pages exist.
+    // SHOPLINE may return total, total_count, or similar.
+    const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
+    const hasMore = total !== null
+      ? pageNo * pageSize < total
+      : products.length === pageSize;  // conservative: assume more if a full page came back
+
     return {
-      products: extractProductRecords(response.data)
-        .map(mapProductRecord)
-        .filter((product): product is ShoplineProduct => Boolean(product)),
-      nextPageInfo: response.nextPageInfo,
+      products,
+      nextPageInfo: hasMore ? String(pageNo + 1) : null,
       traceId: response.traceId,
     };
   }
@@ -467,23 +498,31 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       });
     }
 
+    const pageSize = Math.min(options.limit || 250, 250);
+    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
+
     const query = new URLSearchParams();
-    query.set('limit', String(Math.min(options.limit || 250, 250)));
-    if (options.pageInfo) {
-      query.set('page_info', options.pageInfo);
-    }
+    query.set('page_size', String(pageSize));
+    query.set('page_no', String(pageNo));
+    query.set('category_id', normalizedCollectionId);
 
     const response = await this.request<unknown>(
       shop,
       accessToken,
-      `/products/collections/${encodeURIComponent(normalizedCollectionId)}/products.json?${query.toString()}`,
+      `/products/list.json?${query.toString()}`,
     );
 
+    const rawRecord = asRecord(response.data);
+    const products = extractProductRecords(response.data)
+      .map(mapProductRecord)
+      .filter((product): product is ShoplineProduct => Boolean(product));
+
+    const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
+    const hasMore = total !== null ? pageNo * pageSize < total : products.length === pageSize;
+
     return {
-      products: extractProductRecords(response.data)
-        .map(mapProductRecord)
-        .filter((product): product is ShoplineProduct => Boolean(product)),
-      nextPageInfo: response.nextPageInfo,
+      products,
+      nextPageInfo: hasMore ? String(pageNo + 1) : null,
       traceId: response.traceId,
     };
   }
@@ -496,44 +535,83 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       limit?: number;
     } = {},
   ): Promise<CollectionsPage> {
+    const pageSize = Math.min(options.limit || 250, 250);
+    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
+
     const query = new URLSearchParams();
-    query.set('limit', String(Math.min(options.limit || 250, 250)));
-    if (options.pageInfo) {
-      query.set('page_info', options.pageInfo);
+    query.set('page_size', String(pageSize));
+    query.set('page_no', String(pageNo));
+
+    // SHOPLINE may call collections "categories" — try most likely paths in order.
+    // /products/collections.json returned 406 in testing; these alternatives match
+    // known SHOPLINE OpenAPI patterns.
+    const candidatePaths = [
+      `/products/categories/list.json?${query.toString()}`,
+      `/categories/list.json?${query.toString()}`,
+      `/custom_collections/list.json?${query.toString()}`,
+    ];
+
+    for (const path of candidatePaths) {
+      let response: CatalogRequestResult<unknown>;
+      try {
+        response = await this.request<unknown>(shop, accessToken, path);
+      } catch (err) {
+        logger.debug('SHOPLINE collections candidate path failed — trying next', {
+          shop,
+          path,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        continue;
+      }
+
+      const record = asRecord(response.data);
+      logger.debug('SHOPLINE collections response shape', {
+        shop,
+        path,
+        topLevelKeys: record ? Object.keys(record) : [],
+      });
+
+      const collectionsArray =
+        asRecordArray(record?.collections) ||
+        asRecordArray(record?.categories) ||
+        asRecordArray(record?.list) ||
+        asRecordArray((asRecord(record?.data))?.collections) ||
+        asRecordArray((asRecord(record?.data))?.categories) ||
+        asRecordArray((asRecord(record?.data))?.list) ||
+        [];
+
+      const collections = collectionsArray
+        .map((collectionRecord): ShoplineCollection | null => {
+          const id = readStringField(collectionRecord, ['id', 'collection_id', 'category_id']);
+          if (!id) return null;
+          return {
+            id: normalizeShoplineResourceId(id) || id,
+            title: readStringField(collectionRecord, ['title', 'name']),
+            handle: readStringField(collectionRecord, ['handle', 'slug']),
+            type: 'collection',
+            status: readStringField(collectionRecord, ['status']),
+            raw: collectionRecord,
+          };
+        })
+        .filter((c): c is ShoplineCollection => Boolean(c));
+
+      const total = readNumberField(record, ['total', 'total_count', 'totalCount', 'count']);
+      const hasMore = total !== null ? pageNo * pageSize < total : collections.length === pageSize;
+
+      return {
+        collections,
+        nextPageInfo: hasMore ? String(pageNo + 1) : null,
+        traceId: response.traceId,
+      };
     }
 
-    const response = await this.request<unknown>(
+    // All known collection paths failed — collections may not be supported by this
+    // API version or scopes. Return empty so the UI degrades gracefully.
+    logger.warn('SHOPLINE collections endpoint unavailable — returning empty list', {
       shop,
-      accessToken,
-      `/products/collections.json?${query.toString()}`,
-    );
-
-    const record = asRecord(response.data);
-    const collectionsArray =
-      asRecordArray(record?.collections) ||
-      asRecordArray((asRecord(record?.data))?.collections) ||
-      [];
-
-    const collections = collectionsArray
-      .map((collectionRecord): ShoplineCollection | null => {
-        const id = readStringField(collectionRecord, ['id', 'collection_id']);
-        if (!id) return null;
-        return {
-          id: normalizeShoplineResourceId(id) || id,
-          title: readStringField(collectionRecord, ['title', 'name']),
-          handle: readStringField(collectionRecord, ['handle']),
-          type: 'collection',
-          status: readStringField(collectionRecord, ['status']),
-          raw: collectionRecord,
-        };
-      })
-      .filter((c): c is ShoplineCollection => Boolean(c));
-
-    return {
-      collections,
-      nextPageInfo: response.nextPageInfo,
-      traceId: response.traceId,
-    };
+      candidatePaths,
+    });
+    return { collections: [], nextPageInfo: null, traceId: null };
   }
 
   private async request<T>(
