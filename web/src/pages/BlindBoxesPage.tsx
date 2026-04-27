@@ -34,9 +34,10 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
   const [collections, setCollections] = useState<CatalogCollection[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showCollectionOverride, setShowCollectionOverride] = useState(false);
 
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [selectedCollectionId, setSelectedCollectionId] = useState('');
+  const [overrideCollectionId, setOverrideCollectionId] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [strategy, setStrategy] = useState<'uniform' | 'weighted'>('uniform');
@@ -47,71 +48,75 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
     if (!open) return;
     setLoadingCatalog(true);
     Promise.all([api.listCatalogProducts(), api.listCatalogCollections()])
-      .then(([prods, colls]) => {
-        setProducts(prods);
-        setCollections(colls);
-      })
-      .catch(() => { /* catalog load failure is surfaced per-section, not as a toast */ })
+      .then(([prods, colls]) => { setProducts(prods); setCollections(colls); })
+      .catch(() => {})
       .finally(() => setLoadingCatalog(false));
   }, [open]);
 
+  const selectedProduct = products.find((p) => p.id === selectedProductId);
+  const tagHandle = selectedProduct ? deriveCollectionHandle(selectedProduct.tags) : '';
+
+  // Effective collection identifier sent to the backend.
+  // Priority: manual dropdown override → tag-derived handle.
+  // The backend accepts both numeric IDs and slug handles.
+  const effectiveCollectionId = overrideCollectionId || tagHandle;
+
+  const isProductSelected = Boolean(selectedProductId);
+  const isBlindBoxTagged = selectedProduct?.tags.includes('blind-box') ?? false;
+  const hasCollectionTag = Boolean(tagHandle);
+  const canSave = isProductSelected && Boolean(effectiveCollectionId) && !loadingCatalog;
+
   const filteredProducts = products.filter(
-    (p) =>
-      !productSearch ||
+    (p) => !productSearch ||
       (p.title ?? '').toLowerCase().includes(productSearch.toLowerCase()) ||
       p.id.includes(productSearch),
   );
-
   const filteredCollections = collections.filter(
-    (c) =>
-      !collectionSearch ||
+    (c) => !collectionSearch ||
       (c.title ?? '').toLowerCase().includes(collectionSearch.toLowerCase()) ||
       c.id.includes(collectionSearch),
   );
 
-  const selectedProduct = products.find((p) => p.id === selectedProductId);
+  function handleProductChange(productId: string) {
+    setSelectedProductId(productId);
+    const p = products.find((x) => x.id === productId);
+    if (p && !name) setName(p.title ?? '');
+    // Clear any manual override so the tag-derived handle takes effect.
+    setOverrideCollectionId('');
+    setShowCollectionOverride(false);
+  }
 
-  // Collection handle from the selected product's blind-box-collection: tag.
-  // Used as the collection identifier when the dropdown has no items (SHOPLINE
-  // collections endpoint unavailable) or when no dropdown selection is made.
-  const derivedCollectionHandle = selectedProduct
-    ? deriveCollectionHandle(selectedProduct.tags)
-    : '';
-
-  // Effective collection ID: dropdown selection > product-tag-derived handle.
-  const effectiveCollectionId = selectedCollectionId || derivedCollectionHandle;
+  function handleClose() {
+    setSelectedProductId('');
+    setOverrideCollectionId('');
+    setName('');
+    setDescription('');
+    setStrategy('uniform');
+    setProductSearch('');
+    setCollectionSearch('');
+    setShowCollectionOverride(false);
+    onClose();
+  }
 
   async function handleSave() {
-    if (!selectedProductId) {
-      addToast('error', 'Select a product first');
-      return;
-    }
+    if (!selectedProductId) { addToast('error', 'Select a product first'); return; }
     if (!effectiveCollectionId) {
-      addToast(
-        'error',
-        'Reward collection required',
-        'Add a "blind-box-collection:<handle>" tag to the product in SHOPLINE Admin, or select a collection from the dropdown.',
-      );
+      addToast('error', 'Reward collection required',
+        'Add a blind-box-collection:<handle> tag to the product in SHOPLINE Admin.');
       return;
     }
 
     setSaving(true);
     try {
-      // 1. Refresh blind box list (product must have "blind-box" tag in SHOPLINE)
       const blindBoxes = await api.listBlindBoxes();
       let blindBox = blindBoxes.find((bb) => bb.shoplineProductId === selectedProductId);
-
       if (!blindBox) {
-        addToast(
-          'warning',
-          'Product not tagged as blind-box',
-          'Add the "blind-box" tag to this product in SHOPLINE Admin, then try again.',
-        );
+        addToast('warning', 'Product not tagged as blind-box',
+          'Add the "blind-box" tag to this product in SHOPLINE Admin, then try again.');
         setSaving(false);
         return;
       }
 
-      // 2. Update blind box settings
       blindBox = await api.updateBlindBox(blindBox.id, {
         name: name.trim() || selectedProduct?.title || 'Blind Box',
         description: description.trim() || null,
@@ -119,19 +124,14 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
         selectionStrategy: strategy,
       });
 
-      // 3. Create reward group from collection and link it.
-      // effectiveCollectionId may be a numeric SHOPLINE ID (from dropdown) or a
-      // handle slug derived from the product tag — the backend resolves both.
+      // effectiveCollectionId is either a numeric SHOPLINE ID or a slug handle.
+      // The backend's validateRewardGroupInput resolves handles automatically.
       const rewardGroup = await api.createRewardGroup({
         shoplineCollectionId: effectiveCollectionId,
         status: 'active',
       });
 
-      await api.upsertRewardGroupLink({
-        blindBoxId: blindBox.id,
-        rewardGroupId: rewardGroup.id,
-      });
-
+      await api.upsertRewardGroupLink({ blindBoxId: blindBox.id, rewardGroupId: rewardGroup.id });
       addToast('success', 'Blind box configured!', `"${blindBox.name}" is now active`);
       onCreated(blindBox);
       onClose();
@@ -140,32 +140,6 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleClose() {
-    setSelectedProductId('');
-    setSelectedCollectionId('');
-    setName('');
-    setDescription('');
-    setStrategy('uniform');
-    setProductSearch('');
-    setCollectionSearch('');
-    onClose();
-  }
-
-  // When the product changes, pre-select the matching collection from the
-  // dropdown (if loaded) and clear any previous manual selection.
-  function handleProductChange(productId: string) {
-    setSelectedProductId(productId);
-    const p = products.find((x) => x.id === productId);
-    if (p && !name) setName(p.title ?? '');
-    const handle = deriveCollectionHandle(p?.tags ?? []);
-    // Auto-select the matching collection in the dropdown if it exists there.
-    const match = collections.find(
-      (c) => c.id === handle ||
-        (c.title ?? '').toLowerCase().replace(/[\s_]+/g, '-') === handle,
-    );
-    setSelectedCollectionId(match?.id ?? '');
   }
 
   return (
@@ -180,7 +154,7 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
           <button className="btn btn-secondary" onClick={handleClose} disabled={saving}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={saving || loadingCatalog}>
+          <button className="btn btn-primary" onClick={handleSave} disabled={!canSave || saving}>
             {saving ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save Configuration'}
           </button>
         </>
@@ -193,14 +167,7 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
         </div>
       ) : (
         <>
-          <div className="alert alert-info mb-4" style={{ marginBottom: '1.25rem' }}>
-            <span className="alert-icon">ℹ</span>
-            <div className="alert-body">
-              The selected product must have the <strong>blind-box</strong> tag in SHOPLINE Admin for the system to detect it automatically.
-            </div>
-          </div>
-
-          {/* Blind-box product selector */}
+          {/* ── Product selector ─────────────────────────────────────────── */}
           <div className="form-group">
             <label>Blind-Box Product *</label>
             <input
@@ -211,10 +178,10 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
               onChange={(e) => setProductSearch(e.target.value)}
             />
             {products.length === 0 ? (
-              <div className="alert alert-warning" style={{ marginTop: '.25rem' }}>
+              <div className="alert alert-warning">
                 <span className="alert-icon">⚠</span>
                 <div className="alert-body">
-                  No products found from SHOPLINE. Add the <strong>blind-box</strong> tag to a product in SHOPLINE Admin, then re-open this dialog.
+                  No products found. Add the <strong>blind-box</strong> tag to a product in SHOPLINE Admin, then re-open this dialog.
                 </div>
               </div>
             ) : (
@@ -228,21 +195,111 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
                 {filteredProducts.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title ?? p.id}
-                    {p.tags.includes('blind-box') ? ' ✓ tagged' : ' ⚠ not tagged'}
-                    {' '}({p.variantCount} variant{p.variantCount !== 1 ? 's' : ''})
+                    {p.tags.includes('blind-box') ? ' ✓' : ' ⚠ missing blind-box tag'}
+                    {p.tags.some((t) => t.startsWith('blind-box-collection:')) ? ' 🔗' : ''}
                   </option>
                 ))}
               </select>
             )}
-            {selectedProductId && !products.find((p) => p.id === selectedProductId)?.tags.includes('blind-box') && (
+            {isProductSelected && !isBlindBoxTagged && (
               <div className="form-error">
-                ⚠ This product does not have the "blind-box" tag. Add it in SHOPLINE Admin first.
+                This product does not have the "blind-box" tag. Add it in SHOPLINE Admin first.
               </div>
             )}
-            <div className="form-hint">Only products tagged "blind-box" will trigger assignments.</div>
           </div>
 
-          <div className="form-row">
+          {/* ── Reward collection — tag-first ────────────────────────────── */}
+          {isProductSelected && (
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+              <label>Reward Collection</label>
+
+              {hasCollectionTag ? (
+                // Primary state: collection handle resolved from product tag.
+                <div
+                  className="alert alert-success"
+                  style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginTop: '.25rem' }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>✓</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, marginBottom: '.15rem' }}>
+                      Auto-linked via product tag
+                    </div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '.85rem' }}>
+                      blind-box-collection:<strong>{tagHandle}</strong>
+                    </div>
+                    {overrideCollectionId && (
+                      <div style={{ fontSize: '.8rem', marginTop: '.2rem', color: 'var(--color-text-muted)' }}>
+                        Override active: using collection ID {overrideCollectionId}
+                      </div>
+                    )}
+                  </div>
+                  {collections.length > 0 && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{ flexShrink: 0 }}
+                      onClick={() => setShowCollectionOverride((v) => !v)}
+                    >
+                      {showCollectionOverride ? 'Hide override' : 'Override'}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                // Warning: product has no collection tag.
+                <div className="alert alert-warning" style={{ marginTop: '.25rem' }}>
+                  <span className="alert-icon">⚠</span>
+                  <div className="alert-body">
+                    No reward collection linked. Add the tag{' '}
+                    <code>blind-box-collection:&lt;handle&gt;</code> to this product in SHOPLINE Admin.
+                    {collections.length > 0 && (
+                      <> Or{' '}
+                        <button
+                          className="btn-link"
+                          style={{ textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                          onClick={() => setShowCollectionOverride((v) => !v)}
+                        >
+                          select a collection manually
+                        </button>.
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Optional collection dropdown override */}
+              {showCollectionOverride && collections.length > 0 && (
+                <div style={{ marginTop: '.75rem' }}>
+                  <input
+                    className="search-input"
+                    style={{ marginBottom: '.5rem' }}
+                    placeholder="Search collections…"
+                    value={collectionSearch}
+                    onChange={(e) => setCollectionSearch(e.target.value)}
+                  />
+                  <select
+                    value={overrideCollectionId}
+                    onChange={(e) => setOverrideCollectionId(e.target.value)}
+                    size={4}
+                    style={{ height: 'auto' }}
+                  >
+                    <option value="">— use tag-derived handle —</option>
+                    {filteredCollections.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title ?? c.id}
+                        {c.handle ? ` (${c.handle})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-hint" style={{ marginTop: '.4rem' }}>
+                Products in this collection are the reward pool for assignments.
+              </div>
+            </div>
+          )}
+
+          {/* ── Name, strategy, description ──────────────────────────────── */}
+          <div className="form-row" style={{ marginTop: '1rem' }}>
             <div className="form-group">
               <label>Internal Name</label>
               <input
@@ -270,58 +327,6 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
             />
-          </div>
-
-          {/* Reward collection selector */}
-          <div className="form-group">
-            <label>Reward Collection *</label>
-            {collections.length > 0 ? (
-              <>
-                <input
-                  className="search-input"
-                  style={{ marginBottom: '.5rem' }}
-                  placeholder="Search collections…"
-                  value={collectionSearch}
-                  onChange={(e) => setCollectionSearch(e.target.value)}
-                />
-                <select
-                  value={selectedCollectionId}
-                  onChange={(e) => setSelectedCollectionId(e.target.value)}
-                  size={5}
-                  style={{ height: 'auto' }}
-                >
-                  <option value="">— select collection —</option>
-                  {filteredCollections.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title ?? c.id}
-                      {c.handle ? ` (${c.handle})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : derivedCollectionHandle ? (
-              <div className="alert alert-info" style={{ marginTop: '.25rem' }}>
-                <span className="alert-icon">ℹ</span>
-                <div className="alert-body">
-                  Collection resolved from product tag: <strong>{derivedCollectionHandle}</strong>.
-                  The backend will look it up by title when saving.
-                </div>
-              </div>
-            ) : (
-              <div className="alert alert-warning" style={{ marginTop: '.25rem' }}>
-                <span className="alert-icon">⚠</span>
-                <div className="alert-body">
-                  No collections loaded and no <code>blind-box-collection:</code> tag on the selected product.
-                  Add <strong>blind-box-collection:&lt;handle&gt;</strong> to the product in SHOPLINE Admin.
-                </div>
-              </div>
-            )}
-            <div className="form-hint">
-              Products in this SHOPLINE collection will be the reward pool.
-              {derivedCollectionHandle && !selectedCollectionId && (
-                <> Using <strong>{derivedCollectionHandle}</strong> from product tag.</>
-              )}
-            </div>
           </div>
         </>
       )}
