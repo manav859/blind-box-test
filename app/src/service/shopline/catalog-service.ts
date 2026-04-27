@@ -68,6 +68,34 @@ export class ShoplineCatalogService {
     return collection;
   }
 
+  /**
+   * Resolve a collection from a tag slug (e.g. "fashion-blindbox").
+   * Tries GraphQL collectionByHandle first; if that returns null (SHOPLINE does
+   * not guarantee collections have a handle field), falls back to REST title
+   * matching via resolveCollectionBySlug.
+   * Returns null when neither strategy finds a match.
+   */
+  async resolveCollectionBySlug(
+    shop: string,
+    slug: string,
+    options: {
+      accessToken?: string;
+    } = {},
+  ): Promise<ShoplineCollection | null> {
+    const accessToken = await this.resolveAccessToken(shop, options.accessToken);
+    const collection = await this.dependencies.catalogGateway.resolveCollectionBySlug(shop, accessToken, slug);
+
+    if (collection) {
+      this.dependencies.logger.info('Resolved SHOPLINE collection by slug', {
+        shop, slug, collectionId: collection.id, collectionTitle: collection.title,
+      });
+    } else {
+      this.dependencies.logger.warn('SHOPLINE collection slug could not be resolved', { shop, slug });
+    }
+
+    return collection;
+  }
+
   async listAllCollectionProducts(
     shop: string,
     collectionId: string,
@@ -81,7 +109,19 @@ export class ShoplineCatalogService {
     traceIds: string[];
   }> {
     const accessToken = await this.resolveAccessToken(shop, options.accessToken);
-    const collection = await this.dependencies.catalogGateway.getCollection(shop, accessToken, collectionId);
+
+    // Fetch collection metadata for the snapshot. This REST path may return 404/406
+    // in some SHOPLINE API versions — synthesise a minimal object on failure so that
+    // product fetching via getCollectionProductsPage still proceeds.
+    let collection: ShoplineCollection;
+    try {
+      collection = await this.dependencies.catalogGateway.getCollection(shop, accessToken, collectionId);
+    } catch (err) {
+      this.dependencies.logger.warn('getCollection REST call failed — synthesising minimal collection for product fetch', {
+        shop, collectionId, error: err instanceof Error ? err.message : String(err),
+      });
+      collection = { id: collectionId, title: null, handle: null, type: 'collection', status: null, raw: {} };
+    }
     const products: ShoplineProduct[] = [];
     const traceIds: string[] = [];
     let pageInfo: string | null = null;

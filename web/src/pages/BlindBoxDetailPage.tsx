@@ -12,8 +12,16 @@ function deriveCollectionHandle(tags: string[]): string {
 }
 
 type ReadinessReport = {
-  ready: boolean;
-  checks: Array<{ name: string; passed: boolean; message: string }>;
+  // Backend returns status:'ready'|'not_ready', not a boolean ready field.
+  status: 'ready' | 'not_ready';
+  mode: 'collection_linked' | 'legacy_manual_pool';
+  resolutionSource: 'product_tag' | 'reward_group_link' | null;
+  collection: { id: string; title: string | null; handle: string | null } | null;
+  rawCollectionSize: number;
+  eligibleCandidates: Array<{ productId: string; productTitle: string | null; variantTitle: string | null }>;
+  excludedCandidates: Array<{ productId: string | null; productTitle: string | null; reason: string; message: string }>;
+  issues: Array<{ code: string; message: string }>;
+  summary: string;
 };
 
 type RewardCandidate = {
@@ -179,7 +187,7 @@ export function BlindBoxDetailPage() {
     setLoadingReadiness(true);
     try {
       const data = await api.getReadiness(id);
-      setReadiness(data as ReadinessReport);
+      setReadiness(data as unknown as ReadinessReport);
     } catch (e: unknown) {
       addToast('error', 'Readiness check failed', e instanceof Error ? e.message : String(e));
     } finally {
@@ -490,32 +498,63 @@ export function BlindBoxDetailPage() {
           </div>
         )}
 
-        {readiness && (
-          <>
-            <div className={`alert ${readiness.ready ? 'alert-success' : 'alert-warning'} mb-4`} style={{ marginBottom: '1rem' }}>
-              <span className="alert-icon">{readiness.ready ? '✓' : '⚠'}</span>
-              <div className="alert-body">
-                <div className="alert-title">
-                  {readiness.ready ? 'Ready for assignments' : 'Not ready — resolve issues below'}
+        {readiness && (() => {
+          const isReady = readiness.status === 'ready';
+          return (
+            <>
+              <div className={`alert ${isReady ? 'alert-success' : 'alert-warning'} mb-4`} style={{ marginBottom: '1rem' }}>
+                <span className="alert-icon">{isReady ? '✓' : '⚠'}</span>
+                <div className="alert-body">
+                  <div className="alert-title">
+                    {isReady ? 'Ready for assignments' : 'Not ready — resolve issues below'}
+                  </div>
+                  <div style={{ fontSize: '.85rem', marginTop: '.25rem' }}>{readiness.summary}</div>
                 </div>
               </div>
-            </div>
-            <div className="health-grid">
-              {(readiness.checks ?? []).map((check, i) => (
-                <div className="health-row" key={i}>
-                  <div className="health-row-left">
-                    <span className="health-row-icon">{check.passed ? '✅' : '❌'}</span>
-                    <div>
-                      <div className="health-row-label">{check.name}</div>
-                      <div className="health-row-sub">{check.message}</div>
-                    </div>
+
+              {readiness.collection && (
+                <div className="kv-list" style={{ marginBottom: '1rem' }}>
+                  <div className="kv-row">
+                    <span className="kv-label">Reward collection</span>
+                    <span className="kv-value">
+                      {readiness.collection.title ?? readiness.collection.id}
+                      {readiness.resolutionSource === 'product_tag' && (
+                        <span className="badge badge-info" style={{ marginLeft: '.5rem', fontSize: '.75rem' }}>via product tag</span>
+                      )}
+                    </span>
                   </div>
-                  <StatusBadge status={check.passed ? 'active' : 'failed'} label={check.passed ? 'Pass' : 'Fail'} />
+                  <div className="kv-row">
+                    <span className="kv-label">Reward products</span>
+                    <span className="kv-value">
+                      {readiness.rawCollectionSize} in collection
+                      {' · '}
+                      <span className={readiness.eligibleCandidates.length > 0 ? 'text-success' : 'text-danger'}>
+                        {readiness.eligibleCandidates.length} eligible
+                      </span>
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+              )}
+
+              {readiness.issues.length > 0 && (
+                <div className="health-grid">
+                  {readiness.issues.map((issue, i) => (
+                    <div className="health-row" key={i}>
+                      <div className="health-row-left">
+                        <span className="health-row-icon">❌</span>
+                        <div>
+                          <div className="health-row-label">{issue.code}</div>
+                          <div className="health-row-sub">{issue.message}</div>
+                        </div>
+                      </div>
+                      <StatusBadge status="failed" label="Fail" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </Section>
     </Layout>
   );

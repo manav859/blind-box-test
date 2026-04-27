@@ -323,30 +323,29 @@ export class RewardCandidateService {
     const collectionHandle = parseBlindBoxCollectionTag(productTags);
 
     if (collectionHandle) {
-      try {
-        const collection = await this.dependencies.catalogService.getCollectionByHandle(shop, collectionHandle, {
-          accessToken: options.accessToken,
-        });
+      // resolveCollectionBySlug tries GraphQL collectionByHandle first, then
+      // falls back to REST title-slug matching.  This handles the case where
+      // SHOPLINE does not expose a handle field on the collection (the GraphQL
+      // query returns null) but the collection can still be matched by title.
+      const collection = await this.dependencies.catalogService.resolveCollectionBySlug(
+        shop,
+        collectionHandle,
+        { accessToken: options.accessToken },
+      );
 
+      if (collection) {
         return {
           rewardGroup: null,
-          collection: {
-            id: collection.id,
-            title: collection.title,
-            handle: collection.handle,
-          },
+          collection: { id: collection.id, title: collection.title, handle: collection.handle },
           resolutionSource: 'product_tag',
         };
-      } catch (error) {
-        if (error instanceof CatalogGatewayError && error.code === 'SHOPLINE_COLLECTION_HANDLE_NOT_FOUND') {
-          throw new RewardCandidateResolutionError(
-            'BLIND_BOX_COLLECTION_NOT_FOUND',
-            `The blind-box product tag points to a SHOPLINE collection handle that does not exist: ${collectionHandle}`,
-          );
-        }
-
-        throw error;
       }
+
+      throw new RewardCandidateResolutionError(
+        'BLIND_BOX_COLLECTION_NOT_FOUND',
+        `The blind-box product tag points to a SHOPLINE collection that could not be resolved: "${collectionHandle}". ` +
+        'Verify the collection exists in SHOPLINE Admin.',
+      );
     }
 
     if (hasBlindBoxCollectionTag(productTags)) {
