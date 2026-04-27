@@ -463,14 +463,55 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       limit?: number;
     } = {},
   ): Promise<CollectionProductsPage> {
-    const pageSize = Math.min(options.limit || 250, 250);
-    // pageInfo carries the GraphQL endCursor from the previous page.
-    const after = options.pageInfo || null;
+    const limit = Math.min(options.limit || 250, 250);
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (options.pageInfo) query.set('page_info', options.pageInfo);
 
-    // REST product listing endpoints (products.json, products/list.json) return
-    // 404 / 406 in SHOPLINE v20230901.  The GraphQL API is the only confirmed
-    // working approach — getCollectionByHandle already uses it successfully.
-    return this.getProductsPageViaGraphQL(shop, accessToken, pageSize, after);
+    // Correct SHOPLINE Admin OpenAPI product list endpoint (v20260901+).
+    // Path:  /admin/openapi/{version}/products/products.json
+    // The gateway's request() method prepends /admin/openapi/{version}, so path = /products/products.json.
+    const path = `/products/products.json?${query.toString()}`;
+
+    try {
+      const response = await this.request<unknown>(shop, accessToken, path);
+
+      const rawRecord = asRecord(response.data);
+      const products = extractProductRecords(response.data)
+        .map(mapProductRecord)
+        .filter((p): p is ShoplineProduct => Boolean(p));
+
+      logger.info('SHOPLINE products/products.json response', {
+        shop,
+        apiVersion: this.apiVersion,
+        path,
+        productCount: products.length,
+        nextPageInfo: response.nextPageInfo,
+        topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
+        sampleProduct: products[0]
+          ? { id: products[0].id, title: products[0].title, tagsRaw: (products[0].raw as Record<string, unknown>)?.tags, tagsNormalized: products[0].tags }
+          : null,
+      });
+
+      return {
+        products,
+        nextPageInfo: response.nextPageInfo,
+        traceId: response.traceId,
+      };
+    } catch (restErr) {
+      const status = restErr instanceof CatalogGatewayError ? restErr.statusCode : null;
+      const preview = restErr instanceof CatalogGatewayError
+        ? String(restErr.details?.responseText ?? '').slice(0, 300)
+        : null;
+      logger.warn('SHOPLINE REST product listing failed — falling back to GraphQL', {
+        shop,
+        apiVersion: this.apiVersion,
+        path,
+        shoplineStatus: status,
+        responsePreview: preview,
+      });
+      // GraphQL fallback (works when REST listing is unavailable).
+      return this.getProductsPageViaGraphQL(shop, accessToken, limit, options.pageInfo || null);
+    }
   }
 
   private async getProductsPageViaGraphQL(
@@ -632,31 +673,24 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       });
     }
 
-    const pageSize = Math.min(options.limit || 250, 250);
-    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
+    const limit = Math.min(options.limit || 250, 250);
+    const query = new URLSearchParams({ limit: String(limit), collection_id: normalizedCollectionId });
+    if (options.pageInfo) query.set('page_info', options.pageInfo);
 
-    const query = new URLSearchParams();
-    query.set('page_size', String(pageSize));
-    query.set('page_no', String(pageNo));
-    query.set('category_id', normalizedCollectionId);
-
+    // Filter by collection: /products/products.json?collection_id=<id>&limit=250
     const response = await this.request<unknown>(
       shop,
       accessToken,
-      `/products/list.json?${query.toString()}`,
+      `/products/products.json?${query.toString()}`,
     );
 
-    const rawRecord = asRecord(response.data);
     const products = extractProductRecords(response.data)
       .map(mapProductRecord)
       .filter((product): product is ShoplineProduct => Boolean(product));
 
-    const total = readNumberField(rawRecord, ['total', 'total_count', 'totalCount', 'count']);
-    const hasMore = total !== null ? pageNo * pageSize < total : products.length === pageSize;
-
     return {
       products,
-      nextPageInfo: hasMore ? String(pageNo + 1) : null,
+      nextPageInfo: response.nextPageInfo,
       traceId: response.traceId,
     };
   }
@@ -669,20 +703,16 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       limit?: number;
     } = {},
   ): Promise<CollectionsPage> {
-    const pageSize = Math.min(options.limit || 250, 250);
-    const pageNo = options.pageInfo ? parseInt(options.pageInfo, 10) || 1 : 1;
+    const limit = Math.min(options.limit || 250, 250);
+    const restQuery = new URLSearchParams({ limit: String(limit) });
+    if (options.pageInfo) restQuery.set('page_info', options.pageInfo);
 
-    const query = new URLSearchParams();
-    query.set('page_size', String(pageSize));
-    query.set('page_no', String(pageNo));
-
-    // SHOPLINE may call collections "categories" — try most likely paths in order.
-    // /products/collections.json returned 406 in testing; these alternatives match
-    // known SHOPLINE OpenAPI patterns.
+    // Correct path mirrors the products endpoint pattern: /products/collections/collections.json
+    // Fallback candidates tried in order if primary returns non-200.
     const candidatePaths = [
-      `/products/categories/list.json?${query.toString()}`,
-      `/categories/list.json?${query.toString()}`,
-      `/custom_collections/list.json?${query.toString()}`,
+      `/products/collections/collections.json?${restQuery.toString()}`,
+      `/products/collections.json?${restQuery.toString()}`,
+      `/products/categories/list.json?${restQuery.toString()}`,
     ];
 
     for (const path of candidatePaths) {
@@ -729,12 +759,9 @@ export class ShoplineCatalogGateway implements CatalogGateway {
         })
         .filter((c): c is ShoplineCollection => Boolean(c));
 
-      const total = readNumberField(record, ['total', 'total_count', 'totalCount', 'count']);
-      const hasMore = total !== null ? pageNo * pageSize < total : collections.length === pageSize;
-
       return {
         collections,
-        nextPageInfo: hasMore ? String(pageNo + 1) : null,
+        nextPageInfo: response.nextPageInfo,
         traceId: response.traceId,
       };
     }

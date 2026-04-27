@@ -26,7 +26,6 @@ import { getWebhookEventService } from '../../../service/webhook/webhook-event-s
 import { ValidationError } from '../../../lib/errors';
 import { getShoplineCatalogService } from '../../../service/shopline/catalog-service';
 import { getBlindBoxDatabase } from '../../../db/client';
-import { normalizeTags } from '../../../integration/shopline/catalog-gateway';
 import { logger } from '../../../lib/logger';
 
 async function validateStorefrontProductMappingInput(
@@ -319,11 +318,11 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
-  // ── Debug: raw SHOPLINE product sample ────────────────────────────────────
-  // GET /api/blind-box/debug/shopline/products
-  // Returns sanitized raw data exactly as SHOPLINE sent it, before any mapping.
-  // Remove or gate behind an env flag before going to production.
-  router.get('/debug/shopline/products', async (req, res) => {
+  // ── Debug: SHOPLINE catalog inspection ────────────────────────────────────
+  // GET /api/blind-box/debug/shopline/catalog
+  // Returns sanitized catalog data so you can verify endpoints/tags without
+  // looking at raw Render logs.  Never exposes tokens or secrets.
+  router.get('/debug/shopline/catalog', async (req, res) => {
     const context = getContext(req, res);
 
     try {
@@ -332,38 +331,90 @@ export function createBlindBoxAdminRouter(): express.Router {
         res.status(401).json({ success: false, error: 'No access token in session' });
         return;
       }
+
       const { ShoplineCatalogGateway } = await import('../../../integration/shopline/catalog-gateway');
-      const gateway = new ShoplineCatalogGateway();
+      const { getBlindBoxProductTags, parseBlindBoxCollectionTag, detectBlindBoxProduct } =
+        await import('../../../domain/blind-box/product-detection');
+      const { getRuntimeConfig } = await import('../../../lib/config');
+      const cfg = getRuntimeConfig();
+      const apiVersion = cfg.shoplineAdminApiVersion;
+      const productPath = `/products/products.json`;
 
-      // Fetch only the first page so this is fast.
-      const page = await gateway.getProductsPage(shop, accessToken, { limit: 20 });
+      // Products — first page only for speed
+      let productStatus = 0;
+      let productCount = 0;
+      let productResponsePreview: string | null = null;
+      let firstProductPreview: Record<string, unknown> | null = null;
+      let blindBoxDetected: unknown[] = [];
 
-      const rawSamples = page.products.slice(0, 10).map((p) => {
-        const raw = p.raw as Record<string, unknown>;
-        const tags = normalizeTags(raw);
-        return {
-          id: p.id,
-          title: p.title,
-          handle: (raw?.handle as string | undefined) ?? null,
-          status: p.status,
-          published: p.published,
-          tagsRaw: raw?.tags,
-          tagListRaw: raw?.tag_list ?? raw?.tagList ?? null,
-          labelsRaw: raw?.labels ?? null,
-          normalizedTags: tags,
-          hasBlindBoxTag: tags.includes('blind-box'),
-          blindBoxCollectionHandle: tags
-            .filter((t) => t.startsWith('blind-box-collection:'))
-            .map((t) => t.replace('blind-box-collection:', '').trim()),
-        };
-      });
+      try {
+        const gateway = new ShoplineCatalogGateway();
+        const page = await gateway.getProductsPage(shop, accessToken, { limit: 20 });
+        productStatus = 200;
+        productCount = page.products.length;
+
+        if (page.products.length > 0) {
+          const p0 = page.products[0];
+          const raw0 = p0.raw as Record<string, unknown>;
+          firstProductPreview = {
+            id: p0.id,
+            title: p0.title,
+            handle: (raw0?.handle as string | undefined) ?? null,
+            tagsRaw: raw0?.tags,
+            tagsNormalized: p0.tags,
+          };
+        }
+
+        blindBoxDetected = page.products
+          .filter((p) => detectBlindBoxProduct(p).isBlindBox)
+          .map((p) => ({
+            id: p.id,
+            title: p.title,
+            handle: ((p.raw as Record<string, unknown>)?.handle as string | undefined) ?? null,
+            tags: p.tags,
+            rewardCollectionHandle: parseBlindBoxCollectionTag(getBlindBoxProductTags(p)),
+          }));
+      } catch (err) {
+        productStatus = err instanceof Error && typeof (err as unknown as Record<string, unknown>).statusCode === 'number'
+          ? (err as unknown as { statusCode: number }).statusCode
+          : 500;
+        productResponsePreview = err instanceof Error ? err.message.slice(0, 300) : String(err);
+      }
+
+      // Collections — first page only
+      let collectionStatus = 0;
+      let collectionCount = 0;
+      let collectionPath = '(not attempted)';
+
+      try {
+        const gateway2 = new ShoplineCatalogGateway();
+        const colPage = await gateway2.getCollectionsPage(shop, accessToken, { limit: 10 });
+        collectionStatus = 200;
+        collectionCount = colPage.collections.length;
+        collectionPath = `/products/collections/collections.json`;
+      } catch (err) {
+        collectionStatus = 500;
+        collectionPath = err instanceof Error ? err.message.slice(0, 200) : String(err);
+      }
 
       res.status(200).json({
-        success: true,
-        endpointUsed: '/products/list.json or /products.json',
-        fetchedCount: page.products.length,
-        detectedCount: page.products.filter((p) => (p.tags ?? []).includes('blind-box')).length,
-        rawSample: rawSamples,
+        shop,
+        apiVersion,
+        hasSession: true,
+        scopes: cfg.shoplineConfiguredScopes,
+        productRequest: {
+          path: `${productPath}?limit=20`,
+          status: productStatus,
+          count: productCount,
+          firstProductPreview,
+          responsePreview: productResponsePreview,
+        },
+        blindBoxDetected,
+        collectionRequest: {
+          path: collectionPath,
+          status: collectionStatus,
+          count: collectionCount,
+        },
       });
     } catch (error) {
       sendErrorResponse(res, error, context);

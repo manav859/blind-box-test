@@ -11,7 +11,7 @@ export interface RuntimeConfig {
 
 const DEFAULT_LOG_LEVEL: RuntimeConfig['logLevel'] = 'info';
 const VALID_LOG_LEVELS: RuntimeConfig['logLevel'][] = ['debug', 'info', 'warn', 'error'];
-const DEFAULT_SHOPLINE_ADMIN_API_VERSION = 'v20230901';
+const DEFAULT_SHOPLINE_ADMIN_API_VERSION = 'v20260901';
 
 let cachedConfig: RuntimeConfig | null = null;
 
@@ -60,7 +60,11 @@ export function getRuntimeConfig(): RuntimeConfig {
     databaseUrl,
     logLevel: readLogLevelEnv(),
     blindBoxInventoryExecutionMode: executionMode,
-    shoplineAdminApiVersion: process.env.SHOPLINE_ADMIN_API_VERSION || DEFAULT_SHOPLINE_ADMIN_API_VERSION,
+    // Accept SHOPLINE_API_VERSION (short alias) or SHOPLINE_ADMIN_API_VERSION (legacy).
+    shoplineAdminApiVersion:
+      process.env.SHOPLINE_API_VERSION ||
+      process.env.SHOPLINE_ADMIN_API_VERSION ||
+      DEFAULT_SHOPLINE_ADMIN_API_VERSION,
     shoplineConfiguredScopes: readScopeListEnv(),
     blindBoxShoplineLocationId: process.env.BLIND_BOX_SHOPLINE_LOCATION_ID || null,
   };
