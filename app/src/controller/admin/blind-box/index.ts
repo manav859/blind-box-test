@@ -81,14 +81,45 @@ async function validateRewardGroupInput(
   accessToken: string | undefined,
   payload: UpsertRewardGroupInput,
 ): Promise<UpsertRewardGroupInput> {
-  const catalogService = await getShoplineCatalogService();
-  const collection = await catalogService.getCollection(shop, payload.shoplineCollectionId, {
-    accessToken,
-  });
+  const { ShoplineCatalogGateway } = await import('../../../integration/shopline/catalog-gateway');
+  const gateway = new ShoplineCatalogGateway();
+  const token = accessToken ?? '';
 
+  // If it looks like a numeric SHOPLINE ID try direct lookup; otherwise it's a
+  // handle/slug that must be resolved first (e.g. "fashion-blindbox" from tag).
+  const isNumericId = /^\d+$/.test(payload.shoplineCollectionId.trim());
+
+  if (isNumericId) {
+    try {
+      const catalogService = await getShoplineCatalogService();
+      const collection = await catalogService.getCollection(shop, payload.shoplineCollectionId, { accessToken });
+      return { ...payload, collectionTitleSnapshot: payload.collectionTitleSnapshot || collection.title || null };
+    } catch {
+      // Fall through to slug resolution below.
+    }
+  }
+
+  // Resolve by handle/slug — tries GraphQL first, then REST title match.
+  const resolved = await gateway.resolveCollectionBySlug(shop, token, payload.shoplineCollectionId);
+  if (resolved) {
+    logger.info('validateRewardGroupInput: collection resolved', {
+      shop, inputSlug: payload.shoplineCollectionId, resolvedId: resolved.id, resolvedTitle: resolved.title,
+    });
+    return {
+      ...payload,
+      shoplineCollectionId: resolved.id,
+      collectionTitleSnapshot: payload.collectionTitleSnapshot || resolved.title || null,
+    };
+  }
+
+  // Could not resolve — store the slug as-is and log; the reward group will still
+  // be created (the snapshot is optional) so the operator can fix it later.
+  logger.warn('validateRewardGroupInput: collection not resolved, storing slug as-is', {
+    shop, slug: payload.shoplineCollectionId,
+  });
   return {
     ...payload,
-    collectionTitleSnapshot: payload.collectionTitleSnapshot || collection.title || null,
+    collectionTitleSnapshot: payload.collectionTitleSnapshot || payload.shoplineCollectionId,
   };
 }
 
@@ -397,6 +428,41 @@ export function createBlindBoxAdminRouter(): express.Router {
         collectionPath = err instanceof Error ? err.message.slice(0, 200) : String(err);
       }
 
+      // Reward resolution — attempt to resolve the first detected blind-box product's
+      // collection handle so the operator can verify the full chain end-to-end.
+      let rewardResolution: unknown = null;
+      const firstDetected = (blindBoxDetected as Array<{ rewardCollectionHandle: string | null; id: string; title: string | null }>)[0];
+      if (firstDetected?.rewardCollectionHandle) {
+        const { slugifyTitle, collectionMatchesSlug } = await import('../../../integration/shopline/catalog-gateway');
+        const requestedHandle = firstDetected.rewardCollectionHandle;
+        try {
+          const gateway3 = new ShoplineCatalogGateway();
+          const resolved = await gateway3.resolveCollectionBySlug(shop, accessToken, requestedHandle);
+          if (resolved) {
+            const productPage = await gateway3.getCollectionProductsPage(shop, accessToken, resolved.id, { limit: 5 });
+            rewardResolution = {
+              requestedHandle,
+              matchedCollection: { id: resolved.id, title: resolved.title },
+              productCount: productPage.products.length,
+              productsPreview: productPage.products.slice(0, 3).map((p) => ({ id: p.id, title: p.title })),
+            };
+          } else {
+            rewardResolution = {
+              requestedHandle,
+              matchedCollection: null,
+              error: 'Collection not found via GraphQL or REST title match',
+            };
+          }
+          // suppress unused import warnings in TS
+          void slugifyTitle; void collectionMatchesSlug;
+        } catch (err) {
+          rewardResolution = {
+            requestedHandle,
+            error: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+
       res.status(200).json({
         shop,
         apiVersion,
@@ -415,6 +481,7 @@ export function createBlindBoxAdminRouter(): express.Router {
           status: collectionStatus,
           count: collectionCount,
         },
+        rewardResolution,
       });
     } catch (error) {
       sendErrorResponse(res, error, context);

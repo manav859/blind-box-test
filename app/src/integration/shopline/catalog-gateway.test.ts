@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeTags } from './catalog-gateway';
+import { normalizeTags, slugifyTitle, collectionMatchesSlug } from './catalog-gateway';
+import type { ShoplineCollection } from './catalog-gateway';
 import {
   getBlindBoxProductTags,
   detectBlindBoxProduct,
@@ -131,6 +132,69 @@ test('catalog gateway uses /products/collections/collections.json as primary col
     src.includes('/products/collections/collections.json'),
     "Expected catalog-gateway.ts to reference '/products/collections/collections.json'",
   );
+});
+
+// ── slugifyTitle ──────────────────────────────────────────────────────────────
+
+test('slugifyTitle: spaces become hyphens', () => {
+  assert.equal(slugifyTitle('Fashion Blindbox'), 'fashion-blindbox');
+});
+
+test('slugifyTitle: underscores become hyphens', () => {
+  assert.equal(slugifyTitle('fashion_blindbox'), 'fashion-blindbox');
+});
+
+test('slugifyTitle: already a slug is unchanged', () => {
+  assert.equal(slugifyTitle('fashion-blindbox'), 'fashion-blindbox');
+});
+
+test('slugifyTitle: strips non-alphanumeric chars', () => {
+  assert.equal(slugifyTitle('Fashion & Blindbox!'), 'fashion--blindbox');
+});
+
+test('slugifyTitle: trims leading/trailing whitespace', () => {
+  assert.equal(slugifyTitle('  winter rewards  '), 'winter-rewards');
+});
+
+// ── collectionMatchesSlug ─────────────────────────────────────────────────────
+
+function makeCollection(overrides: Partial<ShoplineCollection>): ShoplineCollection {
+  return { id: '1', title: null, handle: null, type: 'collection', status: null, raw: {}, ...overrides };
+}
+
+test('collectionMatchesSlug: exact handle match', () => {
+  const c = makeCollection({ handle: 'fashion-blindbox' });
+  assert.ok(collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: handle comparison is case-insensitive', () => {
+  const c = makeCollection({ handle: 'Fashion-Blindbox' });
+  assert.ok(collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: title slugified matches slug', () => {
+  const c = makeCollection({ title: 'Fashion Blindbox' });
+  assert.ok(collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: title with underscores matches slug', () => {
+  const c = makeCollection({ title: 'fashion_blindbox' });
+  assert.ok(collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: fuzzy contains match', () => {
+  const c = makeCollection({ title: 'Winter Fashion Blindbox Collection' });
+  assert.ok(collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: no match returns false', () => {
+  const c = makeCollection({ title: 'Summer Sale', handle: 'summer-sale' });
+  assert.ok(!collectionMatchesSlug(c, 'fashion-blindbox'));
+});
+
+test('collectionMatchesSlug: null title and null handle returns false', () => {
+  const c = makeCollection({});
+  assert.ok(!collectionMatchesSlug(c, 'fashion-blindbox'));
 });
 
 // ── token safety ─────────────────────────────────────────────────────────────

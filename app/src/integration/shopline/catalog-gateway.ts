@@ -305,10 +305,40 @@ export interface CollectionsPage {
   traceId: string | null;
 }
 
+/**
+ * Converts a collection title to a URL slug for comparison.
+ * "Fashion Blindbox" → "fashion-blindbox"
+ * "fashion_blindbox" → "fashion-blindbox"
+ */
+export function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+/**
+ * Returns true if the collection matches the given slug.
+ * Checks (in order): handle exact → title-slug exact → title-slug contains.
+ */
+export function collectionMatchesSlug(collection: ShoplineCollection, targetSlug: string): boolean {
+  const target = targetSlug.toLowerCase().trim();
+  if (collection.handle && collection.handle.toLowerCase().trim() === target) return true;
+  if (collection.title && slugifyTitle(collection.title) === target) return true;
+  // Fuzzy: slug of title contains target, or target contains slug of title
+  if (collection.title) {
+    const titleSlug = slugifyTitle(collection.title);
+    if (titleSlug.includes(target) || target.includes(titleSlug)) return true;
+  }
+  return false;
+}
+
 export interface CatalogGateway {
   getProduct(shop: string, accessToken: string, productId: string): Promise<ShoplineProduct>;
   getCollection(shop: string, accessToken: string, collectionId: string): Promise<ShoplineCollection>;
   getCollectionByHandle(shop: string, accessToken: string, handle: string): Promise<ShoplineCollection>;
+  resolveCollectionBySlug(shop: string, accessToken: string, slug: string): Promise<ShoplineCollection | null>;
   getProductsPage(
     shop: string,
     accessToken: string,
@@ -453,6 +483,76 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       status: null,
       raw: response.data,
     };
+  }
+
+  /**
+   * Resolve a collection from a tag-derived slug (e.g. "fashion-blindbox").
+   * Strategy:
+   *   1. GraphQL collectionByHandle — fast, direct, works when SHOPLINE exposes handle
+   *   2. REST collections list + title-slug matching — fallback when handle field absent
+   * Returns null and logs a warning when neither strategy finds a match.
+   */
+  async resolveCollectionBySlug(
+    shop: string,
+    accessToken: string,
+    slug: string,
+  ): Promise<ShoplineCollection | null> {
+    // 1. GraphQL — the existing getCollectionByHandle method is proven to work.
+    try {
+      const collection = await this.getCollectionByHandle(shop, accessToken, slug);
+      logger.info('Collection resolved via GraphQL collectionByHandle', {
+        shop, slug, collectionId: collection.id, collectionTitle: collection.title,
+      });
+      return collection;
+    } catch (err) {
+      logger.debug('GraphQL collectionByHandle failed — trying REST title match', {
+        shop, slug, error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // 2. REST: page through collections and match by title-slug.
+    let pageInfo: string | null = null;
+    let fuzzyMatch: ShoplineCollection | null = null;
+
+    do {
+      let page: CollectionsPage;
+      try {
+        page = await this.getCollectionsPage(shop, accessToken, { pageInfo, limit: 250 });
+      } catch (err) {
+        logger.warn('Collections REST page failed during slug resolution', {
+          shop, slug, error: err instanceof Error ? err.message : String(err),
+        });
+        break;
+      }
+
+      for (const c of page.collections) {
+        if (!collectionMatchesSlug(c, slug)) continue;
+
+        const isExact =
+          c.handle?.toLowerCase().trim() === slug.toLowerCase().trim() ||
+          (c.title != null && slugifyTitle(c.title) === slug.toLowerCase().trim());
+
+        if (isExact) {
+          logger.info('Collection resolved via REST exact title match', {
+            shop, slug, collectionId: c.id, collectionTitle: c.title,
+          });
+          return c;
+        }
+        if (!fuzzyMatch) fuzzyMatch = c;
+      }
+
+      pageInfo = page.nextPageInfo;
+    } while (pageInfo);
+
+    if (fuzzyMatch) {
+      logger.info('Collection resolved via REST fuzzy title match', {
+        shop, slug, collectionId: fuzzyMatch.id, collectionTitle: fuzzyMatch.title,
+      });
+      return fuzzyMatch;
+    }
+
+    logger.warn('Could not resolve collection by slug — no match in GraphQL or REST', { shop, slug });
+    return null;
   }
 
   async getProductsPage(

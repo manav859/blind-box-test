@@ -22,6 +22,12 @@ interface CreateDialogProps {
   onCreated(bb: BlindBox): void;
 }
 
+/** Extract the blind-box-collection handle from a product's tags array. */
+function deriveCollectionHandle(tags: string[]): string {
+  const tag = tags.find((t) => t.startsWith('blind-box-collection:'));
+  return tag ? tag.replace('blind-box-collection:', '').trim() : '';
+}
+
 function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
   const { addToast } = useToast();
   const [products, setProducts] = useState<CatalogProduct[]>([]);
@@ -45,7 +51,7 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
         setProducts(prods);
         setCollections(colls);
       })
-      .catch(() => addToast('warning', 'Could not load SHOPLINE catalog', 'Check API permissions'))
+      .catch(() => { /* catalog load failure is surfaced per-section, not as a toast */ })
       .finally(() => setLoadingCatalog(false));
   }, [open]);
 
@@ -65,13 +71,27 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
 
   const selectedProduct = products.find((p) => p.id === selectedProductId);
 
+  // Collection handle from the selected product's blind-box-collection: tag.
+  // Used as the collection identifier when the dropdown has no items (SHOPLINE
+  // collections endpoint unavailable) or when no dropdown selection is made.
+  const derivedCollectionHandle = selectedProduct
+    ? deriveCollectionHandle(selectedProduct.tags)
+    : '';
+
+  // Effective collection ID: dropdown selection > product-tag-derived handle.
+  const effectiveCollectionId = selectedCollectionId || derivedCollectionHandle;
+
   async function handleSave() {
     if (!selectedProductId) {
       addToast('error', 'Select a product first');
       return;
     }
-    if (!selectedCollectionId) {
-      addToast('error', 'Select a reward collection first');
+    if (!effectiveCollectionId) {
+      addToast(
+        'error',
+        'Reward collection required',
+        'Add a "blind-box-collection:<handle>" tag to the product in SHOPLINE Admin, or select a collection from the dropdown.',
+      );
       return;
     }
 
@@ -99,9 +119,11 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
         selectionStrategy: strategy,
       });
 
-      // 3. Create reward group from collection and link it
+      // 3. Create reward group from collection and link it.
+      // effectiveCollectionId may be a numeric SHOPLINE ID (from dropdown) or a
+      // handle slug derived from the product tag — the backend resolves both.
       const rewardGroup = await api.createRewardGroup({
-        shoplineCollectionId: selectedCollectionId,
+        shoplineCollectionId: effectiveCollectionId,
         status: 'active',
       });
 
@@ -129,6 +151,21 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
     setProductSearch('');
     setCollectionSearch('');
     onClose();
+  }
+
+  // When the product changes, pre-select the matching collection from the
+  // dropdown (if loaded) and clear any previous manual selection.
+  function handleProductChange(productId: string) {
+    setSelectedProductId(productId);
+    const p = products.find((x) => x.id === productId);
+    if (p && !name) setName(p.title ?? '');
+    const handle = deriveCollectionHandle(p?.tags ?? []);
+    // Auto-select the matching collection in the dropdown if it exists there.
+    const match = collections.find(
+      (c) => c.id === handle ||
+        (c.title ?? '').toLowerCase().replace(/[\s_]+/g, '-') === handle,
+    );
+    setSelectedCollectionId(match?.id ?? '');
   }
 
   return (
@@ -183,11 +220,7 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
             ) : (
               <select
                 value={selectedProductId}
-                onChange={(e) => {
-                  setSelectedProductId(e.target.value);
-                  const p = products.find((x) => x.id === e.target.value);
-                  if (p && !name) setName(p.title ?? '');
-                }}
+                onChange={(e) => handleProductChange(e.target.value)}
                 size={5}
                 style={{ height: 'auto' }}
               >
@@ -242,29 +275,52 @@ function CreateBlindBoxDialog({ open, onClose, onCreated }: CreateDialogProps) {
           {/* Reward collection selector */}
           <div className="form-group">
             <label>Reward Collection *</label>
-            <input
-              className="search-input"
-              style={{ marginBottom: '.5rem' }}
-              placeholder="Search collections…"
-              value={collectionSearch}
-              onChange={(e) => setCollectionSearch(e.target.value)}
-            />
-            <select
-              value={selectedCollectionId}
-              onChange={(e) => setSelectedCollectionId(e.target.value)}
-              size={5}
-              style={{ height: 'auto' }}
-            >
-              <option value="">— select collection —</option>
-              {filteredCollections.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title ?? c.id}
-                  {c.handle ? ` (${c.handle})` : ''}
-                </option>
-              ))}
-            </select>
+            {collections.length > 0 ? (
+              <>
+                <input
+                  className="search-input"
+                  style={{ marginBottom: '.5rem' }}
+                  placeholder="Search collections…"
+                  value={collectionSearch}
+                  onChange={(e) => setCollectionSearch(e.target.value)}
+                />
+                <select
+                  value={selectedCollectionId}
+                  onChange={(e) => setSelectedCollectionId(e.target.value)}
+                  size={5}
+                  style={{ height: 'auto' }}
+                >
+                  <option value="">— select collection —</option>
+                  {filteredCollections.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title ?? c.id}
+                      {c.handle ? ` (${c.handle})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : derivedCollectionHandle ? (
+              <div className="alert alert-info" style={{ marginTop: '.25rem' }}>
+                <span className="alert-icon">ℹ</span>
+                <div className="alert-body">
+                  Collection resolved from product tag: <strong>{derivedCollectionHandle}</strong>.
+                  The backend will look it up by title when saving.
+                </div>
+              </div>
+            ) : (
+              <div className="alert alert-warning" style={{ marginTop: '.25rem' }}>
+                <span className="alert-icon">⚠</span>
+                <div className="alert-body">
+                  No collections loaded and no <code>blind-box-collection:</code> tag on the selected product.
+                  Add <strong>blind-box-collection:&lt;handle&gt;</strong> to the product in SHOPLINE Admin.
+                </div>
+              </div>
+            )}
             <div className="form-hint">
-              Products in this SHOPLINE collection will be the reward pool. Rewards are randomly selected from here.
+              Products in this SHOPLINE collection will be the reward pool.
+              {derivedCollectionHandle && !selectedCollectionId && (
+                <> Using <strong>{derivedCollectionHandle}</strong> from product tag.</>
+              )}
             </div>
           </div>
         </>
