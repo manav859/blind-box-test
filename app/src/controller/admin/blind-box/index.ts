@@ -351,8 +351,7 @@ export function createBlindBoxAdminRouter(): express.Router {
 
   // ── Debug: SHOPLINE catalog inspection ────────────────────────────────────
   // GET /api/blind-box/debug/shopline/catalog
-  // Returns sanitized catalog data so you can verify endpoints/tags without
-  // looking at raw Render logs.  Never exposes tokens or secrets.
+  // Returns sanitized catalog data. Never exposes tokens or secrets.
   router.get('/debug/shopline/catalog', async (req, res) => {
     const context = getContext(req, res);
 
@@ -369,18 +368,26 @@ export function createBlindBoxAdminRouter(): express.Router {
       const { getRuntimeConfig } = await import('../../../lib/config');
       const cfg = getRuntimeConfig();
       const apiVersion = cfg.shoplineAdminApiVersion;
-      const productPath = `/products/products.json`;
+      const productPath = '/products/products.json';
 
-      // Products — first page only for speed
+      // ── 1. Products ──────────────────────────────────────────────────────────
       let productStatus = 0;
       let productCount = 0;
       let productResponsePreview: string | null = null;
       let firstProductPreview: Record<string, unknown> | null = null;
-      let blindBoxDetected: unknown[] = [];
+
+      type DetectedProduct = {
+        id: string;
+        title: string | null;
+        handle: string | null;
+        tags: string[];
+        rewardCollectionHandle: string | null;
+      };
+      const blindBoxDetected: DetectedProduct[] = [];
 
       try {
-        const gateway = new ShoplineCatalogGateway();
-        const page = await gateway.getProductsPage(shop, accessToken, { limit: 20 });
+        const gw = new ShoplineCatalogGateway();
+        const page = await gw.getProductsPage(shop, accessToken, { limit: 20 });
         productStatus = 200;
         productCount = page.products.length;
 
@@ -396,70 +403,141 @@ export function createBlindBoxAdminRouter(): express.Router {
           };
         }
 
-        blindBoxDetected = page.products
-          .filter((p) => detectBlindBoxProduct(p).isBlindBox)
-          .map((p) => ({
-            id: p.id,
-            title: p.title,
-            handle: ((p.raw as Record<string, unknown>)?.handle as string | undefined) ?? null,
-            tags: p.tags,
-            rewardCollectionHandle: parseBlindBoxCollectionTag(getBlindBoxProductTags(p)),
-          }));
+        for (const p of page.products) {
+          if (detectBlindBoxProduct(p).isBlindBox) {
+            blindBoxDetected.push({
+              id: p.id,
+              title: p.title,
+              handle: ((p.raw as Record<string, unknown>)?.handle as string | undefined) ?? null,
+              tags: p.tags ?? [],
+              rewardCollectionHandle: parseBlindBoxCollectionTag(getBlindBoxProductTags(p)),
+            });
+          }
+        }
+
+        logger.info('debug/shopline/catalog: products fetched', {
+          shop, productCount, blindBoxCount: blindBoxDetected.length,
+        });
       } catch (err) {
-        productStatus = err instanceof Error && typeof (err as unknown as Record<string, unknown>).statusCode === 'number'
+        productStatus = (err instanceof Error && typeof (err as unknown as Record<string, unknown>).statusCode === 'number')
           ? (err as unknown as { statusCode: number }).statusCode
           : 500;
         productResponsePreview = err instanceof Error ? err.message.slice(0, 300) : String(err);
+        logger.warn('debug/shopline/catalog: product fetch failed', { shop, error: productResponsePreview });
       }
 
-      // Collections — first page only
+      // ── 2. Collections list (informational only — count may be 0) ────────────
       let collectionStatus = 0;
       let collectionCount = 0;
       let collectionPath = '(not attempted)';
 
       try {
-        const gateway2 = new ShoplineCatalogGateway();
-        const colPage = await gateway2.getCollectionsPage(shop, accessToken, { limit: 10 });
+        const gw2 = new ShoplineCatalogGateway();
+        const colPage = await gw2.getCollectionsPage(shop, accessToken, { limit: 10 });
         collectionStatus = 200;
         collectionCount = colPage.collections.length;
-        collectionPath = `/products/collections/collections.json`;
+        collectionPath = '/products/collections/collections.json';
+        logger.info('debug/shopline/catalog: collections list', { shop, collectionCount });
       } catch (err) {
         collectionStatus = 500;
         collectionPath = err instanceof Error ? err.message.slice(0, 200) : String(err);
+        logger.warn('debug/shopline/catalog: collections list failed', { shop, error: collectionPath });
       }
 
-      // Reward resolution — attempt to resolve the first detected blind-box product's
-      // collection handle so the operator can verify the full chain end-to-end.
-      let rewardResolution: unknown = null;
-      const firstDetected = (blindBoxDetected as Array<{ rewardCollectionHandle: string | null; id: string; title: string | null }>)[0];
-      if (firstDetected?.rewardCollectionHandle) {
-        const { slugifyTitle, collectionMatchesSlug } = await import('../../../integration/shopline/catalog-gateway');
-        const requestedHandle = firstDetected.rewardCollectionHandle;
+      // ── 3. Reward resolution — ALWAYS attempted if a handle is available ─────
+      // Runs regardless of whether the collections list returned results.
+      const targetProduct = blindBoxDetected.find((p) => Boolean(p.rewardCollectionHandle));
+      const requestedHandle = targetProduct?.rewardCollectionHandle ?? null;
+
+      logger.info('debug/shopline/catalog: reward resolution start', {
+        shop,
+        targetProductId: targetProduct?.id ?? null,
+        requestedHandle,
+      });
+
+      type RewardResolution = {
+        requestedHandle: string | null;
+        attempted: boolean;
+        resolutionMethod: 'graphql_handle' | 'rest_title_slug' | 'none';
+        matchedCollection: { id: string; title: string | null } | null;
+        productRequest: { path: string; status: number; count: number };
+        productCount: number;
+        productsPreview: Array<{ id: string; title: string | null }>;
+        error: string | null;
+      };
+
+      const rewardResolution: RewardResolution = {
+        requestedHandle,
+        attempted: Boolean(requestedHandle),
+        resolutionMethod: 'none',
+        matchedCollection: null,
+        productRequest: { path: '(not attempted)', status: 0, count: 0 },
+        productCount: 0,
+        productsPreview: [],
+        error: null,
+      };
+
+      if (requestedHandle) {
         try {
-          const gateway3 = new ShoplineCatalogGateway();
-          const resolved = await gateway3.resolveCollectionBySlug(shop, accessToken, requestedHandle);
+          const gw3 = new ShoplineCatalogGateway();
+          const resolved = await gw3.resolveCollectionBySlug(shop, accessToken, requestedHandle);
+
           if (resolved) {
-            const productPage = await gateway3.getCollectionProductsPage(shop, accessToken, resolved.id, { limit: 5 });
-            rewardResolution = {
+            // Detect which strategy resolved it by checking whether the handle
+            // exactly matches — GraphQL always returns a handle field; REST may not.
+            rewardResolution.resolutionMethod =
+              resolved.handle?.toLowerCase().trim() === requestedHandle.toLowerCase().trim()
+                ? 'graphql_handle'
+                : 'rest_title_slug';
+            rewardResolution.matchedCollection = { id: resolved.id, title: resolved.title };
+
+            logger.info('debug/shopline/catalog: collection resolved', {
+              shop,
               requestedHandle,
-              matchedCollection: { id: resolved.id, title: resolved.title },
-              productCount: productPage.products.length,
-              productsPreview: productPage.products.slice(0, 3).map((p) => ({ id: p.id, title: p.title })),
-            };
+              collectionId: resolved.id,
+              collectionTitle: resolved.title,
+              method: rewardResolution.resolutionMethod,
+            });
+
+            // Fetch reward products by collection ID.
+            const collectionProductPath = `/products/products.json?collection_id=${resolved.id}&limit=20`;
+            try {
+              const productPage = await gw3.getCollectionProductsPage(shop, accessToken, resolved.id, { limit: 20 });
+              rewardResolution.productRequest = {
+                path: collectionProductPath,
+                status: 200,
+                count: productPage.products.length,
+              };
+              rewardResolution.productCount = productPage.products.length;
+              rewardResolution.productsPreview = productPage.products
+                .slice(0, 5)
+                .map((p) => ({ id: p.id, title: p.title }));
+
+              logger.info('debug/shopline/catalog: reward products fetched', {
+                shop,
+                collectionId: resolved.id,
+                productCount: productPage.products.length,
+              });
+            } catch (pErr) {
+              rewardResolution.productRequest = {
+                path: collectionProductPath,
+                status: 500,
+                count: 0,
+              };
+              rewardResolution.error = pErr instanceof Error ? pErr.message.slice(0, 300) : String(pErr);
+              logger.warn('debug/shopline/catalog: reward product fetch failed', {
+                shop, collectionId: resolved.id, error: rewardResolution.error,
+              });
+            }
           } else {
-            rewardResolution = {
-              requestedHandle,
-              matchedCollection: null,
-              error: 'Collection not found via GraphQL or REST title match',
-            };
+            rewardResolution.error = 'Collection not found via GraphQL or REST title match';
+            logger.warn('debug/shopline/catalog: collection not resolved', { shop, requestedHandle });
           }
-          // suppress unused import warnings in TS
-          void slugifyTitle; void collectionMatchesSlug;
         } catch (err) {
-          rewardResolution = {
-            requestedHandle,
-            error: err instanceof Error ? err.message : String(err),
-          };
+          rewardResolution.error = err instanceof Error ? err.message.slice(0, 300) : String(err);
+          logger.warn('debug/shopline/catalog: resolveCollectionBySlug threw', {
+            shop, requestedHandle, error: rewardResolution.error,
+          });
         }
       }
 
