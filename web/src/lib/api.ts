@@ -332,6 +332,10 @@ export const api = {
     return request<CatalogProduct[]>('/catalog/products');
   },
 
+  getCatalogProduct(productId: string): Promise<CatalogProduct> {
+    return request<CatalogProduct>(`/catalog/products/${encodeURIComponent(productId)}`);
+  },
+
   listCatalogCollections(): Promise<CatalogCollection[]> {
     return request<CatalogCollection[]>('/catalog/collections');
   },

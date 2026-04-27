@@ -566,6 +566,35 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
+  // Single product by ID — returns full tag list (needed by the detail page).
+  router.get('/catalog/products/:productId', async (req, res) => {
+    const context = getContext(req, res);
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const catalogService = await getShoplineCatalogService();
+      const product = await catalogService.getProduct(shop, req.params.productId, { accessToken });
+      res.status(200).send({
+        success: true,
+        data: {
+          id: product.id,
+          title: product.title,
+          status: product.status,
+          published: product.published,
+          tags: product.tags ?? [],
+          variantCount: product.variants.length,
+          variants: product.variants.map((v) => ({
+            id: v.id,
+            title: v.title,
+            sku: v.sku,
+            inventoryQuantity: v.inventoryQuantity,
+          })),
+        },
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
   router.get('/catalog/collections', async (req, res) => {
     const context = getContext(req, res);
 

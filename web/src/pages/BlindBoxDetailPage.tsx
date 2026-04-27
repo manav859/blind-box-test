@@ -3,7 +3,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, BlindBox, CatalogCollection, RewardGroup } from '../lib/api';
+import { api, BlindBox, CatalogCollection, CatalogProduct } from '../lib/api';
+
+/** Extract the blind-box-collection handle from a product's tags array. */
+function deriveCollectionHandle(tags: string[]): string {
+  const tag = tags.find((t) => t.startsWith('blind-box-collection:'));
+  return tag ? tag.replace('blind-box-collection:', '').trim() : '';
+}
 
 type ReadinessReport = {
   ready: boolean;
@@ -54,10 +60,12 @@ export function BlindBoxDetailPage() {
 
   // Reward collection
   const [collections, setCollections] = useState<CatalogCollection[]>([]);
-  const [rewardGroups, setRewardGroups] = useState<RewardGroup[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState('');
   const [savingCollection, setSavingCollection] = useState(false);
   const [loadingCollections, setLoadingCollections] = useState(false);
+
+  // SHOPLINE product (fetched for tags — the DB record has no tags field)
+  const [shoplineProduct, setShoplineProduct] = useState<CatalogProduct | null>(null);
 
   // Readiness
   const [readiness, setReadiness] = useState<ReadinessReport | null>(null);
@@ -82,6 +90,24 @@ export function BlindBoxDetailPage() {
           setSelectedCollectionId(bb.rewardGroup.shoplineCollectionId);
         }
         setError(null);
+
+        // Fetch the live SHOPLINE product so we can read its tags.
+        // The DB record (BlindBox) does not store tags.
+        if (bb.shoplineProductId) {
+          api.getCatalogProduct(bb.shoplineProductId)
+            .then((p) => {
+              setShoplineProduct(p);
+              console.log('[BlindBoxDetail] SHOPLINE product loaded', {
+                productId: p.id,
+                productTitle: p.title,
+                tags: p.tags,
+                extractedCollectionHandle: deriveCollectionHandle(p.tags),
+              });
+            })
+            .catch(() => {
+              // Non-fatal — fall back to DB-only state
+            });
+        }
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -91,11 +117,8 @@ export function BlindBoxDetailPage() {
 
   useEffect(() => {
     setLoadingCollections(true);
-    Promise.all([api.listCatalogCollections(), api.listRewardGroups()])
-      .then(([cols, rgs]) => {
-        setCollections(cols);
-        setRewardGroups(rgs);
-      })
+    api.listCatalogCollections()
+      .then((cols) => setCollections(cols))
       .catch(() => {})
       .finally(() => setLoadingCollections(false));
   }, []);
@@ -120,25 +143,28 @@ export function BlindBoxDetailPage() {
     }
   }
 
+  // Tag-derived collection handle — primary source for "is linked" state.
+  const tagHandle = shoplineProduct ? deriveCollectionHandle(shoplineProduct.tags) : '';
+  // Effective identifier: dropdown override first, then tag, then DB snapshot.
+  const effectiveCollectionId =
+    selectedCollectionId ||
+    tagHandle ||
+    blindBox?.rewardGroup?.shoplineCollectionId ||
+    '';
+
   async function handleSaveCollection() {
-    if (!blindBox || !selectedCollectionId) {
-      addToast('error', 'Select a collection first');
+    if (!blindBox || !effectiveCollectionId) {
+      addToast('error', 'No collection to link',
+        'Add a blind-box-collection:<handle> tag to the product or select a collection below.');
       return;
     }
     setSavingCollection(true);
     try {
-      // Upsert reward group for this collection
       const rg = await api.createRewardGroup({
-        shoplineCollectionId: selectedCollectionId,
+        shoplineCollectionId: effectiveCollectionId,
         status: 'active',
       });
-
-      // Link it to this blind box
-      await api.upsertRewardGroupLink({
-        blindBoxId: blindBox.id,
-        rewardGroupId: rg.id,
-      });
-
+      await api.upsertRewardGroupLink({ blindBoxId: blindBox.id, rewardGroupId: rg.id });
       addToast('success', 'Reward collection linked!');
       load();
     } catch (e: unknown) {
@@ -202,9 +228,9 @@ export function BlindBoxDetailPage() {
     );
   }
 
-  const currentCollectionTitle =
+  const collectionTitleDisplay =
     blindBox.rewardGroup?.collectionTitleSnapshot ??
-    collections.find((c) => c.id === selectedCollectionId)?.title ??
+    collections.find((c) => c.id === effectiveCollectionId)?.title ??
     null;
 
   return (
@@ -327,15 +353,34 @@ export function BlindBoxDetailPage() {
 
       {/* Reward collection */}
       <Section title="Reward Collection">
-        {blindBox.rewardGroup ? (
-          <div style={{ marginBottom: '1.25rem' }}>
-            <div className="alert alert-success">
-              <span className="alert-icon">✓</span>
-              <div className="alert-body">
-                <div className="alert-title">Collection linked</div>
-                {blindBox.rewardGroup.collectionTitleSnapshot} (ID:{' '}
-                <span className="code">{blindBox.rewardGroup.shoplineCollectionId}</span>)
+        {/* ── Status badge ── */}
+        {tagHandle ? (
+          <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
+            <span className="alert-icon">✓</span>
+            <div className="alert-body">
+              <div className="alert-title">Auto-linked via product tag</div>
+              <div style={{ fontFamily: 'monospace', fontSize: '.85rem', marginTop: '.2rem' }}>
+                blind-box-collection:<strong>{tagHandle}</strong>
               </div>
+              {(collectionTitleDisplay || blindBox.rewardGroup?.collectionTitleSnapshot) && (
+                <div style={{ fontSize: '.85rem', marginTop: '.25rem', color: 'var(--color-text-muted)' }}>
+                  {collectionTitleDisplay ?? blindBox.rewardGroup?.collectionTitleSnapshot}
+                </div>
+              )}
+              {blindBox.rewardGroup && (
+                <div style={{ fontSize: '.8rem', marginTop: '.2rem', color: 'var(--color-text-muted)' }}>
+                  Saved to DB — collection ID: <span className="code">{blindBox.rewardGroup.shoplineCollectionId}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : blindBox.rewardGroup ? (
+          <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
+            <span className="alert-icon">✓</span>
+            <div className="alert-body">
+              <div className="alert-title">Collection linked</div>
+              {blindBox.rewardGroup.collectionTitleSnapshot}{' '}
+              (ID: <span className="code">{blindBox.rewardGroup.shoplineCollectionId}</span>)
             </div>
           </div>
         ) : (
@@ -343,47 +388,45 @@ export function BlindBoxDetailPage() {
             <span className="alert-icon">⚠</span>
             <div className="alert-body">
               <div className="alert-title">No reward collection linked</div>
-              Select a SHOPLINE collection below. All products in that collection become eligible rewards.
+              Add a <code>blind-box-collection:&lt;handle&gt;</code> tag to the SHOPLINE product,
+              or select a collection below to link manually.
             </div>
           </div>
         )}
 
-        <div className="form-group">
-          <label>Select Reward Collection</label>
-          {loadingCollections ? (
-            <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', padding: '.5rem 0' }}>
-              <span className="spinner spinner-sm" /> Loading collections…
-            </div>
-          ) : (
-            <select
-              value={selectedCollectionId}
-              onChange={(e) => setSelectedCollectionId(e.target.value)}
-            >
-              <option value="">— select a collection —</option>
-              {collections.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title ?? c.id} {c.handle ? `(${c.handle})` : ''}
-                </option>
-              ))}
-            </select>
-          )}
-          <div className="form-hint">
-            Products in this collection are the reward pool. They'll be randomly assigned when orders are paid.
+        {/* ── Optional collection dropdown override ── */}
+        {collections.length > 0 && (
+          <div className="form-group">
+            <label>Override Collection{tagHandle && <span className="form-hint" style={{ display: 'inline', marginLeft: '.5rem' }}>(optional — tag value used by default)</span>}</label>
+            {loadingCollections ? (
+              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', padding: '.5rem 0' }}>
+                <span className="spinner spinner-sm" /> Loading…
+              </div>
+            ) : (
+              <select value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
+                <option value="">{tagHandle ? `— use tag: ${tagHandle} —` : '— select a collection —'}</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title ?? c.id}{c.handle ? ` (${c.handle})` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-        </div>
+        )}
 
         <div style={{ display: 'flex', gap: '.75rem' }}>
           <button
             className="btn btn-primary"
             onClick={handleSaveCollection}
-            disabled={savingCollection || !selectedCollectionId}
+            disabled={savingCollection || !effectiveCollectionId}
           >
             {savingCollection ? <><span className="spinner spinner-sm" /> Saving…</> : '💾 Link Collection'}
           </button>
           <button
             className="btn btn-secondary"
             onClick={previewCandidates}
-            disabled={loadingCandidates || !blindBox.rewardGroup}
+            disabled={loadingCandidates || (!blindBox.rewardGroup && !tagHandle)}
           >
             {loadingCandidates ? <><span className="spinner spinner-sm" /> Loading…</> : '👁 Preview Reward Pool'}
           </button>
