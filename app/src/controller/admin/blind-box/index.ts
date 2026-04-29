@@ -23,10 +23,13 @@ import { parseJsonBody, sendErrorResponse } from '../../../lib/http';
 import { createRequestContext, getRequestIdFromHeaders } from '../../../lib/request-context';
 import { requireShopSession } from '../../../lib/shop-session';
 import { getWebhookEventService } from '../../../service/webhook/webhook-event-service';
+import { getPaidOrderWebhookService } from '../../../service/webhook/paid-order-webhook-service';
 import { ValidationError } from '../../../lib/errors';
 import { getShoplineCatalogService } from '../../../service/shopline/catalog-service';
 import { getBlindBoxDatabase } from '../../../db/client';
 import { logger } from '../../../lib/logger';
+import type { OrderPaidWebhookPayload } from '../../../domain/blind-box/order-paid';
+import type { IncomingHttpHeaders } from 'http';
 
 async function validateStorefrontProductMappingInput(
   shop: string,
@@ -1048,6 +1051,79 @@ export function createBlindBoxAdminRouter(): express.Router {
       res.status(200).send({
         success: true,
         data,
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // Retry a failed webhook event by re-running its stored payload.
+  router.post('/webhook-events/:id/retry', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop } = requireShopSession(res);
+      const webhookEventService = await getWebhookEventService();
+
+      const event = await webhookEventService.findById(req.params.id);
+      if (!event || event.shop !== shop) {
+        res.status(404).send({ success: false, error: { message: 'Webhook event not found' } });
+        return;
+      }
+
+      if (event.status !== 'failed') {
+        res.status(400).send({
+          success: false,
+          error: { message: `Event is "${event.status}" — only failed events can be retried` },
+        });
+        return;
+      }
+
+      if (event.topic !== 'orders/paid') {
+        res.status(400).send({
+          success: false,
+          error: { message: `Retry is only supported for orders/paid events, got "${event.topic}"` },
+        });
+        return;
+      }
+
+      // Reset status so processPaidOrderWebhook won't treat it as a duplicate.
+      await webhookEventService.resetForRetry(shop, event.eventId);
+
+      const paidOrderWebhookService = await getPaidOrderWebhookService();
+
+      let parsedPayload: unknown;
+      try {
+        parsedPayload = JSON.parse(event.payload);
+      } catch {
+        res.status(400).send({ success: false, error: { message: 'Stored event payload is not valid JSON' } });
+        return;
+      }
+
+      const fakeHeaders = {
+        'x-shopline-shop-domain': `${shop}.myshopline.com`,
+        'x-shopline-webhook-id': event.eventId,
+      };
+
+      const result = await paidOrderWebhookService.processPaidOrderWebhook(
+        fakeHeaders as unknown as IncomingHttpHeaders,
+        parsedPayload as unknown as OrderPaidWebhookPayload,
+      );
+
+      logger.info('Webhook event retried', {
+        shop,
+        eventId: event.eventId,
+        internalId: event.id,
+        result: result.status,
+      });
+
+      res.status(result.shouldAcknowledge ? 200 : 500).send({
+        success: result.shouldAcknowledge,
+        data: {
+          eventId: result.eventId,
+          status: result.status,
+          summary: result.summary,
+        },
       });
     } catch (error) {
       sendErrorResponse(res, error, context);

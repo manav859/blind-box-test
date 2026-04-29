@@ -318,6 +318,12 @@ export const api = {
   },
 
   // Webhook Events
+  retryWebhookEvent(id: string): Promise<{ eventId: string; status: string; summary: unknown }> {
+    return request<{ eventId: string; status: string; summary: unknown }>(`/webhook-events/${encodeURIComponent(id)}/retry`, {
+      method: 'POST',
+    });
+  },
+
   listWebhookEvents(params?: { status?: string; topic?: string }): Promise<WebhookEvent[]> {
     const qs = params
       ? '?' + new URLSearchParams(

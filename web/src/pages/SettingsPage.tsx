@@ -6,6 +6,27 @@ import { api, HealthStatus, WebhookEvent } from '../lib/api';
 
 type Tab = 'health' | 'webhooks';
 
+function ErrorCell({ message }: { message: string | null }) {
+  const [expanded, setExpanded] = React.useState(false);
+  if (!message) return <span className="text-muted">—</span>;
+  const short = message.slice(0, 60);
+  const isTruncated = message.length > 60;
+  return (
+    <span
+      style={{ cursor: isTruncated ? 'pointer' : 'default', wordBreak: 'break-all' }}
+      title={isTruncated && !expanded ? 'Click to expand' : undefined}
+      onClick={() => isTruncated && setExpanded((v) => !v)}
+    >
+      {expanded ? message : short}{isTruncated && !expanded ? '…' : ''}
+      {isTruncated && (
+        <span style={{ marginLeft: '.3rem', fontSize: '.75rem', color: 'var(--color-text-muted)' }}>
+          {expanded ? '▲' : '▼'}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleString(undefined, {
@@ -60,6 +81,7 @@ export function SettingsPage() {
   const [webhookEvents, setWebhookEvents] = useState<WebhookEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [webhookFilter, setWebhookFilter] = useState('all');
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -89,6 +111,19 @@ export function SettingsPage() {
       addToast('success', `Collections accessible — ${cols.length} collections found`);
     } catch (e: unknown) {
       addToast('error', 'Collection access failed', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function retryEvent(event: WebhookEvent) {
+    setRetryingId(event.id);
+    try {
+      const result = await api.retryWebhookEvent(event.id);
+      addToast('success', `Retry ${result.status}`, `Event ${event.eventId.slice(-8)}`);
+      await refreshWebhooks();
+    } catch (e: unknown) {
+      addToast('error', 'Retry failed', e instanceof Error ? e.message : String(e));
+    } finally {
+      setRetryingId(null);
     }
   }
 
@@ -335,31 +370,31 @@ export function SettingsPage() {
                     <th>Error</th>
                     <th>Received</th>
                     <th>Processed</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEvents.slice(0, 100).map((e) => (
                     <tr key={e.id}>
-                      <td>
-                        <span className="code" style={{ fontSize: '.7rem' }}>
-                          {e.eventId.slice(-12)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="badge badge-primary">{e.topic}</span>
-                      </td>
-                      <td>
-                        <StatusBadge status={e.status} />
-                      </td>
+                      <td><span className="code" style={{ fontSize: '.7rem' }}>{e.eventId.slice(-12)}</span></td>
+                      <td><span className="badge badge-primary">{e.topic}</span></td>
+                      <td><StatusBadge status={e.status} /></td>
                       <td className="text-xs" style={{ color: 'var(--color-danger-text)', maxWidth: 240 }}>
-                        {e.errorMessage ? (
-                          <span title={e.errorMessage}>{e.errorMessage.slice(0, 60)}{e.errorMessage.length > 60 ? '…' : ''}</span>
-                        ) : (
-                          <span className="text-muted">—</span>
-                        )}
+                        <ErrorCell message={e.errorMessage} />
                       </td>
                       <td className="text-xs text-muted">{formatDate(e.createdAt)}</td>
                       <td className="text-xs text-muted">{e.processedAt ? formatDate(e.processedAt) : '—'}</td>
+                      <td>
+                        {e.status === 'failed' && e.topic === 'orders/paid' && (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            disabled={retryingId === e.id}
+                            onClick={() => retryEvent(e)}
+                          >
+                            {retryingId === e.id ? <><span className="spinner spinner-sm" /> Retrying…</> : '↺ Retry'}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

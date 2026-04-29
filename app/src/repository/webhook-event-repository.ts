@@ -34,6 +34,7 @@ function mapWebhookEventRow(row: WebhookEventRow): WebhookEvent {
 
 export interface WebhookEventRepository {
   create(input: Required<RecordWebhookEventInput>): Promise<WebhookEvent>;
+  findById(id: string): Promise<WebhookEvent | null>;
   listByShop(
     shop: string,
     filters?: {
@@ -92,6 +93,15 @@ export class SqliteWebhookEventRepository implements WebhookEventRepository {
     }
 
     return event;
+  }
+
+  async findById(id: string): Promise<WebhookEvent | null> {
+    const row = await this.db.get<WebhookEventRow>(
+      `SELECT id, shop, topic, event_id, status, payload, error_message, processed_at, created_at, updated_at
+       FROM webhook_events WHERE id = ?`,
+      [id],
+    );
+    return row ? mapWebhookEventRow(row) : null;
   }
 
   async findByShopAndEventId(shop: string, eventId: string): Promise<WebhookEvent | null> {

@@ -248,6 +248,24 @@ class TestCatalogService {
     return collection;
   }
 
+  async resolveCollectionBySlug(_shop: string, slug: string): Promise<ShoplineCollection | null> {
+    // 1. Try exact handle match
+    const byHandle = this.collectionsByHandle.get(slug);
+    if (byHandle) return byHandle;
+
+    // 2. Try title-slug match (same logic as slugifyTitle in catalog-gateway)
+    const normalizedSlug = slug.toLowerCase().trim().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '');
+    for (const c of this.collectionsById.values()) {
+      if (!c.title) continue;
+      const titleSlug = c.title.toLowerCase().trim().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (titleSlug === normalizedSlug || titleSlug.includes(normalizedSlug) || normalizedSlug.includes(titleSlug)) {
+        return c;
+      }
+    }
+
+    return null;
+  }
+
   async listAllCollectionProducts(_shop: string, collectionId: string): Promise<{
     collection: ShoplineCollection;
     products: ShoplineProduct[];

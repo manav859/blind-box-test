@@ -61,6 +61,14 @@ export class WebhookEventService {
     return this.webhookEventRepository.updateStatus(shop, eventId, 'failed', errorMessage);
   }
 
+  async findById(id: string): Promise<WebhookEvent | null> {
+    return this.webhookEventRepository.findById(id);
+  }
+
+  async resetForRetry(shop: string, eventId: string): Promise<WebhookEvent> {
+    return this.webhookEventRepository.updateStatus(shop, eventId, 'received', null);
+  }
+
   async listWebhookEvents(
     shop: string,
     filters: {
