@@ -352,6 +352,43 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
+  // ── Debug: recent orders from webhook events ────────────────────────────
+  // GET /api/blind-box/debug/shopline/orders
+  // Parses the last 5 stored orders/paid webhook payloads — no extra SHOPLINE
+  // API call needed. Returns order id, line items, and product ids.
+  router.get('/debug/shopline/orders', async (req, res) => {
+    const context = getContext(req, res);
+    try {
+      const { shop } = requireShopSession(res);
+      const webhookEventService = await getWebhookEventService();
+      const events = await webhookEventService.listWebhookEvents(shop, { topic: 'orders/paid' });
+      const latest = events.slice(0, 5);
+
+      const orders = latest.map((evt) => {
+        let parsed: Record<string, unknown> | null = null;
+        try { parsed = JSON.parse(evt.payload); } catch { /* ignore */ }
+        const lineItems: unknown[] = Array.isArray(parsed?.line_items) ? parsed!.line_items as unknown[] : [];
+        return {
+          eventId: evt.eventId,
+          eventStatus: evt.status,
+          eventError: evt.errorMessage ?? null,
+          receivedAt: evt.createdAt,
+          orderId: parsed?.id ?? null,
+          orderName: parsed?.name ?? null,
+          lineItemCount: lineItems.length,
+          lineItems: lineItems.map((li) => {
+            const l = li as Record<string, unknown>;
+            return { id: l.id, productId: l.product_id, variantId: l.variant_id ?? null, title: l.title ?? null, quantity: l.quantity ?? 1 };
+          }),
+        };
+      });
+
+      res.status(200).json({ shop, orderCount: orders.length, orders });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
   // ── Debug: per-product tag inspection ────────────────────────────────────
   // GET /api/blind-box/debug/shopline/product-tags?productId=<id>
   // Fetches the product DETAIL endpoint (not list) and dumps every tag field.

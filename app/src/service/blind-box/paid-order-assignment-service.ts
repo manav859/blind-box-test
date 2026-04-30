@@ -10,7 +10,8 @@ import {
   BlindBoxOrderDetectionResult,
   detectBlindBoxOrderLines,
 } from '../../domain/blind-box/order-detection';
-import { isBlindBoxProduct } from '../../domain/blind-box/product-detection';
+import { isBlindBoxProduct, getBlindBoxProductTags, parseBlindBoxCollectionTag } from '../../domain/blind-box/product-detection';
+import { extractRawTagFields, normalizeTags as normalizeTagsFromRecord } from '../../integration/shopline/catalog-gateway';
 import { evaluateEligiblePoolItems, selectPoolItemForBlindBox } from '../../domain/blind-box/selection';
 import { ValidationError } from '../../lib/errors';
 import { logger, Logger } from '../../lib/logger';
@@ -225,6 +226,19 @@ export class PaidOrderAssignmentService {
   constructor(private readonly dependencies: PaidOrderAssignmentServiceDependencies) {}
 
   async processPaidOrder(shop: string, payload: OrderPaidWebhookPayload): Promise<PaidOrderProcessingSummary> {
+    const lineItems = getOrderLineItems(payload);
+    this.dependencies.logger.info('paid-order: processing started', {
+      shop,
+      orderId: payload.id,
+      lineItemCount: lineItems.length,
+      lineItems: lineItems.map((li) => ({
+        lineItemId: li.id,
+        productId: li.product_id,
+        title: li.title ?? null,
+        quantity: li.quantity ?? 1,
+      })),
+    });
+
     const detectionMappings = await this.loadOrderDetectionMappings(shop);
     const productCache = await this.loadProductCache(shop, payload);
     const detections: BlindBoxOrderDetectionResult[] = [];
@@ -250,6 +264,16 @@ export class PaidOrderAssignmentService {
       }
     }
 
+    this.dependencies.logger.info('paid-order: processing complete', {
+      shop,
+      orderId: payload.id,
+      detectedLineCount: detections.length,
+      matchedLineCount: matchedDetections.length,
+      assignmentCount: assignments.length,
+      failureCount: failures.length,
+      failures: failures.map((f) => ({ lineItemId: f.lineItemId, reason: f.reason, message: f.message })),
+    });
+
     return {
       detectedLineCount: detections.length,
       matchedLineCount: matchedDetections.length,
@@ -268,10 +292,37 @@ export class PaidOrderAssignmentService {
       productIds.map(async (productId) => {
         try {
           const product = await this.dependencies.catalogService.getProduct(shop, productId);
+          const rawRecord = product.raw as Record<string, unknown>;
+          const rawTagFields = extractRawTagFields(rawRecord);
+          const tagsNormalized = normalizeTagsFromRecord(rawRecord);
+          const collectionHandle = parseBlindBoxCollectionTag(getBlindBoxProductTags(product));
+
+          this.dependencies.logger.info('paid-order: product detail fetched', {
+            shop,
+            orderId: payload.id,
+            productId: product.id,
+            title: product.title,
+            rawTagFields,
+            tagsNormalized,
+            isBlindBox: isBlindBoxProduct(product),
+            extractedCollectionHandle: collectionHandle,
+          });
+
+          if (isBlindBoxProduct(product) && !collectionHandle) {
+            this.dependencies.logger.warn('paid-order: MISSING_COLLECTION_TAG — blind-box product has no blind-box-collection: tag', {
+              shop,
+              orderId: payload.id,
+              productId: product.id,
+              title: product.title,
+              tagsNormalized,
+            });
+          }
+
           return [productId, product] as const;
         } catch (error) {
-          this.dependencies.logger.warn('Failed to load SHOPLINE product during blind-box order detection; falling back to legacy mappings', {
+          this.dependencies.logger.warn('paid-order: failed to load SHOPLINE product — falling back to legacy mappings', {
             shop,
+            orderId: payload.id,
             productId,
             error: error instanceof Error ? error.message : String(error),
           });
@@ -304,13 +355,31 @@ export class PaidOrderAssignmentService {
     }
 
     const product = productCache.get(lineItem.product_id) || null;
-    if (product && isBlindBoxProduct(product)) {
+    const productIsBlindBox = product ? isBlindBoxProduct(product) : false;
+
+    this.dependencies.logger.info('paid-order: line item detection', {
+      shop,
+      lineItemId: lineItem.id,
+      productId: lineItem.product_id,
+      title: lineItem.title ?? null,
+      productFound: Boolean(product),
+      isBlindBox: productIsBlindBox,
+      tags: product?.tags ?? [],
+    });
+
+    if (product && productIsBlindBox) {
       const blindBox = await this.dependencies.blindBoxDiscoveryService.ensureBlindBoxForDetectedProduct(shop, product, {
         productVariantId: lineItem.variant_id || null,
       });
       const syntheticMapping = toSyntheticBlindBoxReferenceMapping(blindBox);
 
       if (syntheticMapping) {
+        this.dependencies.logger.info('paid-order: blind-box match via product tag', {
+          shop,
+          lineItemId: lineItem.id,
+          productId: lineItem.product_id,
+          blindBoxId: blindBox.id,
+        });
         return {
           lineItem,
           reason: 'BLIND_BOX_MATCH',
