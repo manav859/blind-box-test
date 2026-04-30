@@ -235,23 +235,35 @@ function mapVariantRecord(variantRecord: Record<string, unknown>): ShoplineProdu
 
 /**
  * Normalise tags from whatever shape SHOPLINE returns into a trimmed lowercase
- * string array.  SHOPLINE has returned tags as:
- *   - array of strings       ["blind-box", "sale"]
- *   - comma-separated string "blind-box, sale"
- *   - alternative field names: tagList, product_tags, labels, productTags
+ * string array.  Checks every known field name variation and handles both
+ * array-of-strings and comma-separated-string formats.
+ *
+ * When SHOPLINE returns a { product: { ... } } envelope (detail endpoint), pass
+ * the inner product record, not the envelope.  The caller should unwrap first.
  */
 export function normalizeTags(productRecord: Record<string, unknown>): string[] {
+  // Candidate field names in priority order.
   const raw =
     productRecord.tags ??
+    productRecord.tag ??                  // singular variant
     productRecord.tagList ??
     productRecord.tag_list ??
     productRecord.product_tags ??
+    productRecord.productTags ??
     productRecord.labels ??
-    productRecord.productTags;
+    productRecord.label ??
+    productRecord.categories;             // SHOPLINE sometimes surfaces categories as tags
 
   if (Array.isArray(raw)) {
+    // Each element may itself be an object { name: "blind-box" } in some API versions
     return raw
-      .map((t) => String(t).trim().toLowerCase())
+      .map((t) => {
+        if (typeof t === 'string') return t.trim().toLowerCase();
+        if (t && typeof t === 'object' && typeof (t as Record<string, unknown>).name === 'string') {
+          return ((t as Record<string, unknown>).name as string).trim().toLowerCase();
+        }
+        return String(t).trim().toLowerCase();
+      })
       .filter(Boolean);
   }
 
@@ -263,6 +275,16 @@ export function normalizeTags(productRecord: Record<string, unknown>): string[] 
   }
 
   return [];
+}
+
+/** Returns every tag-related field from the raw product record for debug inspection. */
+export function extractRawTagFields(productRecord: Record<string, unknown>): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+  const candidates = ['tags', 'tag', 'tagList', 'tag_list', 'product_tags', 'productTags', 'labels', 'label', 'categories'];
+  for (const key of candidates) {
+    if (productRecord[key] !== undefined) fields[key] = productRecord[key];
+  }
+  return fields;
 }
 
 function mapProductRecord(productRecord: Record<string, unknown>): ShoplineProduct | null {
