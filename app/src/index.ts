@@ -115,6 +115,67 @@ async function start() {
     next();
   });
 
+  // ── Public legal pages (no auth required) ───────────────────────────────
+  app.get('/privacy-policy', (_req, res) => {
+    res.status(200).set('Content-Type', 'text/html; charset=utf-8').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy - Blind Box</title>
+<style>body{font-family:system-ui,sans-serif;max-width:700px;margin:48px auto;padding:0 24px;color:#222;line-height:1.7}h1{font-size:1.8rem;margin-bottom:.25rem}p.meta{color:#666;font-size:.9rem;margin-top:0}h2{margin-top:2rem;font-size:1.1rem}</style>
+</head>
+<body>
+<h1>Privacy Policy</h1>
+<p class="meta">Blind Box &mdash; Last updated: 2026-04-30</p>
+
+<p>Blind Box respects merchant and customer privacy. The app only collects store, product, collection, order, and line item data needed to detect blind box products, assign rewards, and record order results. We do not sell data or collect payment card details. Data is used only to provide, secure, and improve the app. Merchants may request data access or deletion by contacting support.</p>
+
+<h2>Data Collected</h2>
+<p>We access store information, product and collection details, and paid order data (order ID, line items, product IDs) solely to operate the blind-box reward assignment feature.</p>
+
+<h2>Data Sharing</h2>
+<p>We do not sell, rent, or share merchant or customer data with third parties except as required to operate the service (e.g. database hosting).</p>
+
+<h2>Data Retention</h2>
+<p>Order assignment records are retained to support order history and retry flows. Merchants may request deletion of their store data at any time.</p>
+
+<h2>Contact</h2>
+<p>For data access or deletion requests, contact: <a href="mailto:support@example.com">support@example.com</a></p>
+</body>
+</html>`);
+  });
+
+  app.get('/terms-of-service', (_req, res) => {
+    res.status(200).set('Content-Type', 'text/html; charset=utf-8').send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terms of Service - Blind Box</title>
+<style>body{font-family:system-ui,sans-serif;max-width:700px;margin:48px auto;padding:0 24px;color:#222;line-height:1.7}h1{font-size:1.8rem;margin-bottom:.25rem}p.meta{color:#666;font-size:.9rem;margin-top:0}h2{margin-top:2rem;font-size:1.1rem}</style>
+</head>
+<body>
+<h1>Terms of Service</h1>
+<p class="meta">Blind Box &mdash; Last updated: 2026-04-30</p>
+
+<p>Blind Box is provided to help SHOPLINE merchants sell blind box products and assign rewards after paid orders. Merchants are responsible for configuring products, collections, fulfillment, customer communication, and compliance with applicable laws. The app is provided as is, and availability may depend on SHOPLINE APIs, hosting, and merchant store settings.</p>
+
+<h2>Use of the Service</h2>
+<p>By installing Blind Box you agree to use it only for lawful purposes and in accordance with SHOPLINE's merchant terms. You are responsible for the products and collections you configure.</p>
+
+<h2>Limitation of Liability</h2>
+<p>The app is provided "as is" without warranty of any kind. We are not liable for missed reward assignments caused by SHOPLINE API unavailability, inventory discrepancies, or misconfigured products.</p>
+
+<h2>Changes</h2>
+<p>We may update these terms at any time. Continued use of the app after changes constitutes acceptance.</p>
+
+<h2>Contact</h2>
+<p><a href="mailto:support@example.com">support@example.com</a></p>
+</body>
+</html>`);
+  });
+
   app.get('/api/health', (_req, res) => {
     const cfg = getRuntimeConfig();
     const dbHost = (() => { try { return new URL(cfg.databaseUrl).hostname; } catch { return '(unparseable)'; } })();
