@@ -4,6 +4,18 @@ import { getPgPool } from '../db/postgres-client';
 import { PostgresSessionStorage } from '../db/session/postgres-session-storage';
 import { logger } from '../lib/logger';
 
+/** Safe session summary for logging — never includes accessToken or secrets. */
+function safeSessionSummary(session: Session) {
+  return {
+    id: session.id,
+    handle: session.handle,
+    isOnline: session.isOnline,
+    scopes: session.scope,
+    expires: session.expires ?? null,
+    accessTokenPresent: Boolean(session.accessToken),
+  };
+}
+
 // Shared session storage — same pool used by the rest of the app.
 const sessionStorage = new PostgresSessionStorage(getPgPool());
 
@@ -111,11 +123,7 @@ export async function requireShoplineSession(
     session,
   };
 
-  logger.info('requireShoplineSession: session valid', {
-    handle,
-    sessionId: session.id,
-    scopes: session.scope,
-  });
+  logger.info('requireShoplineSession: session valid', safeSessionSummary(session));
 
   next();
 }

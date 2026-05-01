@@ -318,10 +318,18 @@ export const api = {
   },
 
   // Webhook Events
-  retryWebhookEvent(id: string): Promise<{ eventId: string; status: string; summary: unknown }> {
-    return request<{ eventId: string; status: string; summary: unknown }>(`/webhook-events/${encodeURIComponent(id)}/retry`, {
-      method: 'POST',
-    });
+  // Retry always returns 200 — check ok/status fields to determine outcome.
+  retryWebhookEvent(id: string): Promise<{
+    ok: boolean;
+    eventId: string;
+    status: string;
+    assignmentCount?: number;
+    failureCount?: number;
+    summary?: unknown;
+    errorCode?: string;
+    message?: string;
+  }> {
+    return request(`/webhook-events/${encodeURIComponent(id)}/retry`, { method: 'POST' });
   },
 
   listWebhookEvents(params?: { status?: string; topic?: string }): Promise<WebhookEvent[]> {

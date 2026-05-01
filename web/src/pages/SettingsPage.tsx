@@ -118,10 +118,21 @@ export function SettingsPage() {
     setRetryingId(event.id);
     try {
       const result = await api.retryWebhookEvent(event.id);
-      addToast('success', `Retry ${result.status}`, `Event ${event.eventId.slice(-8)}`);
+      if (result.ok) {
+        addToast(
+          'success',
+          `Retry succeeded (${result.status})`,
+          `${result.assignmentCount ?? 0} assignment(s) created`,
+        );
+      } else {
+        // Business-logic failure (e.g. EMPTY_REWARD_GROUP) — not a network error
+        const detail = result.message
+          ?? (result.failureCount ? `${result.failureCount} failure(s)` : result.status);
+        addToast('warning', `Retry completed with failures`, `${result.errorCode ?? result.status}: ${detail}`);
+      }
       await refreshWebhooks();
     } catch (e: unknown) {
-      addToast('error', 'Retry failed', e instanceof Error ? e.message : String(e));
+      addToast('error', 'Retry request failed', e instanceof Error ? e.message : String(e));
     } finally {
       setRetryingId(null);
     }

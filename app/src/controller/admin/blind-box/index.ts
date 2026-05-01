@@ -1175,7 +1175,6 @@ export function createBlindBoxAdminRouter(): express.Router {
 
   // Retry a failed webhook event by re-running its stored payload.
   router.post('/webhook-events/:id/retry', async (req, res) => {
-    const context = getContext(req, res);
 
     try {
       const { shop } = requireShopSession(res);
@@ -1221,28 +1220,57 @@ export function createBlindBoxAdminRouter(): express.Router {
         'x-shopline-webhook-id': event.eventId,
       };
 
+      logger.info('webhook retry started', {
+        shop,
+        eventId: event.eventId,
+        internalId: event.id,
+        topic: event.topic,
+        hasPayload: Boolean(event.payload),
+      });
+
       const result = await paidOrderWebhookService.processPaidOrderWebhook(
         fakeHeaders as unknown as IncomingHttpHeaders,
         parsedPayload as unknown as OrderPaidWebhookPayload,
       );
 
-      logger.info('Webhook event retried', {
+      const summary = result.summary as Record<string, unknown> | null;
+      const assignmentCount = Array.isArray(summary?.assignments) ? (summary!.assignments as unknown[]).length : 0;
+      const failureCount = Array.isArray(summary?.failures) ? (summary!.failures as unknown[]).length : 0;
+
+      logger.info('webhook retry completed', {
         shop,
-        eventId: event.eventId,
-        internalId: event.id,
-        result: result.status,
+        eventId: result.eventId,
+        status: result.status,
+        assignmentCount,
+        failureCount,
       });
 
-      res.status(result.shouldAcknowledge ? 200 : 500).send({
-        success: result.shouldAcknowledge,
-        data: {
-          eventId: result.eventId,
-          status: result.status,
-          summary: result.summary,
-        },
+      // Always 200 — business-logic failures (e.g. EMPTY_REWARD_GROUP) are not
+      // server errors; the caller reads result.status to know if it succeeded.
+      res.status(200).json({
+        ok: result.shouldAcknowledge,
+        eventId: result.eventId,
+        status: result.status,
+        assignmentCount,
+        failureCount,
+        summary: result.summary,
       });
     } catch (error) {
-      sendErrorResponse(res, error, context);
+      const appErr = error instanceof Error ? error : new Error(String(error));
+      logger.error('webhook retry failed', {
+        shop: (res.locals?.shopline?.session?.handle as string | undefined) ?? 'unknown',
+        error: appErr.message,
+        stack: appErr.stack?.split('\n').slice(0, 5).join(' | '),
+      });
+
+      // Return structured JSON even for unexpected errors — frontend can show message.
+      res.status(200).json({
+        ok: false,
+        eventId: req.params.id,
+        status: 'error',
+        errorCode: 'RETRY_INTERNAL_ERROR',
+        message: appErr.message,
+      });
     }
   });
 

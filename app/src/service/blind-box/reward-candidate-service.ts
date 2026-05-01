@@ -5,7 +5,7 @@ import {
   parseBlindBoxWeightTag,
 } from '../../domain/blind-box/product-detection';
 import { BlindBox, ExcludedRewardCandidate, RewardCandidate, RewardGroup } from '../../domain/blind-box/types';
-import { CatalogGatewayError } from '../../integration/shopline/catalog-gateway';
+
 import { ShoplineInventoryGateway, InventoryGatewayError } from '../../integration/shopline/inventory-gateway';
 import { getRuntimeConfig } from '../../lib/config';
 import type { ShopAdminAccessTokenProvider } from '../../lib/shop-admin-access-token';
@@ -219,6 +219,18 @@ export class RewardCandidateService {
       }
 
       const variantChoice = chooseVariant(product.variants, this.dependencies.random);
+
+      if (variantChoice.variant) {
+        this.dependencies.logger.debug('variant selection', {
+          shop,
+          productId: product.id,
+          productTitle: product.title,
+          variantCount: product.variants.length,
+          eligibleVariantCount: variantChoice.eligibleVariantCount,
+          selectedVariantId: variantChoice.variant.id,
+        });
+      }
+
       if (!variantChoice.variant) {
         const outOfStockQty = variantChoice.exclusion!.reason === 'OUT_OF_STOCK' ? firstVariantQty : null;
         excludedCandidates.push(
