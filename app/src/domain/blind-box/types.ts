@@ -317,4 +317,8 @@ export interface ExcludedRewardCandidate {
   variantTitle: string | null;
   reason: string;
   message: string;
+  // Diagnostic fields — populated when available
+  productStatus: string | null;
+  inventoryQuantity: number | null;
+  variantCount: number | null;
 }

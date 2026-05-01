@@ -90,6 +90,9 @@ function buildExcludedCandidate(
     variantTitle: options.variantTitle || null,
     reason,
     message,
+    productStatus: options.productStatus ?? null,
+    inventoryQuantity: options.inventoryQuantity ?? null,
+    variantCount: options.variantCount ?? null,
   };
 }
 
@@ -194,15 +197,15 @@ export class RewardCandidateService {
     const excludedCandidates: ExcludedRewardCandidate[] = [];
 
     for (const product of collectionResult.products) {
+      const variantCount = product.variants.length;
+      const firstVariantQty = product.variants[0]?.inventoryQuantity ?? null;
+
       if (isBlindBoxProduct(product.id, blindBox)) {
         excludedCandidates.push(
           buildExcludedCandidate(
             'SELF_REWARD_PRODUCT',
             'The blind-box product cannot be present in its own reward collection',
-            {
-              productId: product.id,
-              productTitle: product.title,
-            },
+            { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
           ),
         );
         continue;
@@ -212,11 +215,8 @@ export class RewardCandidateService {
         excludedCandidates.push(
           buildExcludedCandidate(
             'INACTIVE_PRODUCT',
-            'The reward product is inactive or unavailable in SHOPLINE',
-            {
-              productId: product.id,
-              productTitle: product.title,
-            },
+            `Product status is "${product.status ?? 'unknown'}" — only active/published products are eligible`,
+            { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
           ),
         );
         continue;
@@ -224,10 +224,14 @@ export class RewardCandidateService {
 
       const variantChoice = chooseVariant(product.variants);
       if (!variantChoice.variant) {
+        const outOfStockQty = variantChoice.exclusion!.reason === 'OUT_OF_STOCK' ? firstVariantQty : null;
         excludedCandidates.push(
           buildExcludedCandidate(variantChoice.exclusion!.reason, variantChoice.exclusion!.message, {
             productId: product.id,
             productTitle: product.title,
+            productStatus: product.status,
+            variantCount,
+            inventoryQuantity: outOfStockQty,
           }),
         );
         continue;
@@ -400,6 +404,7 @@ export class RewardCandidateService {
             variantId: candidate.variantId,
             productTitle: candidate.productTitle,
             variantTitle: candidate.variantTitle,
+            inventoryQuantity: candidate.inventoryQuantity,
           },
         );
       }

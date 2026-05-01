@@ -33,6 +33,24 @@ type RewardCandidate = {
   selectionWeight: number;
 };
 
+type ExcludedCandidate = {
+  productId: string | null;
+  productTitle: string | null;
+  variantTitle: string | null;
+  reason: string;
+  message: string;
+  productStatus: string | null;
+  inventoryQuantity: number | null;
+  variantCount: number | null;
+};
+
+type CandidatePreview = {
+  collection?: { id: string; title: string | null; handle: string | null };
+  rawCollectionSize?: number;
+  eligibleCandidates?: RewardCandidate[];
+  excludedCandidates?: ExcludedCandidate[];
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function Section({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
@@ -80,7 +98,7 @@ export function BlindBoxDetailPage() {
   const [loadingReadiness, setLoadingReadiness] = useState(false);
 
   // Reward preview
-  const [candidates, setCandidates] = useState<RewardCandidate[]>([]);
+  const [candidatePreview, setCandidatePreview] = useState<CandidatePreview | null>(null);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
 
   const load = useCallback(() => {
@@ -200,8 +218,7 @@ export function BlindBoxDetailPage() {
     setLoadingCandidates(true);
     try {
       const data = await api.getRewardCandidates(id);
-      const d = data as { eligible?: RewardCandidate[] };
-      setCandidates(d.eligible ?? (Array.isArray(data) ? (data as RewardCandidate[]) : []));
+      setCandidatePreview(data as unknown as CandidatePreview);
     } catch (e: unknown) {
       addToast('error', 'Preview failed', e instanceof Error ? e.message : String(e));
     } finally {
@@ -440,43 +457,82 @@ export function BlindBoxDetailPage() {
           </button>
         </div>
 
-        {candidates.length > 0 && (
-          <div style={{ marginTop: '1.25rem' }}>
-            <div style={{ fontWeight: 600, marginBottom: '.75rem', fontSize: '.875rem' }}>
-              Reward Pool Preview ({candidates.length} items)
+        {candidatePreview && (() => {
+          const eligible = candidatePreview.eligibleCandidates ?? [];
+          const excluded = candidatePreview.excludedCandidates ?? [];
+          const total = candidatePreview.rawCollectionSize ?? (eligible.length + excluded.length);
+          return (
+            <div style={{ marginTop: '1.25rem' }}>
+              {/* Summary banner */}
+              <div className={`alert ${eligible.length > 0 ? 'alert-success' : 'alert-warning'} mb-4`} style={{ marginBottom: '1rem' }}>
+                <span className="alert-icon">{eligible.length > 0 ? '✓' : '⚠'}</span>
+                <div className="alert-body">
+                  <div className="alert-title">
+                    {eligible.length > 0
+                      ? `${eligible.length} eligible reward${eligible.length !== 1 ? 's' : ''}`
+                      : `0 eligible — ${total} product${total !== 1 ? 's' : ''} found, all excluded`}
+                  </div>
+                  {total > 0 && (
+                    <div style={{ fontSize: '.85rem' }}>
+                      {total} in collection · {eligible.length} eligible · {excluded.length} excluded
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Eligible */}
+              {eligible.length > 0 && (
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontWeight: 600, marginBottom: '.5rem', fontSize: '.875rem' }}>Eligible rewards</div>
+                  <div className="table-wrapper">
+                    <table>
+                      <thead><tr><th>Product</th><th>Variant</th><th>Inventory</th><th>Weight</th></tr></thead>
+                      <tbody>
+                        {eligible.map((c, i) => (
+                          <tr key={i}>
+                            <td className="td-primary">{c.productTitle ?? c.productId}</td>
+                            <td>{c.variantTitle ?? '—'}</td>
+                            <td>
+                              {c.inventoryQuantity !== null
+                                ? <span className={c.inventoryQuantity > 0 ? 'badge badge-success' : 'badge badge-danger'}>{c.inventoryQuantity}</span>
+                                : '—'}
+                            </td>
+                            <td className="code">{c.selectionWeight}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Excluded */}
+              {excluded.length > 0 && (
+                <div>
+                  <div style={{ fontWeight: 600, marginBottom: '.5rem', fontSize: '.875rem', color: 'var(--color-danger-text)' }}>
+                    Excluded ({excluded.length})
+                  </div>
+                  <div className="table-wrapper">
+                    <table>
+                      <thead><tr><th>Product</th><th>Reason</th><th>Status</th><th>Inventory</th><th>Detail</th></tr></thead>
+                      <tbody>
+                        {excluded.map((c, i) => (
+                          <tr key={i}>
+                            <td className="td-primary">{c.productTitle ?? c.productId ?? '—'}</td>
+                            <td><span className="badge badge-danger" style={{ fontSize: '.7rem' }}>{c.reason}</span></td>
+                            <td><span className="code" style={{ fontSize: '.75rem' }}>{c.productStatus ?? '—'}</span></td>
+                            <td>{c.inventoryQuantity !== null ? <span className="badge badge-danger">{c.inventoryQuantity}</span> : '—'}</td>
+                            <td className="text-xs text-muted">{c.message}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Variant</th>
-                    <th>Inventory</th>
-                    <th>Weight</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.map((c, i) => (
-                    <tr key={i}>
-                      <td className="td-primary">{c.productTitle ?? c.productId}</td>
-                      <td>{c.variantTitle ?? '—'}</td>
-                      <td>
-                        {c.inventoryQuantity !== null ? (
-                          <span className={c.inventoryQuantity > 0 ? 'badge badge-success' : 'badge badge-danger'}>
-                            {c.inventoryQuantity}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="code">{c.selectionWeight}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </Section>
 
       {/* Readiness */}

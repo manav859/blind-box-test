@@ -352,6 +352,55 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
+  // ── Debug: reward candidates for a collection slug ──────────────────────
+  // GET /api/blind-box/debug/reward-candidates?collection=fashion-blindbox
+  router.get('/debug/reward-candidates', async (req, res) => {
+    const context = getContext(req, res);
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      if (!accessToken) { res.status(401).json({ success: false, error: 'No access token' }); return; }
+
+      const collectionSlug = typeof req.query.collection === 'string' ? req.query.collection : null;
+      if (!collectionSlug) { res.status(400).json({ success: false, error: 'collection query param required' }); return; }
+
+      const { ShoplineCatalogGateway } = await import('../../../integration/shopline/catalog-gateway');
+      const gw = new ShoplineCatalogGateway();
+      const collection = await gw.resolveCollectionBySlug(shop, accessToken, collectionSlug);
+      if (!collection) {
+        res.status(200).json({ collectionSlug, resolved: false, error: 'Collection not found' });
+        return;
+      }
+
+      const page = await gw.getCollectionProductsPage(shop, accessToken, collection.id, { limit: 50 });
+
+      const products = page.products.map((p) => ({
+        id: p.id,
+        title: p.title,
+        status: p.status,
+        published: p.published,
+        variantCount: p.variants.length,
+        variants: p.variants.map((v) => ({
+          id: v.id,
+          title: v.title,
+          inventoryQuantity: v.inventoryQuantity,
+          available: v.available,
+          tracked: v.tracked,
+        })),
+        tags: p.tags,
+      }));
+
+      res.status(200).json({
+        collectionSlug,
+        resolved: true,
+        collection: { id: collection.id, title: collection.title, handle: collection.handle },
+        productCount: products.length,
+        products,
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
   // ── Debug: recent orders from webhook events ────────────────────────────
   // GET /api/blind-box/debug/shopline/orders
   // Parses the last 5 stored orders/paid webhook payloads — no extra SHOPLINE
