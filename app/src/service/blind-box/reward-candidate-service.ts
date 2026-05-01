@@ -50,6 +50,7 @@ export interface RewardCandidateServiceDependencies {
   inventoryGateway: ShoplineInventoryGateway;
   accessTokenProvider: ShopAdminAccessTokenProvider;
   logger: Logger;
+  random: () => number;
 }
 
 type RewardCandidateResolutionErrorCode =
@@ -129,15 +130,15 @@ function isVariantCandidateAvailable(variant: CandidateVariantLike): boolean {
 
 function chooseVariant(
   variants: CandidateVariantLike[],
+  random: () => number = Math.random,
 ): {
   variant?: CandidateVariantLike;
-  exclusion?: {
-    reason: string;
-    message: string;
-  };
+  eligibleVariantCount: number;
+  exclusion?: { reason: string; message: string };
 } {
   if (!variants.length) {
     return {
+      eligibleVariantCount: 0,
       exclusion: {
         reason: 'NO_VARIANTS',
         message: 'The SHOPLINE product does not expose any variants that can be assigned',
@@ -148,25 +149,20 @@ function chooseVariant(
   const availableVariants = variants.filter(isVariantCandidateAvailable);
   if (availableVariants.length === 0) {
     return {
+      eligibleVariantCount: 0,
       exclusion: {
         reason: 'OUT_OF_STOCK',
-        message: 'Every visible variant is unavailable or out of stock',
+        message: `Every visible variant is unavailable or out of stock (${variants.length} variant${variants.length !== 1 ? 's' : ''} checked)`,
       },
     };
   }
 
-  if (availableVariants.length === 1) {
-    return {
-      variant: availableVariants[0],
-    };
-  }
-
+  // Pick uniformly at random — variant selection is always uniform regardless
+  // of the blind-box product selection strategy (which applies to products).
+  const idx = Math.min(Math.floor(random() * availableVariants.length), availableVariants.length - 1);
   return {
-    exclusion: {
-      reason: 'AMBIGUOUS_VARIANTS',
-      message:
-        'The reward product has multiple eligible variants. Use single-variant reward products or narrow the collection membership.',
-    },
+    variant: availableVariants[idx],
+    eligibleVariantCount: availableVariants.length,
   };
 }
 
@@ -222,7 +218,7 @@ export class RewardCandidateService {
         continue;
       }
 
-      const variantChoice = chooseVariant(product.variants);
+      const variantChoice = chooseVariant(product.variants, this.dependencies.random);
       if (!variantChoice.variant) {
         const outOfStockQty = variantChoice.exclusion!.reason === 'OUT_OF_STOCK' ? firstVariantQty : null;
         excludedCandidates.push(
@@ -243,6 +239,7 @@ export class RewardCandidateService {
         productTitle: product.title,
         variantTitle: variantChoice.variant.title,
         inventoryQuantity: variantChoice.variant.inventoryQuantity,
+        eligibleVariantCount: variantChoice.eligibleVariantCount,
         selectionWeight: parseBlindBoxWeightTag(Array.isArray(product.tags) ? product.tags : []),
         payloadJson: JSON.stringify({
           collectionId: collectionContext.collection.id,
@@ -429,5 +426,6 @@ export async function getRewardCandidateService(): Promise<RewardCandidateServic
     inventoryGateway: new ShoplineInventoryGateway(),
     accessTokenProvider: new ShoplineSessionAccessTokenProvider(),
     logger,
+    random: Math.random,
   });
 }

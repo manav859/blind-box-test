@@ -50,6 +50,32 @@ function buildProduct(
   };
 }
 
+/** Seed helper: creates an active blind-box with shoplineProductId and links a reward group. */
+async function seedCollectionLinkedBlindBox(context: Awaited<ReturnType<typeof createBlindBoxTestContext>>) {
+  const blindBox = await context.blindBoxService.createBlindBox('blind-box', {
+    name: 'Test Box',
+    status: 'active',
+    selectionStrategy: 'uniform',
+    shoplineProductId: 'bb-product',
+    shoplineVariantId: 'bb-variant',
+  });
+  context.testCatalogService.setProduct(
+    buildProduct('bb-product', 'BB Product', [{ id: 'bb-variant', title: 'Default', inventoryQuantity: 5 }], {
+      tags: ['blind-box', 'blind-box-collection:rewards-col'],
+    }),
+  );
+  context.testCatalogService.setCollection({ ...buildCollection('collection-1', 'Rewards Col'), handle: 'rewards-col' });
+  const rewardGroup = await context.rewardGroupService.upsertRewardGroup('blind-box', {
+    shoplineCollectionId: 'collection-1',
+    status: 'active',
+  });
+  await context.blindBoxRewardGroupLinkService.upsertLink('blind-box', {
+    blindBoxId: blindBox.id,
+    rewardGroupId: rewardGroup.id,
+  });
+  return { blindBox, rewardGroupId: rewardGroup.id };
+}
+
 test('reward candidate preview resolves the reward collection from the blind-box product tag', async () => {
   const context = await createBlindBoxTestContext();
   const blindBox = await context.blindBoxService.createBlindBox('blind-box', {
@@ -349,7 +375,93 @@ test('reward candidate preview marks ambiguous multi-variant rewards as excluded
     blindBox.id,
   );
 
+  // Multi-variant products are now eligible — one variant is picked randomly.
+  assert.equal(preview.eligibleCandidates.length, 1);
+  assert.equal(preview.excludedCandidates.length, 0);
+  assert.equal(preview.eligibleCandidates[0].productId, 'reward-3');
+  assert.equal(preview.eligibleCandidates[0].eligibleVariantCount, 2);
+  assert.ok(
+    ['reward-3-v1', 'reward-3-v2'].includes(preview.eligibleCandidates[0].variantId!),
+    'selected variant must be one of the eligible variants',
+  );
+});
+
+// ── multi-variant tests ──────────────────────────────────────────────────────
+
+test('multi-variant: all in-stock → product is eligible and eligibleVariantCount reflects count', async () => {
+  const context = await createBlindBoxTestContext({ random: () => 0 });
+  const { blindBox, rewardGroupId } = await seedCollectionLinkedBlindBox(context);
+  void rewardGroupId;
+
+  context.testCatalogService.setCollection(buildCollection('collection-1', 'Rewards'), [
+    buildProduct('reward-multi', 'Prize Multi', [
+      { id: 'v1', title: 'Red', inventoryQuantity: 3 },
+      { id: 'v2', title: 'Blue', inventoryQuantity: 5 },
+      { id: 'v3', title: 'Green', inventoryQuantity: 0 },  // out of stock
+    ]),
+  ]);
+
+  const preview = await context.rewardCandidateService.previewCandidatesForBlindBox('blind-box', blindBox.id);
+
+  assert.equal(preview.eligibleCandidates.length, 1);
+  assert.equal(preview.eligibleCandidates[0].eligibleVariantCount, 2);  // v3 excluded
+  // random()=0 → floor(0*2)=0 → first eligible variant
+  assert.equal(preview.eligibleCandidates[0].variantId, 'v1');
+});
+
+test('multi-variant: second variant selected when random returns high value', async () => {
+  const context = await createBlindBoxTestContext({ random: () => 0.99 });
+  const { blindBox, rewardGroupId } = await seedCollectionLinkedBlindBox(context);
+  void rewardGroupId;
+
+  context.testCatalogService.setCollection(buildCollection('collection-1', 'Rewards'), [
+    buildProduct('reward-pick', 'Prize Pick', [
+      { id: 'va', title: 'Alpha', inventoryQuantity: 5 },
+      { id: 'vb', title: 'Beta', inventoryQuantity: 5 },
+    ]),
+  ]);
+
+  const preview = await context.rewardCandidateService.previewCandidatesForBlindBox('blind-box', blindBox.id);
+
+  assert.equal(preview.eligibleCandidates[0].eligibleVariantCount, 2);
+  // random()=0.99 → floor(0.99*2)=1 → second eligible variant
+  assert.equal(preview.eligibleCandidates[0].variantId, 'vb');
+});
+
+test('multi-variant: single in-stock variant among many → eligibleVariantCount is 1', async () => {
+  const context = await createBlindBoxTestContext({ random: () => 0 });
+  const { blindBox, rewardGroupId } = await seedCollectionLinkedBlindBox(context);
+  void rewardGroupId;
+
+  context.testCatalogService.setCollection(buildCollection('collection-1', 'Rewards'), [
+    buildProduct('reward-one', 'Prize One', [
+      { id: 'sold1', title: 'Sold', inventoryQuantity: 0 },
+      { id: 'live1', title: 'Live', inventoryQuantity: 3 },
+      { id: 'sold2', title: 'Sold2', inventoryQuantity: 0 },
+    ]),
+  ]);
+
+  const preview = await context.rewardCandidateService.previewCandidatesForBlindBox('blind-box', blindBox.id);
+
+  assert.equal(preview.eligibleCandidates.length, 1);
+  assert.equal(preview.eligibleCandidates[0].eligibleVariantCount, 1);
+  assert.equal(preview.eligibleCandidates[0].variantId, 'live1');
+});
+
+test('multi-variant: all variants out of stock → OUT_OF_STOCK exclusion', async () => {
+  const context = await createBlindBoxTestContext();
+  const { blindBox, rewardGroupId } = await seedCollectionLinkedBlindBox(context);
+  void rewardGroupId;
+
+  context.testCatalogService.setCollection(buildCollection('collection-1', 'Rewards'), [
+    buildProduct('reward-oos', 'Prize OOS', [
+      { id: 'o1', title: 'A', inventoryQuantity: 0 },
+      { id: 'o2', title: 'B', inventoryQuantity: 0 },
+    ]),
+  ]);
+
+  const preview = await context.rewardCandidateService.previewCandidatesForBlindBox('blind-box', blindBox.id);
+
   assert.equal(preview.eligibleCandidates.length, 0);
-  assert.equal(preview.excludedCandidates.length, 1);
-  assert.equal(preview.excludedCandidates[0].reason, 'AMBIGUOUS_VARIANTS');
+  assert.equal(preview.excludedCandidates[0].reason, 'OUT_OF_STOCK');
 });

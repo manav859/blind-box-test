@@ -308,6 +308,8 @@ export interface RewardCandidate {
   inventoryQuantity: number | null;
   selectionWeight: number;
   payloadJson: string | null;
+  /** How many variants on this product were eligible; >1 means multi-variant selection was used. */
+  eligibleVariantCount: number;
 }
 
 export interface ExcludedRewardCandidate {

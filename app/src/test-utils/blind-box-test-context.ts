@@ -374,9 +374,8 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
     catalogService: testCatalogService as unknown as any,
     inventoryGateway: inventoryGateway as any,
     accessTokenProvider: new TestAccessTokenProvider(),
-    logger: new Logger({
-      service: 'blind-box-test',
-    }),
+    logger: new Logger({ service: 'blind-box-test' }),
+    random: options.random ?? (() => 0.25),
   });
   const blindBoxDiscoveryService = new BlindBoxDiscoveryService({
     blindBoxRepository,

@@ -31,6 +31,7 @@ type RewardCandidate = {
   variantTitle: string | null;
   inventoryQuantity: number | null;
   selectionWeight: number;
+  eligibleVariantCount: number;
 };
 
 type ExcludedCandidate = {
@@ -490,7 +491,14 @@ export function BlindBoxDetailPage() {
                       <tbody>
                         {eligible.map((c, i) => (
                           <tr key={i}>
-                            <td className="td-primary">{c.productTitle ?? c.productId}</td>
+                            <td className="td-primary">
+                              {c.productTitle ?? c.productId}
+                              {c.eligibleVariantCount > 1 && (
+                                <span className="badge badge-info" style={{ marginLeft: '.4rem', fontSize: '.7rem' }}>
+                                  {c.eligibleVariantCount} variants
+                                </span>
+                              )}
+                            </td>
                             <td>{c.variantTitle ?? '—'}</td>
                             <td>
                               {c.inventoryQuantity !== null
