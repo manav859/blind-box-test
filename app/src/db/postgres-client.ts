@@ -74,7 +74,12 @@ export function getPgPool(): Pool {
     ssl: { rejectUnauthorized: false },
     max: 10,
     idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
+    // Generous timeout so Neon / Supabase scale-to-zero wake-ups (often 5–10 s
+    // from a fully-suspended compute) don't surface as "Connection terminated
+    // due to connection timeout" on the first request after idle. The pool
+    // only spends this long when actually waiting for a fresh connection;
+    // warm queries are unaffected.
+    connectionTimeoutMillis: 30_000,
   });
 
   pool.on('error', (err) => {
