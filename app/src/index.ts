@@ -119,6 +119,24 @@ async function start() {
 
   const app = express();
 
+  // ── Embed-friendly security headers ────────────────────────────────────────
+  // Shopline Admin frames the app from `https://<shop>.myshopline.com` (and
+  // sometimes `*.shoplineapp.com`). The browser refuses to render the iframe
+  // unless either X-Frame-Options is absent and CSP frame-ancestors lists the
+  // parent origin. Strip any inherited X-Frame-Options and emit a broad
+  // frame-ancestors so the embed works for ANY merchant store, including the
+  // reviewer's preview shop. Declared FIRST so it applies to every response
+  // (the SDK's per-shop cspHeaders() previously narrowed this and was the
+  // likely cause of the blank-iframe symptom).
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.removeHeader('X-Frame-Options');
+    res.setHeader(
+      'Content-Security-Policy',
+      "frame-ancestors https://*.myshopline.com https://*.shoplineapp.com",
+    );
+    next();
+  });
+
   // Lightweight health probe for the platform and the keep-alive self-ping.
   // Declared before any other route/middleware so health checks bypass auth.
   app.get('/health', (_req: Request, res: Response) => res.status(200).json({ status: 'ok' }));
@@ -247,7 +265,10 @@ async function start() {
       );
   });
 
-  app.use(shopline.cspHeaders());
+  // NOTE: shopline.cspHeaders() removed — it narrowed frame-ancestors to the
+  // single resolved shop handle, which blanked the iframe whenever the parent
+  // origin didn't match exactly (e.g. preview shops). The global middleware at
+  // the top of start() now sets a broad embed-friendly CSP for every response.
   app.use(serveStatic(STATIC_PATH, { index: false }));
 
   // If handle is present: let confirmInstallationStatus check the session.
