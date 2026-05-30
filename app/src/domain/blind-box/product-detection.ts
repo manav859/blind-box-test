@@ -1,6 +1,19 @@
-const SUPPORTED_BLIND_BOX_PRODUCT_TAGS = new Set(['blind-box', 'blind-box-active']);
+// Stored lowercase so tag matching is always case-insensitive: incoming tags are
+// lowercased by normalizeProductTags before they are compared against this set.
+const SUPPORTED_BLIND_BOX_PRODUCT_TAGS = new Set(
+  ['blind-box', 'blind-box-active'].map((tag) => tag.toLowerCase()),
+);
 const BLIND_BOX_COLLECTION_TAG_PREFIX = 'blind-box-collection:';
 const BLIND_BOX_WEIGHT_TAG_PREFIX = 'blind-box-weight:';
+
+/**
+ * The product tags that mark a SHOPLINE product as a blind box, lowercased.
+ * Callers (e.g. the discovery service) use these to drive the server-side
+ * `?tag=` filter on the SHOPLINE products list endpoint.
+ */
+export function getSupportedBlindBoxProductTags(): string[] {
+  return [...SUPPORTED_BLIND_BOX_PRODUCT_TAGS];
+}
 
 interface BlindBoxProductLike {
   tags?: string[] | string | null;

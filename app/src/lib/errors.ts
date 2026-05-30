@@ -70,6 +70,25 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+/**
+ * Raised when SHOPLINE rejects the stored access token (HTTP 401 /
+ * "ACCESS_TOKEN is expired"). Distinct from a generic 401 so callers can choose
+ * to surface a re-auth redirect instead of silently degrading (e.g. the
+ * discovery service must NOT fall back to local cache on this). The message
+ * intentionally contains "Session expired" so the frontend banner detects it.
+ */
+export class SessionExpiredError extends AppError {
+  constructor(message = 'Session expired — please re-authenticate', details?: unknown) {
+    super({
+      code: 'SESSION_EXPIRED',
+      statusCode: 401,
+      message,
+      details,
+    });
+    this.name = 'SessionExpiredError';
+  }
+}
+
 export function toAppError(error: unknown): AppError {
   if (error instanceof AppError) {
     return error;

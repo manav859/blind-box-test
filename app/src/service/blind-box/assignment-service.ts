@@ -33,6 +33,10 @@ export class BlindBoxAssignmentService {
   ): Promise<BlindBoxAssignment | null> {
     return this.assignmentRepository.findByOrderLine(shop, orderId, orderLineId);
   }
+
+  async findAssignmentByOrderId(shop: string, orderId: string): Promise<BlindBoxAssignment | null> {
+    return this.assignmentRepository.findByOrderId(shop, orderId);
+  }
 }
 
 export async function getBlindBoxAssignmentService(): Promise<BlindBoxAssignmentService> {

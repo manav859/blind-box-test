@@ -6,6 +6,16 @@ import { api, HealthStatus, WebhookEvent } from '../lib/api';
 
 type Tab = 'health' | 'webhooks';
 
+// Webhook topics this app subscribes to, registered in app/src/shopline.ts.
+// Fixed by design — kept here as a single accurate list for the Settings display.
+const SUBSCRIBED_WEBHOOK_TOPICS = [
+  'apps/installed_uninstalled',
+  'orders/paid',
+  'customers/data_request',
+  'customers/redact',
+  'shop/redact',
+] as const;
+
 function ErrorCell({ message }: { message: string | null }) {
   const [expanded, setExpanded] = React.useState(false);
   if (!message) return <span className="text-muted">—</span>;
@@ -284,56 +294,16 @@ export function SettingsPage() {
                 </div>
                 <div className="kv-row">
                   <span className="kv-label">Subscribed Topics</span>
-                  <div>
-                    <span className="badge badge-primary" style={{ marginRight: '.375rem' }}>orders/paid</span>
-                    <span className="badge badge-info">apps/installed_uninstalled</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.375rem' }}>
+                    {SUBSCRIBED_WEBHOOK_TOPICS.map((topic) => (
+                      <span key={topic} className="badge badge-primary">{topic}</span>
+                    ))}
                   </div>
                 </div>
                 <div className="kv-row">
                   <span className="kv-label">Signature Verification</span>
                   <StatusBadge status="active" label="Enabled" />
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Storefront extension */}
-          <div className="card">
-            <div className="card-header">
-              <h2>Storefront Theme Extension</h2>
-            </div>
-            <div className="card-body">
-              <div className="alert alert-info" style={{ marginBottom: '1rem' }}>
-                <span className="alert-icon">ℹ</span>
-                <div className="alert-body">
-                  <div className="alert-title">Manual activation required</div>
-                  The Blind Box theme block must be manually added to your product page template in the SHOPLINE Theme Editor.
-                </div>
-              </div>
-              <div className="kv-list">
-                <div className="kv-row">
-                  <span className="kv-label">Block Name</span>
-                  <span className="kv-value code">blind-box-product-shell</span>
-                </div>
-                <div className="kv-row">
-                  <span className="kv-label">Trigger Condition</span>
-                  <span className="kv-value">Product must have <span className="code">blind-box</span> tag</span>
-                </div>
-                <div className="kv-row">
-                  <span className="kv-label">Public API</span>
-                  <span className="kv-value code">{health.appUrl}/api/storefront/blind-box/*</span>
-                </div>
-              </div>
-              <div style={{ marginTop: '1rem' }}>
-                <p className="text-sm text-muted">Setup steps:</p>
-                <ol style={{ paddingLeft: '1.25rem', marginTop: '.5rem', fontSize: '.875rem', color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
-                  <li>Go to SHOPLINE Admin → Online Store → Themes</li>
-                  <li>Click "Customize" on your active theme</li>
-                  <li>Navigate to a product page template</li>
-                  <li>Add the "Blind Box Shell" app block to the product page</li>
-                  <li>Save the theme</li>
-                  <li>Tag any product with <span className="code">blind-box</span> to activate the block</li>
-                </ol>
               </div>
             </div>
           </div>

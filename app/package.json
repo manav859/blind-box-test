@@ -9,6 +9,8 @@
     "start": "node dist/index.js",
     "serve": "cross-env NODE_ENV=production node dist/index.js",
     "build": "cd ../web && npm install && npm run build && cd ../app && tsc",
+    "build:local": "cd ../web && npm run build && cd ../app && tsc",
+    "serve:local": "npm run build:local && cross-env NODE_ENV=production node dist/index.js",
     "test": "powershell -Command \"$files = Get-ChildItem -Recurse -Filter *.test.ts src | ForEach-Object { $_.FullName }; if (-not $files) { exit 0 }; node --test -r ts-node/register $files\""
   },
   "author": "SHOPLINE",

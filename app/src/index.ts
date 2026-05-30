@@ -1,14 +1,15 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { join } from 'path';
+import fetch from 'node-fetch';
 import shopline from './shopline';
 import { readFileSync } from 'fs';
 import serveStatic from 'serve-static';
 import { webhooksController } from './controller/webhook';
-// Blind-box storefront API controller (product status for theme extension block)
-import { createBlindBoxStorefrontRouter } from './controller/storefront/blind-box';
-// Blind-box admin API controller (pool CRUD, assignment queries, debug endpoints)
+// Blind-box admin API controller (pool CRUD, assignment & webhook-event queries)
 import { createBlindBoxAdminRouter } from './controller/admin/blind-box';
 import { initializeBlindBoxPersistence } from './db/client';
+import { getPgPool } from './db/postgres-client';
+import { PostgresSessionStorage } from './db/session/postgres-session-storage';
 import { logger } from './lib/logger';
 import { getRuntimeConfig } from './lib/config';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
@@ -84,6 +85,26 @@ async function start() {
   validateStartupConfig();
   await initializeBlindBoxPersistence();
 
+  // Purge dead (expired) SHOPLINE sessions on boot and every 6 hours so a stale
+  // token row can never be mistaken for a valid session. The expiry guard in
+  // middleware/shopline-auth.ts is the request-time backstop; this keeps the
+  // table clean (e.g. removes the long-expired "testlive" session at deploy).
+  const sessionStorage = new PostgresSessionStorage(getPgPool());
+  const purgeExpiredSessions = async () => {
+    try {
+      const deleted = await sessionStorage.deleteExpiredSessions();
+      if (deleted > 0) {
+        logger.info('Purged expired SHOPLINE sessions', { deleted });
+      }
+    } catch (err) {
+      logger.error('Failed to purge expired SHOPLINE sessions', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+  await purgeExpiredSessions();
+  setInterval(purgeExpiredSessions, 6 * 60 * 60 * 1000);
+
   if (resolvedPort.invalidSources.length > 0) {
     logger.warn('Ignoring invalid backend port env values', {
       invalidSources: resolvedPort.invalidSources,
@@ -97,6 +118,10 @@ async function start() {
   }
 
   const app = express();
+
+  // Lightweight health probe for the platform and the keep-alive self-ping.
+  // Declared before any other route/middleware so health checks bypass auth.
+  app.get('/health', (_req: Request, res: Response) => res.status(200).json({ status: 'ok' }));
 
   // Resolve shop handle from all known sources and normalise to req.query.handle
   // before any library middleware sees the request.
@@ -206,9 +231,6 @@ async function start() {
     createBlindBoxAdminRouter()
   );
 
-  // Blind-box storefront API — public, no auth required
-  app.use('/api/storefront/blind-box', createBlindBoxStorefrontRouter());
-
   // After OAuth, the library redirects to /exit-iframe?redirectUri=<url>.
   // This handler breaks out of the embedded iframe by navigating window.top.
   app.get('/exit-iframe', (req: Request, res: Response) => {
@@ -257,6 +279,15 @@ async function start() {
       portSource: resolvedPort.source,
       staticPath: STATIC_PATH,
     });
+
+    // Keep-alive self-ping to avoid free-tier cold starts: hit our own /health
+    // every 13 minutes (under the ~15-min idle spin-down window).
+    setInterval(() => {
+      const url = process.env.SHOPLINE_APP_URL;
+      if (url) {
+        fetch(`${url}/health`).catch(() => {});
+      }
+    }, 13 * 60 * 1000);
   });
 }
 

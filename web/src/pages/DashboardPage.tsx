@@ -114,12 +114,6 @@ function SessionErrorBanner({ error, onRetry }: { error: string; onRetry: () => 
           </button>
         )}
       </div>
-      {/* Debug panel — visible during integration testing */}
-      <div style={{ fontSize: '.75rem', color: 'var(--color-text-muted)', paddingLeft: '1.75rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-        <div>page: {window.location.href}</div>
-        <div>handle: {handle}</div>
-        <div>authUrl: {authUrl}</div>
-      </div>
     </div>
   );
 }
@@ -150,6 +144,16 @@ export function DashboardPage() {
     </Link>
   );
 
+  // A fresh store has a stats object where every metric is zero. Treat that the
+  // same as "no data" so we show a clean empty state instead of a grid of zeros.
+  const hasData =
+    !!stats &&
+    (stats.totalBlindBoxes > 0 ||
+      stats.totalAssignments > 0 ||
+      stats.webhookProcessed > 0 ||
+      stats.webhookFailed > 0 ||
+      stats.recentAssignments.length > 0);
+
   return (
     <Layout title="Dashboard" actions={headerActions}>
       {loading && (
@@ -161,7 +165,21 @@ export function DashboardPage() {
 
       {error && !loading && <SessionErrorBanner error={error} onRetry={load} />}
 
-      {stats && (
+      {!loading && !error && !hasData && (
+        <div className="empty-state">
+          <div className="empty-state-icon">🎁</div>
+          <h3>No blind-box activity yet</h3>
+          <p>
+            Create a blind box and, once customers start purchasing, your metrics and
+            recent assignments will appear here.
+          </p>
+          <Link to="/blind-boxes" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+            + Create your first Blind Box
+          </Link>
+        </div>
+      )}
+
+      {!loading && !error && hasData && stats && (
         <>
           {/* KPI cards */}
           <div className="stats-grid">
@@ -324,14 +342,6 @@ export function DashboardPage() {
             </div>
           </div>
         </>
-      )}
-
-      {!loading && !stats && !error && (
-        <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
-          <h3>No data yet</h3>
-          <p>Stats will appear after your first blind-box is configured.</p>
-        </div>
       )}
     </Layout>
   );

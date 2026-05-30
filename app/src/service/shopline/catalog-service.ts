@@ -162,6 +162,7 @@ export class ShoplineCatalogService {
     options: {
       accessToken?: string;
       limitPerPage?: number;
+      tag?: string | null;
     } = {},
   ): Promise<{
     products: ShoplineProduct[];
@@ -172,10 +173,13 @@ export class ShoplineCatalogService {
     const traceIds: string[] = [];
     let pageInfo: string | null = null;
 
+    // Walk every page; SHOPLINE caps a page at 250 products and signals more via
+    // the Link header (nextPageInfo). Stop only once there is no next page.
     do {
       const page = await this.dependencies.catalogGateway.getProductsPage(shop, accessToken, {
         pageInfo,
         limit: options.limitPerPage,
+        tag: options.tag,
       });
 
       products.push(...page.products);
@@ -187,6 +191,7 @@ export class ShoplineCatalogService {
 
     this.dependencies.logger.info('Fetched SHOPLINE products for blind-box detection', {
       shop,
+      tag: options.tag ?? null,
       productCount: products.length,
     });
 

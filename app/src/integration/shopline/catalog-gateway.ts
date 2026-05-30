@@ -1,6 +1,7 @@
 import fetch from 'node-fetch';
 import { getRuntimeConfig } from '../../lib/config';
 import { logger } from '../../lib/logger';
+import { SessionExpiredError } from '../../lib/errors';
 
 export interface ShoplineCollection {
   id: string;
@@ -367,6 +368,7 @@ export interface CatalogGateway {
     options?: {
       pageInfo?: string | null;
       limit?: number;
+      tag?: string | null;
     },
   ): Promise<CollectionProductsPage>;
   getCollectionProductsPage(
@@ -583,15 +585,27 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     options: {
       pageInfo?: string | null;
       limit?: number;
+      tag?: string | null;
     } = {},
   ): Promise<CollectionProductsPage> {
     const limit = Math.min(options.limit || 250, 250);
+    const tag = options.tag?.trim() || null;
     const query = new URLSearchParams({ limit: String(limit) });
     if (options.pageInfo) query.set('page_info', options.pageInfo);
+    // Server-side tag filter — SHOPLINE returns only products carrying this tag,
+    // e.g. /products/products.json?tag=blind-box.
+    if (tag) query.set('tag', tag);
+    // The products LIST endpoint omits the tags field by default, which breaks
+    // client-side blind-box detection. Request it explicitly (alongside the
+    // other fields we map) so tags are present in the list response.
+    query.set('fields', 'id,title,status,published,tags,product_type,handle,template_path,variants');
 
-    // Correct SHOPLINE Admin OpenAPI product list endpoint (v20260901+).
-    // Path:  /admin/openapi/{version}/products/products.json
-    // The gateway's request() method prepends /admin/openapi/{version}, so path = /products/products.json.
+    // SHOPLINE Admin OpenAPI product list endpoint.
+    // Full URL: https://{shop}.myshopline.com/admin/openapi/{version}/products/products.json
+    // NOTE: SHOPLINE uses the `/admin/openapi/` base (no underscore); the
+    // `/admin/open_api/` form is the Shopify-style path and is NOT valid for
+    // SHOPLINE. request() prepends /admin/openapi/{version}, so the path here
+    // is just /products/products.json.
     const path = `/products/products.json?${query.toString()}`;
 
     try {
@@ -606,6 +620,7 @@ export class ShoplineCatalogGateway implements CatalogGateway {
         shop,
         apiVersion: this.apiVersion,
         path,
+        tag,
         productCount: products.length,
         nextPageInfo: response.nextPageInfo,
         topLevelKeys: rawRecord ? Object.keys(rawRecord) : [],
@@ -620,6 +635,12 @@ export class ShoplineCatalogGateway implements CatalogGateway {
         traceId: response.traceId,
       };
     } catch (restErr) {
+      // An expired/invalid token is not a "REST unavailable" condition — the
+      // GraphQL fallback would 401 too. Re-throw so the caller forces re-auth.
+      if (restErr instanceof SessionExpiredError) {
+        throw restErr;
+      }
+
       const status = restErr instanceof CatalogGatewayError ? restErr.statusCode : null;
       const preview = restErr instanceof CatalogGatewayError
         ? String(restErr.details?.responseText ?? '').slice(0, 300)
@@ -628,11 +649,12 @@ export class ShoplineCatalogGateway implements CatalogGateway {
         shop,
         apiVersion: this.apiVersion,
         path,
+        tag,
         shoplineStatus: status,
         responsePreview: preview,
       });
       // GraphQL fallback (works when REST listing is unavailable).
-      return this.getProductsPageViaGraphQL(shop, accessToken, limit, options.pageInfo || null);
+      return this.getProductsPageViaGraphQL(shop, accessToken, limit, options.pageInfo || null, tag);
     }
   }
 
@@ -641,6 +663,7 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     accessToken: string,
     first: number,
     after: string | null,
+    tag: string | null = null,
   ): Promise<CollectionProductsPage> {
     type GqlProductsResponse = {
       data?: {
@@ -676,12 +699,16 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       };
     };
 
+    // SHOPLINE's GraphQL products connection accepts a Shopify-style search
+    // string; `tag:blind-box` is the server-side equivalent of the REST ?tag= filter.
+    const searchQuery = tag ? `tag:${tag}` : null;
+
     const gqlResponse = await this.graphqlRequest<GqlProductsResponse>(
       shop,
       accessToken,
       `
-        query GetProducts($first: Int!, $after: String) {
-          products(first: $first, after: $after) {
+        query GetProducts($first: Int!, $after: String, $query: String) {
+          products(first: $first, after: $after, query: $query) {
             edges {
               node {
                 id
@@ -707,7 +734,7 @@ export class ShoplineCatalogGateway implements CatalogGateway {
           }
         }
       `,
-      { first, after },
+      { first, after, query: searchQuery },
     );
 
     const productsConn = gqlResponse.data?.data?.products;
@@ -929,6 +956,20 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     const nextPageInfo = parseLinkHeader(response.headers.get('link'));
     const responseText = await response.text();
 
+    // 401 means SHOPLINE rejected the access token (e.g. "ACCESS_TOKEN is expired").
+    // Surface a distinct error so callers force re-auth instead of degrading silently.
+    if (response.status === 401) {
+      logger.warn('SHOPLINE catalog request unauthorized — access token expired/invalid', {
+        path,
+        traceId,
+        responsePreview: responseText.slice(0, 200),
+      });
+      throw new SessionExpiredError(
+        'Session expired — SHOPLINE rejected the access token. Please re-authenticate.',
+        { path, traceId },
+      );
+    }
+
     if (!response.ok) {
       throw new CatalogGatewayError(
         `SHOPLINE catalog request failed with ${response.status} ${response.statusText}`,
@@ -988,6 +1029,17 @@ export class ShoplineCatalogGateway implements CatalogGateway {
 
     const traceId = response.headers.get('traceid')?.split(',')?.[0] || null;
     const responseText = await response.text();
+
+    if (response.status === 401) {
+      logger.warn('SHOPLINE GraphQL request unauthorized — access token expired/invalid', {
+        traceId,
+        responsePreview: responseText.slice(0, 200),
+      });
+      throw new SessionExpiredError(
+        'Session expired — SHOPLINE rejected the access token. Please re-authenticate.',
+        { traceId },
+      );
+    }
 
     if (!response.ok) {
       throw new CatalogGatewayError(

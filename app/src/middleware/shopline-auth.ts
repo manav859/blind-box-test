@@ -16,6 +16,18 @@ function safeSessionSummary(session: Session) {
   };
 }
 
+/**
+ * True when the session carries an expiry that is at or before now. A session
+ * row existing in the DB is NOT proof the token still works — SHOPLINE rejects
+ * expired tokens with 401, so we must check this before trusting the session.
+ */
+function isSessionExpired(session: Session): boolean {
+  if (!session.expires) {
+    return false;
+  }
+  return new Date(session.expires).getTime() <= Date.now();
+}
+
 // Shared session storage — same pool used by the rest of the app.
 const sessionStorage = new PostgresSessionStorage(getPgPool());
 
@@ -86,7 +98,10 @@ export async function requireShoplineSession(
   if (!session) {
     try {
       const rows = await sessionStorage.findSessionsByHandle(handle);
-      session = rows.find((s) => s.accessToken);
+      // Prefer a non-expired tokened session; only fall back to an expired one
+      // so the expiry guard below can delete it and trigger re-auth.
+      const tokened = rows.filter((s) => s.accessToken);
+      session = tokened.find((s) => !isSessionExpired(s)) ?? tokened[0];
       if (session) {
         logger.debug('requireShoplineSession: found session via findSessionsByHandle fallback', {
           handle,
@@ -109,6 +124,33 @@ export async function requireShoplineSession(
       sessionFound: Boolean(session),
       authUrl,
     });
+    res.status(401).json({
+      error: 'Session expired — please re-authenticate',
+      authUrl,
+    });
+    return;
+  }
+
+  // A DB row alone does NOT mean the token is still good. If the session has
+  // expired, SHOPLINE would reject every API call with 401 and the app would
+  // fall back to an empty cache. Delete the dead session and force re-auth.
+  if (isSessionExpired(session)) {
+    const appUrl = process.env.SHOPLINE_APP_URL ?? '';
+    const authUrl = `${appUrl}/auth?handle=${encodeURIComponent(handle)}`;
+    logger.warn('requireShoplineSession: session expired — deleting and forcing re-auth', {
+      handle,
+      sessionId: session.id,
+      expires: session.expires ?? null,
+    });
+    try {
+      await sessionStorage.deleteSession(session.id);
+    } catch (err) {
+      logger.error('requireShoplineSession: failed to delete expired session', {
+        handle,
+        sessionId: session.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
     res.status(401).json({
       error: 'Session expired — please re-authenticate',
       authUrl,

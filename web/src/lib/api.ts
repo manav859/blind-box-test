@@ -353,13 +353,4 @@ export const api = {
   listCatalogCollections(): Promise<CatalogCollection[]> {
     return request<CatalogCollection[]>('/catalog/collections');
   },
-
-  // Debug
-  getProduct(productId: string): Promise<unknown> {
-    return request<unknown>(`/debug/products/${productId}`);
-  },
-
-  getCollection(collectionId: string): Promise<unknown> {
-    return request<unknown>(`/debug/collections/${collectionId}`);
-  },
 };

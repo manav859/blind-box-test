@@ -1,6 +1,6 @@
 import net from 'node:net';
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type UserConfig } from 'vite';
 
 const DEFAULT_BACKEND_PORT = 3001;
 const PORT_PROBE_TIMEOUT_MS = 200;
@@ -68,26 +68,30 @@ async function resolveBackendPort(): Promise<number> {
 
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => {
-  const backendPort = await resolveBackendPort();
-  const proxyOptions = {
-    target: `http://127.0.0.1:${backendPort}`,
-    changeOrigin: false,
-    secure: true,
-    ws: false,
-  };
+// Resolved eagerly into a Promise<UserConfig> — vite awaits the default export,
+// and defineConfig's Promise overload accepts this directly.
+export default defineConfig(
+  (async (): Promise<UserConfig> => {
+    const backendPort = await resolveBackendPort();
+    const proxyOptions = {
+      target: `http://127.0.0.1:${backendPort}`,
+      changeOrigin: false,
+      secure: true,
+      ws: false,
+    };
 
-  return {
-    plugins: [react()],
-    server: {
-      host: "localhost",
-      port: process.env.FRONTEND_PORT as unknown as number,
-      proxy: {
-        "^/(\\?.*)?$": proxyOptions,
-        "^/api(/|(\\?.*)?$)": proxyOptions,
+    return {
+      plugins: [react()],
+      server: {
+        host: "localhost",
+        port: process.env.FRONTEND_PORT as unknown as number,
+        proxy: {
+          "^/(\\?.*)?$": proxyOptions,
+          "^/api(/|(\\?.*)?$)": proxyOptions,
+        },
+        // ref: https://vite.dev/config/server-options.html#server-allowedhosts
+        allowedHosts: true,
       },
-      // ref: https://vite.dev/config/server-options.html#server-allowedhosts
-      allowedHosts: true,
-    },
-  };
-})
+    };
+  })(),
+)

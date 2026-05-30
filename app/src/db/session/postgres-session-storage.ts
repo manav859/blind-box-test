@@ -92,6 +92,21 @@ export class PostgresSessionStorage {
     return true;
   }
 
+  /**
+   * Purge every session whose token has expired. `expires` is stored as Unix
+   * epoch SECONDS (bigint), so we compare against the current epoch — NOT a
+   * timestamp. Rows with NULL expires (no known expiry) are left untouched.
+   * Returns the number of rows deleted.
+   */
+  async deleteExpiredSessions(): Promise<number> {
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const result = await this.pool.query(
+      'DELETE FROM shopline_sessions WHERE expires IS NOT NULL AND expires < $1',
+      [nowUnix],
+    );
+    return result.rowCount ?? 0;
+  }
+
   async findSessionsByShop(shop: string): Promise<Session[]> {
     return this.findSessionsByHandle(shop);
   }

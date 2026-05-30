@@ -1,9 +1,0 @@
-.section-blog-container {
-  background-color: rgb(var(--color-background));
-}
-
-@media (max-width: 959px) {
-  .section-blog-container {
-    padding-inline: 0;
-  }
-}

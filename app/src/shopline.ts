@@ -29,6 +29,15 @@ const shopline = shoplineApp({
     'orders/paid': {
       callbackUrl: '/api/webhooks',
     },
+    'customers/data_request': {
+      callbackUrl: '/api/webhooks',
+    },
+    'customers/redact': {
+      callbackUrl: '/api/webhooks',
+    },
+    'shop/redact': {
+      callbackUrl: '/api/webhooks',
+    },
   },
   hooks: {
     afterAuth: async ({ session }) => {

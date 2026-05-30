@@ -1,9 +1,9 @@
 
 appName = "blindbox-test-01"
 appKey = "0758d90091e6e9adcd5b810cbe568d9b6e60e174"
-appUrl = "https://logan-exclusively-florence-costa.trycloudflare.com"
+appUrl = "https://same-recording-referred-prison.trycloudflare.com"
 appCallbackUrlList = [
-  "https://logan-exclusively-florence-costa.trycloudflare.com/api/auth/callback"
+  "https://same-recording-referred-prison.trycloudflare.com/api/auth/callback"
 ]
 isNewWindow = false
 subPathPrefix = "apps"

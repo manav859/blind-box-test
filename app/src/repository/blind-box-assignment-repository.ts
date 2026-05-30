@@ -52,6 +52,7 @@ export interface BlindBoxAssignmentRepository {
   create(shop: string, input: NormalizedCreateBlindBoxAssignmentInput): Promise<BlindBoxAssignment>;
   listByShop(shop: string): Promise<BlindBoxAssignment[]>;
   findByOrderLine(shop: string, orderId: string, orderLineId: string): Promise<BlindBoxAssignment | null>;
+  findByOrderId(shop: string, orderId: string): Promise<BlindBoxAssignment | null>;
   findById(shop: string, assignmentId: string): Promise<BlindBoxAssignment | null>;
   updateStatus(
     shop: string,
@@ -187,6 +188,39 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
         WHERE shop = ? AND order_id = ? AND order_line_id = ?
       `,
       [shop, orderId, orderLineId],
+    );
+
+    return row ? mapBlindBoxAssignmentRow(row) : null;
+  }
+
+  async findByOrderId(shop: string, orderId: string): Promise<BlindBoxAssignment | null> {
+    const row = await this.db.get<BlindBoxAssignmentRow>(
+      `
+        SELECT
+          id,
+          shop,
+          blind_box_id,
+          order_id,
+          order_line_id,
+          reward_group_id,
+          selected_pool_item_id,
+          selected_reward_product_id,
+          selected_reward_variant_id,
+          selected_reward_title_snapshot,
+          selected_reward_variant_title_snapshot,
+          selected_reward_payload_json,
+          status,
+          selection_strategy,
+          idempotency_key,
+          metadata,
+          created_at,
+          updated_at
+        FROM blind_box_assignments
+        WHERE shop = ? AND order_id = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+      `,
+      [shop, orderId],
     );
 
     return row ? mapBlindBoxAssignmentRow(row) : null;

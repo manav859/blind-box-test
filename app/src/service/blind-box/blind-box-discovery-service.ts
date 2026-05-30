@@ -1,7 +1,11 @@
 import { ShoplineProduct } from '../../integration/shopline/catalog-gateway';
-import { isBlindBoxProduct } from '../../domain/blind-box/product-detection';
+import {
+  getBlindBoxProductTags,
+  getSupportedBlindBoxProductTags,
+  isBlindBoxProduct,
+} from '../../domain/blind-box/product-detection';
 import { BlindBox } from '../../domain/blind-box/types';
-import { ConflictError } from '../../lib/errors';
+import { ConflictError, SessionExpiredError } from '../../lib/errors';
 import { Logger, logger } from '../../lib/logger';
 import { BlindBoxRepository, getBlindBoxRepository } from '../../repository/blind-box-repository';
 import { getShoplineCatalogService, ShoplineCatalogService } from '../shopline/catalog-service';
@@ -14,6 +18,20 @@ export interface BlindBoxDiscoveryServiceDependencies {
 
 function sortBlindBoxes(blindBoxes: BlindBox[]): BlindBox[] {
   return [...blindBoxes].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+}
+
+/**
+ * Confirm a product fetched via the server-side `?tag=` filter really is a blind box.
+ * When the SHOPLINE list payload includes tags we re-check case-insensitively (guards
+ * against an API version that ignores the tag filter). When the list payload omits
+ * tags entirely, we trust the server-side filter that returned the product.
+ */
+function isConfirmedBlindBoxProduct(product: ShoplineProduct): boolean {
+  if (getBlindBoxProductTags(product).length === 0) {
+    return true;
+  }
+
+  return isBlindBoxProduct(product);
 }
 
 function selectExistingBlindBoxReference(
@@ -49,22 +67,44 @@ export class BlindBoxDiscoveryService {
     const existingBlindBoxes = await this.dependencies.blindBoxRepository.listByShop(shop);
 
     try {
-      const productResult = await this.dependencies.catalogService.listAllProducts(shop, {
-        accessToken: options.accessToken,
-      });
+      // Query SHOPLINE once per supported blind-box tag using the server-side
+      // `?tag=` filter (e.g. tag=blind-box). Each call paginates through every
+      // page, and we de-duplicate by product id since a product may carry more
+      // than one supported tag.
+      const detectedProducts = new Map<string, ShoplineProduct>();
+
+      for (const tag of getSupportedBlindBoxProductTags()) {
+        const productResult = await this.dependencies.catalogService.listAllProducts(shop, {
+          accessToken: options.accessToken,
+          tag,
+        });
+
+        for (const product of productResult.products) {
+          if (isConfirmedBlindBoxProduct(product)) {
+            detectedProducts.set(product.id, product);
+          }
+        }
+      }
+
       const resolvedBlindBoxes = new Map(existingBlindBoxes.map((blindBox) => [blindBox.id, blindBox]));
 
-      for (const product of productResult.products) {
-        if (!isBlindBoxProduct(product)) {
-          continue;
-        }
-
+      for (const product of detectedProducts.values()) {
         const blindBox = await this.ensureBlindBoxForDetectedProduct(shop, product);
         resolvedBlindBoxes.set(blindBox.id, blindBox);
       }
 
       return sortBlindBoxes([...resolvedBlindBoxes.values()]);
     } catch (error) {
+      // An expired/invalid SHOPLINE token must NOT be hidden behind the local
+      // cache — that produces a silently-empty product list. Propagate it so the
+      // route returns a 401 and the merchant is sent to re-authenticate.
+      if (error instanceof SessionExpiredError) {
+        this.dependencies.logger.warn('Blind-box discovery aborted — SHOPLINE session expired; forcing re-auth', {
+          shop,
+        });
+        throw error;
+      }
+
       this.dependencies.logger.warn('Failed to refresh detected SHOPLINE blind-box products; using local cache only', {
         shop,
         error: error instanceof Error ? error.message : String(error),

@@ -24,6 +24,24 @@ export function sendErrorResponse(res: Response, error: unknown, context: Reques
     details: appError.details,
   });
 
+  // For auth failures hit mid-request (e.g. SHOPLINE rejected an expired token),
+  // mirror the requireShoplineSession 401 contract: a string `error` plus an
+  // `authUrl`, so the frontend shows the "Re-authenticate" flow instead of a
+  // silently-empty view. (The frontend reads `body.error` as a string.)
+  if (appError.statusCode === 401) {
+    const appUrl = process.env.SHOPLINE_APP_URL ?? '';
+    const authUrl = context.shop
+      ? `${appUrl}/auth?handle=${encodeURIComponent(context.shop)}`
+      : `${appUrl}/auth`;
+    res.status(401).send({
+      success: false,
+      error: appError.message,
+      code: appError.code,
+      authUrl,
+    });
+    return;
+  }
+
   res.status(appError.statusCode).send({
     success: false,
     error: {
