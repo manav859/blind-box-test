@@ -132,7 +132,10 @@ async function start() {
     res.removeHeader('X-Frame-Options');
     res.setHeader(
       'Content-Security-Policy',
-      "frame-ancestors https://*.myshopline.com https://*.shoplineapp.com",
+      // *.myshopline.com already matches previewapp.myshopline.com (single-label
+      // wildcard); the explicit *.previewapp.myshopline.com is for any nested
+      // Admin sub-host some builds use, and is harmless if unused.
+      'frame-ancestors https://*.myshopline.com https://*.shoplineapp.com https://*.previewapp.myshopline.com',
     );
     next();
   });
@@ -249,20 +252,78 @@ async function start() {
     createBlindBoxAdminRouter()
   );
 
-  // After OAuth, the library redirects to /exit-iframe?redirectUri=<url>.
-  // This handler breaks out of the embedded iframe by navigating window.top.
+  // When the SDK detects we're in the Admin iframe and need to start OAuth, it
+  // redirects to /exit-iframe?redirectUri=<oauth_url>&handle=<handle>. This
+  // page has to navigate the TOP frame (out of the iframe) to the OAuth URL.
+  //
+  // Chrome blocks `window.top.location.replace()` here because the iframe and
+  // the parent are cross-origin (us vs *.myshopline.com) and the iframe lacks
+  // navigation permissions. The reliable cross-browser pattern is a <form>
+  // with target="_top" auto-submitted from JS, with <meta http-equiv="refresh">
+  // and the JS attempt as belt-and-suspenders fallbacks.
   app.get('/exit-iframe', (req: Request, res: Response) => {
-    const redirectUri = req.query.redirectUri as string | undefined;
-    const safe = redirectUri && /^https?:\/\//.test(redirectUri) ? redirectUri : '/';
-    res
-      .status(200)
-      .set('Content-Type', 'text/html')
-      .send(
-        `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>` +
-        `if(window.top===window){window.location.replace(${JSON.stringify(safe)});}` +
-        `else{window.top.location.replace(${JSON.stringify(safe)});}` +
-        `</script></body></html>`,
-      );
+    const q = req.query as Record<string, unknown>;
+
+    // The SDK sends `redirectUri`. We also accept Shopline-style `Uri`/`uri`
+    // and a generic `redirect` for resilience. If Shopline Admin has packed
+    // the URI into the `appkey` value using a `__Uri=` joiner (seen in some
+    // Admin builds), extract it from there too.
+    let candidate: unknown =
+      q.redirectUri ?? q.Uri ?? q.uri ?? q.redirect;
+    if (!candidate && typeof q.appkey === 'string' && q.appkey.includes('__Uri=')) {
+      candidate = decodeURIComponent(q.appkey.split('__Uri=')[1] ?? '');
+    }
+
+    const redirectUri = typeof candidate === 'string' ? candidate : '';
+    if (!redirectUri || !/^https?:\/\//i.test(redirectUri)) {
+      res.status(400).set('Content-Type', 'text/plain').send('Missing or invalid redirect URI for /exit-iframe');
+      return;
+    }
+
+    // HTML-escape (only & < > " ' need handling for an attribute / meta value);
+    // the URL passes through unmodified for the JSON.stringify (JS) path.
+    const escapeHtml = (input: string): string =>
+      input
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    const escapedUri = escapeHtml(redirectUri);
+
+    res.status(200).set('Content-Type', 'text/html; charset=utf-8').send(
+      `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0;url=${escapedUri}">
+  <title>Redirecting…</title>
+</head>
+<body>
+  <noscript>
+    <p>Redirecting to SHOPLINE to complete authorization. If nothing happens, <a href="${escapedUri}" target="_top" rel="noopener">click here</a>.</p>
+  </noscript>
+  <form id="exit-iframe-form" method="get" action="${escapedUri}" target="_top"></form>
+  <script>
+    (function () {
+      var url = ${JSON.stringify(redirectUri)};
+      // 1. Try the safest pattern first: a real form submit with target="_top".
+      //    Browsers allow this even when JS window.top navigation is blocked.
+      try {
+        document.getElementById('exit-iframe-form').submit();
+        return;
+      } catch (e) { /* fall through */ }
+      // 2. Fallback: direct JS top navigation. Chrome will block this when the
+      //    iframe lacks permission, but Safari/Firefox often allow it.
+      try { window.top.location.replace(url); return; } catch (e) {}
+      // 3. Final fallback: navigate THIS frame; the <meta refresh> above will
+      //    have already done the same — leaves a non-blank state if all else fails.
+      try { window.location.replace(url); } catch (e) {}
+    })();
+  </script>
+</body>
+</html>`,
+    );
   });
 
   // NOTE: shopline.cspHeaders() removed — it narrowed frame-ancestors to the
