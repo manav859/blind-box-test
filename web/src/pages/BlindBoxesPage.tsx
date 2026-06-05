@@ -4,7 +4,8 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { api, BlindBox, CatalogProduct, CatalogCollection, RewardGroup } from '../lib/api';
+import { api, BlindBox, CatalogProduct, CatalogCollection, RewardGroup, SessionExpiredError } from '../lib/api';
+import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 function formatDate(iso: string): string {
   try {
@@ -340,7 +341,7 @@ export function BlindBoxesPage() {
   const { addToast } = useToast();
   const [blindBoxes, setBlindBoxes] = useState<BlindBox[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
@@ -354,7 +355,7 @@ export function BlindBoxesPage() {
         setBlindBoxes(data);
         setError(null);
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -438,13 +439,17 @@ export function BlindBoxesPage() {
       )}
 
       {error && !loading && (
-        <div className="alert alert-danger mb-4">
-          <span className="alert-icon">✕</span>
-          <div className="alert-body">
-            <div className="alert-title">Failed to load</div>
-            {error}
+        error instanceof SessionExpiredError ? (
+          <SessionExpiredBanner authUrl={error.authUrl} />
+        ) : (
+          <div className="alert alert-danger mb-4">
+            <span className="alert-icon">✕</span>
+            <div className="alert-body">
+              <div className="alert-title">Failed to load</div>
+              {error.message}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {!loading && !error && filtered.length === 0 && (

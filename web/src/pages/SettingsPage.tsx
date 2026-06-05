@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, HealthStatus, WebhookEvent } from '../lib/api';
+import { api, HealthStatus, WebhookEvent, SessionExpiredError } from '../lib/api';
+import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 type Tab = 'health' | 'webhooks';
 
@@ -90,6 +91,7 @@ export function SettingsPage() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [webhookEvents, setWebhookEvents] = useState<WebhookEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [webhookFilter, setWebhookFilter] = useState('all');
   const [retryingId, setRetryingId] = useState<string | null>(null);
 
@@ -99,8 +101,16 @@ export function SettingsPage() {
       .then(([h, w]) => {
         setHealth(h);
         setWebhookEvents(w);
+        setError(null);
       })
-      .catch((e: Error) => addToast('error', 'Failed to load settings', e.message))
+      .catch((e: Error) => {
+        setError(e);
+        // Surface non-session errors as a toast too (preserves prior UX); the
+        // banner below handles SessionExpiredError specifically.
+        if (!(e instanceof SessionExpiredError)) {
+          addToast('error', 'Failed to load settings', e.message);
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -182,8 +192,12 @@ export function SettingsPage() {
         </div>
       )}
 
+      {error && !loading && error instanceof SessionExpiredError && (
+        <SessionExpiredBanner authUrl={error.authUrl} />
+      )}
+
       {/* Health tab */}
-      {!loading && tab === 'health' && health && (
+      {!loading && !(error instanceof SessionExpiredError) && tab === 'health' && health && (
         <>
           {/* App config */}
           <div className="card mb-6" style={{ marginBottom: '1.5rem' }}>
@@ -311,7 +325,7 @@ export function SettingsPage() {
       )}
 
       {/* Webhooks tab */}
-      {!loading && tab === 'webhooks' && (
+      {!loading && !(error instanceof SessionExpiredError) && tab === 'webhooks' && (
         <>
           <div style={{ display: 'flex', gap: '.75rem', marginBottom: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <select

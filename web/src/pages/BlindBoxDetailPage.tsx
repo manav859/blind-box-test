@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, BlindBox, CatalogCollection, CatalogProduct } from '../lib/api';
+import { api, BlindBox, CatalogCollection, CatalogProduct, SessionExpiredError } from '../lib/api';
+import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 /** Extract the blind-box-collection handle from a product's tags array. */
 function deriveCollectionHandle(tags: string[]): string {
@@ -76,7 +77,7 @@ export function BlindBoxDetailPage() {
   const [blindBox, setBlindBox] = useState<BlindBox | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   // Edit form state
   const [name, setName] = useState('');
@@ -136,7 +137,7 @@ export function BlindBoxDetailPage() {
             });
         }
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -238,13 +239,21 @@ export function BlindBoxDetailPage() {
     );
   }
 
+  if (error instanceof SessionExpiredError) {
+    return (
+      <Layout title="Session expired">
+        <SessionExpiredBanner authUrl={error.authUrl} />
+      </Layout>
+    );
+  }
+
   if (error || !blindBox) {
     return (
       <Layout title="Blind Box Not Found">
         <div className="alert alert-danger">
           <span className="alert-icon">✕</span>
           <div className="alert-body">
-            <div className="alert-title">{error ?? 'Blind box not found'}</div>
+            <div className="alert-title">{error?.message ?? 'Blind box not found'}</div>
             <button className="btn btn-secondary btn-sm" style={{ marginTop: '.75rem' }} onClick={() => navigate('/blind-boxes')}>
               ← Back to list
             </button>

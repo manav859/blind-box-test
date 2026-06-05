@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, BlindBoxAssignment, InventoryOperation } from '../lib/api';
+import { api, BlindBoxAssignment, InventoryOperation, SessionExpiredError } from '../lib/api';
+import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 type Tab = 'assignments' | 'operations';
 
@@ -29,7 +30,7 @@ export function AssignmentsPage() {
   const [assignments, setAssignments] = useState<BlindBoxAssignment[]>([]);
   const [operations, setOperations] = useState<InventoryOperation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function AssignmentsPage() {
         setOperations(o);
         setError(null);
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -163,13 +164,17 @@ export function AssignmentsPage() {
       )}
 
       {error && !loading && (
-        <div className="alert alert-danger mb-4">
-          <span className="alert-icon">✕</span>
-          <div className="alert-body">
-            <div className="alert-title">Failed to load</div>
-            {error}
+        error instanceof SessionExpiredError ? (
+          <SessionExpiredBanner authUrl={error.authUrl} />
+        ) : (
+          <div className="alert alert-danger mb-4">
+            <span className="alert-icon">✕</span>
+            <div className="alert-body">
+              <div className="alert-title">Failed to load</div>
+              {error.message}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Assignments table */}

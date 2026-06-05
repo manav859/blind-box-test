@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
-import { api, DashboardStats, HealthStatus, getShopHandle } from '../lib/api';
+import { api, DashboardStats, HealthStatus, SessionExpiredError } from '../lib/api';
+import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 function formatDate(iso: string): string {
   try {
@@ -69,51 +70,17 @@ function HealthRow({
   );
 }
 
-// Full backend URL baked in at Vite build time; falls back to the known Render URL.
-// IMPORTANT: must be absolute — window.top is the SHOPLINE Admin domain, so a
-// relative /auth would resolve to testlive.myshopline.com/auth → 404.
-const APP_BACKEND_URL =
-  (import.meta.env.VITE_SHOPLINE_APP_URL as string | undefined)?.replace(/\/$/, '') ||
-  'https://blind-box-test.onrender.com';
-
-function SessionErrorBanner({ error, onRetry }: { error: string; onRetry: () => void }) {
-  const isSessionError = error.includes('Session expired');
-  const handle = getShopHandle() || 'testlive';
-  // Absolute URL to the Render backend's OAuth start route.
-  const authUrl = `${APP_BACKEND_URL}/auth?handle=${encodeURIComponent(handle)}`;
-
+function LoadErrorBanner({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="alert alert-warning mb-6" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: '.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', width: '100%' }}>
-        <span className="alert-icon">⚠</span>
-        <div className="alert-body" style={{ flex: 1 }}>
-          <div className="alert-title">
-            {isSessionError ? 'Session expired' : 'Could not load stats'}
-          </div>
-          <div>
-            {isSessionError
-              ? 'Your SHOPLINE session is missing or expired. Click Re-authenticate to start OAuth.'
-              : error}
-          </div>
-        </div>
-        {isSessionError ? (
-          <button
-            className="btn btn-primary btn-sm"
-            style={{ flexShrink: 0 }}
-            onClick={() => {
-              // Navigate the top-level frame so OAuth has a real window to work in.
-              // window.top is the SHOPLINE Admin; we send it to the Render backend /auth.
-              (window.top ?? window).location.href = authUrl;
-            }}
-          >
-            Re-authenticate
-          </button>
-        ) : (
-          <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={onRetry}>
-            ↺ Retry
-          </button>
-        )}
+    <div className="alert alert-warning mb-6" style={{ alignItems: 'center', gap: '.75rem' }}>
+      <span className="alert-icon">⚠</span>
+      <div className="alert-body" style={{ flex: 1 }}>
+        <div className="alert-title">Could not load stats</div>
+        <div>{message}</div>
       </div>
+      <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }} onClick={onRetry}>
+        ↺ Retry
+      </button>
     </div>
   );
 }
@@ -122,7 +89,7 @@ export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -132,7 +99,7 @@ export function DashboardPage() {
         setStats(s);
         setHealth(h);
       })
-      .catch((e: Error) => setError(e.message))
+      .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
   }, []);
 
@@ -163,7 +130,13 @@ export function DashboardPage() {
         </div>
       )}
 
-      {error && !loading && <SessionErrorBanner error={error} onRetry={load} />}
+      {error && !loading && (
+        error instanceof SessionExpiredError ? (
+          <SessionExpiredBanner authUrl={error.authUrl} />
+        ) : (
+          <LoadErrorBanner message={error.message} onRetry={load} />
+        )
+      )}
 
       {!loading && !error && !hasData && (
         <div className="empty-state">

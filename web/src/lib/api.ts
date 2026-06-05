@@ -135,6 +135,47 @@ export interface HealthStatus {
   sessionMode: string;
 }
 
+// ── Session-expired error type ───────────────────────────────────────────────
+// Thrown from request() whenever the backend signals re-auth is required (401
+// with { authUrl } body, opaqueredirect from cross-origin auth middleware, or
+// the SHOPLINE reauthorize header). Carries the authUrl so the UI can offer a
+// one-click recovery and the global handler can auto-navigate top-frame.
+export class SessionExpiredError extends Error {
+  constructor(public authUrl?: string) {
+    super('Session expired — please re-authenticate');
+    this.name = 'SessionExpiredError';
+  }
+}
+
+// Backend base URL (mirrors the value previously inlined in DashboardPage).
+// Used to derive a fallback authUrl when the response doesn't include one
+// (e.g. opaqueredirect — body is unreadable across origins).
+const APP_BACKEND_URL =
+  (import.meta.env.VITE_SHOPLINE_APP_URL as string | undefined)?.replace(/\/$/, '') ||
+  'https://blind-box-test.onrender.com';
+
+function deriveAuthUrlFallback(): string | undefined {
+  const handle = getShopHandle();
+  if (!handle) return undefined;
+  return `${APP_BACKEND_URL}/auth?handle=${encodeURIComponent(handle)}`;
+}
+
+// Single-shot guard so a burst of parallel 401s doesn't kick off the navigation
+// repeatedly (or race the browser's first navigation against itself).
+let _autoRedirectAttempted = false;
+function maybeAutoRedirect(authUrl: string | undefined): void {
+  if (!authUrl || _autoRedirectAttempted) return;
+  _autoRedirectAttempted = true;
+  try {
+    // Navigate the TOP frame — we're embedded in the SHOPLINE Admin iframe and
+    // OAuth needs a real window. If cross-origin policy blocks it, fall back to
+    // navigating this frame; the Admin will still pick up the redirect.
+    (window.top ?? window).location.href = authUrl;
+  } catch {
+    window.location.href = authUrl;
+  }
+}
+
 // ── App Bridge session token ──────────────────────────────────────────────────
 // Populated by App.tsx once App Bridge is initialized.
 // The ready-promise prevents a race where API calls fire before the dynamic
@@ -201,19 +242,30 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   // opaqueredirect = auth middleware issued a cross-origin redirect (exitIframe flow).
   // X-SHOPLINE-API-Request-Failure-Reauthorize: 1 = appBridgeHeaderRedirect (403).
-  // 401 from our requireShoplineSession middleware carries a JSON body with error/authUrl
-  //   and is handled below in the !resp.ok branch.
+  // Body is unreadable across opaque redirects, so we derive authUrl from the
+  // shop handle in the current location.
   if (
     resp.type === 'opaqueredirect' ||
     (resp.redirected && resp.url.includes('/auth')) ||
     resp.headers.get('X-SHOPLINE-API-Request-Failure-Reauthorize') === '1'
   ) {
-    throw new Error('Session expired — please reload the page in SHOPLINE Admin');
+    const authUrl = deriveAuthUrlFallback();
+    maybeAutoRedirect(authUrl);
+    throw new SessionExpiredError(authUrl);
   }
 
   const text = await resp.text();
   let body: Record<string, unknown> = {};
   try { body = JSON.parse(text); } catch { /* ignore */ }
+
+  // 401 from requireShoplineSession carries { error, authUrl } so the UI can
+  // navigate the merchant straight back through OAuth.
+  if (resp.status === 401) {
+    const authUrl =
+      (body as { authUrl?: string }).authUrl || deriveAuthUrlFallback();
+    maybeAutoRedirect(authUrl);
+    throw new SessionExpiredError(authUrl);
+  }
 
   if (!resp.ok) {
     const message =
