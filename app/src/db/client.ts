@@ -67,10 +67,12 @@ export async function initializeBlindBoxPersistence(): Promise<void> {
 
   // Verify connectivity before starting. Serverless Postgres (Neon, Supabase)
   // can suspend compute when idle, so the very first query after deploy may
-  // race a wake-up. Retry with exponential backoff so a single slow wake-up
-  // doesn't crash the deploy. The pool's own connectionTimeoutMillis bounds
-  // each attempt; total worst-case here is roughly attempts * (timeout + backoff).
-  const maxAttempts = 3;
+  // race a wake-up. Retry with a wider backoff than the pool's own per-attempt
+  // timeout so a slow wake-up can't crash the deploy. Total worst-case wait is
+  // bounded by sum(per-attempt timeout + delays[i]); we hit the listen() call
+  // FIRST in index.ts so this never threatens Render's 60s port-bind deadline.
+  const maxAttempts = 5;
+  const delaysMs = [3_000, 6_000, 10_000, 15_000, 20_000];
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       await db.get<{ result: number }>('SELECT 1 AS result');
@@ -86,7 +88,7 @@ export async function initializeBlindBoxPersistence(): Promise<void> {
         });
         throw err;
       }
-      const delayMs = 2_000 * Math.pow(2, attempt - 1); // 2s, 4s
+      const delayMs = delaysMs[attempt - 1];
       logger.warn('Postgres healthcheck failed — likely cold start; retrying', {
         attempt,
         nextDelayMs: delayMs,

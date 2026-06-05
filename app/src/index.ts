@@ -8,7 +8,7 @@ import { webhooksController } from './controller/webhook';
 // Blind-box admin API controller (pool CRUD, assignment & webhook-event queries)
 import { createBlindBoxAdminRouter } from './controller/admin/blind-box';
 import { initializeBlindBoxPersistence } from './db/client';
-import { getPgPool } from './db/postgres-client';
+import { getPgPool, startDatabaseKeepAlive } from './db/postgres-client';
 import { PostgresSessionStorage } from './db/session/postgres-session-storage';
 import { logger } from './lib/logger';
 import { getRuntimeConfig } from './lib/config';
@@ -83,27 +83,6 @@ function resolveHandle(req: Request): { handle: string; source: string } {
 
 async function start() {
   validateStartupConfig();
-  await initializeBlindBoxPersistence();
-
-  // Purge dead (expired) SHOPLINE sessions on boot and every 6 hours so a stale
-  // token row can never be mistaken for a valid session. The expiry guard in
-  // middleware/shopline-auth.ts is the request-time backstop; this keeps the
-  // table clean (e.g. removes the long-expired "testlive" session at deploy).
-  const sessionStorage = new PostgresSessionStorage(getPgPool());
-  const purgeExpiredSessions = async () => {
-    try {
-      const deleted = await sessionStorage.deleteExpiredSessions();
-      if (deleted > 0) {
-        logger.info('Purged expired SHOPLINE sessions', { deleted });
-      }
-    } catch (err) {
-      logger.error('Failed to purge expired SHOPLINE sessions', {
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  };
-  await purgeExpiredSessions();
-  setInterval(purgeExpiredSessions, 6 * 60 * 60 * 1000);
 
   if (resolvedPort.invalidSources.length > 0) {
     logger.warn('Ignoring invalid backend port env values', {
@@ -355,22 +334,60 @@ async function start() {
     },
   );
 
-  app.listen(resolvedPort.port, '0.0.0.0', () => {
-    logger.info('SHOPLINE backend started', {
-      port: resolvedPort.port,
-      portSource: resolvedPort.source,
-      staticPath: STATIC_PATH,
+  // ── Phase 1: Bind port FIRST ──────────────────────────────────────────────
+  // Render kills any process that hasn't bound a port within ~60s. We bind
+  // BEFORE DB init so /health responds immediately even while Neon is still
+  // waking from scale-to-zero. The DB-backed routes (/api/blind-box, the
+  // install check) will briefly return errors during the cold-start window —
+  // accepted trade-off vs. the deploy being SIGKILL'd outright.
+  await new Promise<void>((resolve) => {
+    app.listen(resolvedPort.port, '0.0.0.0', () => {
+      logger.info('SHOPLINE backend listening', {
+        port: resolvedPort.port,
+        portSource: resolvedPort.source,
+        staticPath: STATIC_PATH,
+      });
+      resolve();
     });
-
-    // Keep-alive self-ping to avoid free-tier cold starts: hit our own /health
-    // every 13 minutes (under the ~15-min idle spin-down window).
-    setInterval(() => {
-      const url = process.env.SHOPLINE_APP_URL;
-      if (url) {
-        fetch(`${url}/health`).catch(() => {});
-      }
-    }, 13 * 60 * 1000);
   });
+
+  // ── Phase 2: Initialize the DB (with retries from db/client.ts) ───────────
+  // Safe now — the port is already bound, so Render is happy even if this
+  // takes its full retry budget (up to ~70s on a cold Neon).
+  await initializeBlindBoxPersistence();
+
+  // ── Phase 3: One-shot expired-session purge + 6h recurring schedule ───────
+  // Dead session rows can otherwise be mistaken for valid ones. The
+  // middleware/shopline-auth.ts guard is the request-time backstop; this keeps
+  // the table clean (and removes the long-expired "testlive" row at deploy).
+  const sessionStorage = new PostgresSessionStorage(getPgPool());
+  const purgeExpiredSessions = async () => {
+    try {
+      const deleted = await sessionStorage.deleteExpiredSessions();
+      if (deleted > 0) {
+        logger.info('Purged expired SHOPLINE sessions', { deleted });
+      }
+    } catch (err) {
+      logger.error('Failed to purge expired SHOPLINE sessions', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+  await purgeExpiredSessions();
+  setInterval(purgeExpiredSessions, 6 * 60 * 60 * 1000);
+
+  // ── Phase 4: Keep Neon warm so subsequent user queries don't cold-start ────
+  startDatabaseKeepAlive(getPgPool());
+
+  // ── Phase 5: Self-ping /health every 13 min to keep the Render dyno warm ──
+  setInterval(() => {
+    const url = process.env.SHOPLINE_APP_URL;
+    if (url) {
+      fetch(`${url}/health`).catch(() => {});
+    }
+  }, 13 * 60 * 1000);
+
+  logger.info('SHOPLINE backend fully ready');
 }
 
 start().catch((error) => {
