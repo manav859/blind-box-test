@@ -3,6 +3,8 @@ import { Session } from '@shoplineos/shopline-api-js';
 import { getPgPool } from '../db/postgres-client';
 import { PostgresSessionStorage } from '../db/session/postgres-session-storage';
 import { logger } from '../lib/logger';
+import { buildReAuthUrl } from '../lib/shopline-app-config';
+import { isTokenExpiringSoon, refreshShoplineToken } from '../lib/token-refresh';
 
 /** Safe session summary for logging — never includes accessToken or secrets. */
 function safeSessionSummary(session: Session) {
@@ -65,10 +67,11 @@ export async function requireShoplineSession(
   });
 
   if (!handle) {
+    // No handle means we can't identify the shop, so we can't build a targeted
+    // re-auth URL either. The frontend derives one from its own ?shop= param.
     logger.warn('requireShoplineSession: no handle — cannot load session', { path: req.path });
     res.status(401).json({
       error: 'Session expired — shop handle missing from request',
-      authUrl: `${process.env.SHOPLINE_APP_URL ?? ''}/auth?handle=testlive`,
     });
     return;
   }
@@ -117,8 +120,7 @@ export async function requireShoplineSession(
   }
 
   if (!session || !session.accessToken) {
-    const appUrl = process.env.SHOPLINE_APP_URL ?? '';
-    const authUrl = `${appUrl}/auth?handle=${encodeURIComponent(handle)}`;
+    const authUrl = buildReAuthUrl(handle);
     logger.warn('requireShoplineSession: no valid session — returning 401', {
       handle,
       sessionFound: Boolean(session),
@@ -131,31 +133,55 @@ export async function requireShoplineSession(
     return;
   }
 
-  // A DB row alone does NOT mean the token is still good. If the session has
-  // expired, SHOPLINE would reject every API call with 401 and the app would
-  // fall back to an empty cache. Delete the dead session and force re-auth.
-  if (isSessionExpired(session)) {
-    const appUrl = process.env.SHOPLINE_APP_URL ?? '';
-    const authUrl = `${appUrl}/auth?handle=${encodeURIComponent(handle)}`;
-    logger.warn('requireShoplineSession: session expired — deleting and forcing re-auth', {
-      handle,
-      sessionId: session.id,
-      expires: session.expires ?? null,
-    });
+  // A DB row alone does NOT mean the token is still good — SHOPLINE tokens last
+  // only 10 hours. Refresh BEFORE the token dies so SHOPLINE never rejects an
+  // API call with 401. We refresh both proactively (expiring within the lead
+  // window) and reactively (already expired, found via the handle fallback).
+  if (isTokenExpiringSoon(session)) {
+    const alreadyExpired = isSessionExpired(session);
     try {
-      await sessionStorage.deleteSession(session.id);
-    } catch (err) {
-      logger.error('requireShoplineSession: failed to delete expired session', {
+      session = await refreshShoplineToken(handle);
+      logger.info('requireShoplineSession: token refreshed', {
         handle,
         sessionId: session.id,
+        alreadyExpired,
+        expires: session.expires ?? null,
+      });
+    } catch (err) {
+      if (alreadyExpired) {
+        // The token was already dead and refresh failed (app uninstalled,
+        // STORE_NOT_INSTALL_APP, etc.). Drop the dead row and force full re-auth.
+        const authUrl = buildReAuthUrl(handle);
+        logger.warn('requireShoplineSession: expired token, refresh failed — forcing re-auth', {
+          handle,
+          sessionId: session.id,
+          authUrl,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        try {
+          await sessionStorage.deleteSession(session.id);
+        } catch (deleteErr) {
+          logger.error('requireShoplineSession: failed to delete dead session', {
+            handle,
+            sessionId: session.id,
+            error: deleteErr instanceof Error ? deleteErr.message : String(deleteErr),
+          });
+        }
+        res.status(401).json({
+          error: 'Session expired — please re-authenticate',
+          authUrl,
+        });
+        return;
+      }
+      // Token is still valid — this was only a proactive top-up. Continue with
+      // the current token and try again on the next request / background sweep.
+      logger.warn('requireShoplineSession: proactive refresh failed — continuing with current token', {
+        handle,
+        sessionId: session.id,
+        expires: session.expires ?? null,
         error: err instanceof Error ? err.message : String(err),
       });
     }
-    res.status(401).json({
-      error: 'Session expired — please re-authenticate',
-      authUrl,
-    });
-    return;
   }
 
   // Attach session exactly as validateAuthentication() does so downstream

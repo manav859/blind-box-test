@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import { getRuntimeConfig } from '../../lib/config';
 import { logger } from '../../lib/logger';
 import { SessionExpiredError } from '../../lib/errors';
+import { refreshShoplineToken } from '../../lib/token-refresh';
 
 export interface ShoplineCollection {
   id: string;
@@ -924,7 +925,44 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     return { collections: [], nextPageInfo: null, traceId: null };
   }
 
+  /**
+   * Retry-once backstop: if a SHOPLINE call returns 401 (surfaced as
+   * SessionExpiredError), refresh the access token once and replay the call
+   * with the fresh token. If the replay also fails — or anything other than a
+   * 401 is thrown — the error propagates unchanged. The middleware + 6h sweep
+   * keep tokens fresh proactively; this only catches the rare token that lapses
+   * mid-request.
+   */
+  private async requestWithTokenRefresh<T>(
+    shop: string,
+    requestFn: (accessToken: string) => Promise<T>,
+    accessToken: string,
+  ): Promise<T> {
+    try {
+      return await requestFn(accessToken);
+    } catch (err) {
+      if (err instanceof SessionExpiredError) {
+        logger.warn('Catalog gateway 401 — refreshing token and retrying once', { shop });
+        const refreshed = await refreshShoplineToken(shop);
+        return requestFn(refreshed.accessToken ?? accessToken);
+      }
+      throw err;
+    }
+  }
+
   private async request<T>(
+    shop: string,
+    accessToken: string,
+    path: string,
+  ): Promise<CatalogRequestResult<T>> {
+    return this.requestWithTokenRefresh(
+      shop,
+      (token) => this.requestRaw<T>(shop, token, path),
+      accessToken,
+    );
+  }
+
+  private async requestRaw<T>(
     shop: string,
     accessToken: string,
     path: string,
@@ -995,6 +1033,19 @@ export class ShoplineCatalogGateway implements CatalogGateway {
   }
 
   private async graphqlRequest<T>(
+    shop: string,
+    accessToken: string,
+    query: string,
+    variables: Record<string, unknown>,
+  ): Promise<GraphqlRequestResult<T>> {
+    return this.requestWithTokenRefresh(
+      shop,
+      (token) => this.graphqlRequestRaw<T>(shop, token, query, variables),
+      accessToken,
+    );
+  }
+
+  private async graphqlRequestRaw<T>(
     shop: string,
     accessToken: string,
     query: string,

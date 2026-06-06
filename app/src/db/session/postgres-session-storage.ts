@@ -107,6 +107,27 @@ export class PostgresSessionStorage {
     return result.rowCount ?? 0;
   }
 
+  /**
+   * Sessions whose token is still valid now but expires within `withinMs`.
+   * `expires` is stored as Unix epoch SECONDS (bigint). Rows with NULL expires
+   * or no access token are excluded — there's nothing to proactively refresh.
+   * Used by the background refresh sweep so idle stores keep a fresh token.
+   */
+  async findSessionsExpiringWithin(withinMs: number): Promise<Session[]> {
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const cutoffUnix = Math.floor((Date.now() + withinMs) / 1000);
+    const result = await this.pool.query<SessionRow>(
+      `SELECT id, handle, state, is_online, expires, scope, access_token
+         FROM shopline_sessions
+        WHERE access_token IS NOT NULL
+          AND expires IS NOT NULL
+          AND expires > $1
+          AND expires <= $2`,
+      [nowUnix, cutoffUnix],
+    );
+    return result.rows.map(rowToSession);
+  }
+
   async findSessionsByShop(shop: string): Promise<Session[]> {
     return this.findSessionsByHandle(shop);
   }

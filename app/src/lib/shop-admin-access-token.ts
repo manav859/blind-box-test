@@ -1,6 +1,8 @@
 import { Session } from '@shoplineos/shopline-api-js';
 import shopline from '../shopline';
 import { NotFoundError } from './errors';
+import { logger } from './logger';
+import { refreshShoplineToken } from './token-refresh';
 
 interface SessionStorageWithHandleLookup {
   findSessionsByHandle(handle: string): Promise<Session[]>;
@@ -45,6 +47,24 @@ export class ShoplineSessionAccessTokenProvider implements ShopAdminAccessTokenP
       .sort(compareSessionPriority)[0];
 
     if (!usableSession?.accessToken) {
+      // No live token, but if there's an expired token row the app is still
+      // installed — refresh on demand. This path is hit by webhook and other
+      // background flows that never pass through the request-time auth
+      // middleware, so it's their only chance to recover a dead 10h token.
+      const hasStoredToken = sessions.some((session) => session.accessToken);
+      if (hasStoredToken) {
+        try {
+          const refreshed = await refreshShoplineToken(shop);
+          if (refreshed.accessToken) {
+            return refreshed.accessToken;
+          }
+        } catch (error) {
+          logger.warn('On-demand token refresh failed for shop', {
+            shop,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
       throw new NotFoundError(`No stored SHOPLINE admin access token is available for shop "${shop}"`);
     }
 

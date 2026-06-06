@@ -14,6 +14,7 @@ import { logger } from './lib/logger';
 import { getRuntimeConfig } from './lib/config';
 import { DEFAULT_BACKEND_PORT, resolveBackendPort } from './lib/backend-port';
 import { requireShoplineSession } from './middleware/shopline-auth';
+import { refreshShoplineToken } from './lib/token-refresh';
 
 const resolvedPort = resolveBackendPort();
 
@@ -375,6 +376,42 @@ async function start() {
   };
   await purgeExpiredSessions();
   setInterval(purgeExpiredSessions, 6 * 60 * 60 * 1000);
+
+  // ── Phase 3b: Proactively refresh tokens before they expire ───────────────
+  // SHOPLINE access tokens live only 10 HOURS. The request-time middleware
+  // refreshes for active admins, but webhooks and idle stores need fresh
+  // tokens too. Every 6h we refresh any session expiring within the next 4h so
+  // a valid token is always on hand. With 10h token life, a 6h interval + 4h
+  // look-ahead leaves no window where a token can lapse unrefreshed.
+  const REFRESH_SWEEP_INTERVAL_MS = 6 * 60 * 60 * 1000;
+  const REFRESH_LOOKAHEAD_MS = 4 * 60 * 60 * 1000;
+  const refreshExpiringSessions = async () => {
+    try {
+      const sessions = await sessionStorage.findSessionsExpiringWithin(REFRESH_LOOKAHEAD_MS);
+      if (sessions.length === 0) {
+        return;
+      }
+      logger.info('Proactively refreshing SHOPLINE tokens nearing expiry', { count: sessions.length });
+      for (const session of sessions) {
+        try {
+          await refreshShoplineToken(session.handle);
+        } catch (err) {
+          // One shop failing (e.g. uninstalled) must not stop the rest. The
+          // request middleware will force re-auth for that shop if needed.
+          logger.warn('Proactive token refresh failed for shop — will retry next sweep', {
+            shop: session.handle,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+    } catch (err) {
+      logger.error('Proactive token refresh sweep failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+  await refreshExpiringSessions();
+  setInterval(refreshExpiringSessions, REFRESH_SWEEP_INTERVAL_MS);
 
   // ── Phase 4: Keep Neon warm so subsequent user queries don't cold-start ────
   startDatabaseKeepAlive(getPgPool());

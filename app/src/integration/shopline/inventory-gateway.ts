@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
 import { getRuntimeConfig } from '../../lib/config';
+import { logger } from '../../lib/logger';
+import { refreshShoplineToken } from '../../lib/token-refresh';
 
 export type InventoryGatewayFailureDisposition = 'definitive' | 'indeterminate';
 
@@ -1051,7 +1053,52 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       }));
   }
 
+  /**
+   * Retry-once backstop: a 401 from SHOPLINE surfaces here as an
+   * InventoryGatewayError with code SHOPLINE_INVENTORY_AUTH_ERROR. When we see
+   * that, refresh the access token once and replay the call with the fresh
+   * token. Any other failure (and a second 401) propagates unchanged. A 401
+   * means the request was rejected before applying, so replaying a mutation is
+   * safe. The middleware + 6h sweep keep tokens fresh; this only catches a
+   * token that lapses mid-request.
+   */
+  private async requestWithTokenRefresh<T>(
+    shop: string,
+    requestFn: (accessToken: string) => Promise<T>,
+    accessToken: string,
+  ): Promise<T> {
+    try {
+      return await requestFn(accessToken);
+    } catch (err) {
+      if (err instanceof InventoryGatewayError && err.code === 'SHOPLINE_INVENTORY_AUTH_ERROR') {
+        logger.warn('Inventory gateway 401 — refreshing token and retrying once', { shop });
+        const refreshed = await refreshShoplineToken(shop);
+        return requestFn(refreshed.accessToken ?? accessToken);
+      }
+      throw err;
+    }
+  }
+
   private async request<T>(
+    shop: string,
+    accessToken: string,
+    path: string,
+    init?: {
+      method?: string;
+      body?: string;
+    },
+  ): Promise<{
+    data: T;
+    traceId: string | null;
+  }> {
+    return this.requestWithTokenRefresh(
+      shop,
+      (token) => this.requestRaw<T>(shop, token, path, init),
+      accessToken,
+    );
+  }
+
+  private async requestRaw<T>(
     shop: string,
     accessToken: string,
     path: string,

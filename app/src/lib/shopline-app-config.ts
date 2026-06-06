@@ -169,3 +169,22 @@ export function resolveShoplineAppConfig(): ResolvedShoplineAppConfig {
   assertRequiredSecrets(config);
   return config;
 }
+
+/**
+ * Build the URL that re-starts SHOPLINE OAuth for a shop.
+ *
+ * We deliberately point at the app's own `/auth` entry (handled by
+ * `shopline.auth.begin`) rather than hand-crafting the
+ * `https://<shop>.myshopline.com/admin/oauth-web/#/oauth/authorize?...` URL:
+ * `begin()` builds that exact authorize URL for us (appKey, responseType,
+ * scope, encoded redirectUri) AND sets the signed `state` cookie and re-runs
+ * the `afterAuth` hook (webhook re-registration) on callback. The frontend
+ * navigates the TOP frame to this URL, so the subsequent 302 to SHOPLINE
+ * happens outside the embedded iframe where it is allowed to render.
+ */
+export function buildReAuthUrl(
+  shop: string,
+  cfg: ResolvedShoplineAppConfig = resolveShoplineAppConfig(),
+): string {
+  return `${cfg.appUrl}/auth?handle=${encodeURIComponent(shop)}`;
+}
