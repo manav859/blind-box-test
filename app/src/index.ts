@@ -271,6 +271,21 @@ async function start() {
         .replace(/'/g, '&#39;');
     const escapedUri = escapeHtml(redirectUri);
 
+    // CRITICAL: a GET <form> submit DISCARDS any query string already present on
+    // `action` and replaces it with the form's own fields. An empty form with
+    // action="…/auth?handle=testlive" therefore navigates to "…/auth" with NO
+    // handle — which breaks OAuth (and, with SHOPLINE_DEFAULT_HANDLE set, silently
+    // resolves back to the dead default handle, fuelling the redirect loop). Split
+    // the query into hidden inputs so the GET submit reconstructs it exactly.
+    const queryStart = redirectUri.indexOf('?');
+    const redirectBase = queryStart === -1 ? redirectUri : redirectUri.slice(0, queryStart);
+    const redirectQuery = queryStart === -1 ? '' : redirectUri.slice(queryStart + 1);
+    let hiddenInputsHtml = '';
+    for (const [name, value] of new URLSearchParams(redirectQuery)) {
+      hiddenInputsHtml += `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`;
+    }
+    const escapedBase = escapeHtml(redirectBase);
+
     res.status(200).set('Content-Type', 'text/html; charset=utf-8').send(
       `<!DOCTYPE html>
 <html lang="en">
@@ -283,7 +298,7 @@ async function start() {
   <noscript>
     <p>Redirecting to SHOPLINE to complete authorization. If nothing happens, <a href="${escapedUri}" target="_top" rel="noopener">click here</a>.</p>
   </noscript>
-  <form id="exit-iframe-form" method="get" action="${escapedUri}" target="_top"></form>
+  <form id="exit-iframe-form" method="get" action="${escapedBase}" target="_top">${hiddenInputsHtml}</form>
   <script>
     (function () {
       var url = ${JSON.stringify(redirectUri)};

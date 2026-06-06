@@ -160,20 +160,110 @@ function deriveAuthUrlFallback(): string | undefined {
   return `${APP_BACKEND_URL}/auth?handle=${encodeURIComponent(handle)}`;
 }
 
+// ── Re-auth loop guard ─────────────────────────────────────────────────────
+// OAuth for embedded apps must run at the TOP window. A scripted
+// window.top.location assignment is blocked when the SHOPLINE admin iframe
+// doesn't grant programmatic top-navigation, so the redirect silently happens
+// inside the iframe, OAuth never completes, the app reloads, and we 401 again —
+// an endless begin→reload loop (~1-2s each). Two changes break it:
+//   1. Navigate OUR OWN frame to the backend /exit-iframe page (always allowed);
+//      its <form target="_top"> performs the real top-frame navigation.
+//   2. Count attempts in sessionStorage; after 2 within 30s, stop auto-looping
+//      and show a manual "Reconnect" link instead.
+const REAUTH_ATTEMPTS_KEY = 'bb_reauth_attempts';
+const REAUTH_WINDOW_MS = 30_000;
+const REAUTH_MAX_ATTEMPTS = 2;
+
+function recentReauthAttempts(): number[] {
+  try {
+    const raw = sessionStorage.getItem(REAUTH_ATTEMPTS_KEY);
+    const times: number[] = raw ? JSON.parse(raw) : [];
+    const now = Date.now();
+    return times.filter((t) => typeof t === 'number' && now - t < REAUTH_WINDOW_MS);
+  } catch {
+    return [];
+  }
+}
+
+function recordReauthAttempt(): void {
+  try {
+    const times = recentReauthAttempts();
+    times.push(Date.now());
+    sessionStorage.setItem(REAUTH_ATTEMPTS_KEY, JSON.stringify(times));
+  } catch {
+    /* sessionStorage unavailable — proceed without the persistent guard */
+  }
+}
+
+// Cleared once a request succeeds again, so a later genuine expiry isn't
+// immediately treated as a loop.
+function clearReauthGuard(): void {
+  try {
+    sessionStorage.removeItem(REAUTH_ATTEMPTS_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+// Wrap the OAuth entry URL (…/auth?handle=X) in our own /exit-iframe page so the
+// top-frame breakout is done by a form submit, which works where scripted
+// cross-origin top-navigation is blocked.
+function toExitIframeUrl(authUrl: string): string {
+  return `${APP_BACKEND_URL}/exit-iframe?redirectUri=${encodeURIComponent(authUrl)}`;
+}
+
+function showManualReauthLink(authUrl: string): void {
+  if (typeof document === 'undefined' || !document.body) return;
+  if (document.getElementById('bb-reauth-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'bb-reauth-overlay';
+  overlay.setAttribute(
+    'style',
+    'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#fff;font-family:system-ui,-apple-system,sans-serif;padding:24px;text-align:center',
+  );
+  const link = document.createElement('a');
+  link.href = toExitIframeUrl(authUrl);
+  link.target = '_top';
+  link.rel = 'noopener';
+  link.textContent = 'Reconnect the app';
+  link.setAttribute(
+    'style',
+    'display:inline-block;background:#1f6feb;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:600',
+  );
+  const box = document.createElement('div');
+  box.setAttribute('style', 'max-width:420px');
+  const h = document.createElement('h2');
+  h.textContent = 'Session expired';
+  h.setAttribute('style', 'margin:0 0 8px;font-size:1.25rem');
+  const p = document.createElement('p');
+  p.textContent =
+    "We couldn't re-authenticate automatically. Click below to reconnect the app to SHOPLINE.";
+  p.setAttribute('style', 'margin:0 0 20px;color:#555;line-height:1.5');
+  box.append(h, p, link);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
 // Single-shot guard so a burst of parallel 401s doesn't kick off the navigation
-// repeatedly (or race the browser's first navigation against itself).
+// repeatedly within one page load.
 let _autoRedirectAttempted = false;
 function maybeAutoRedirect(authUrl: string | undefined): void {
-  if (!authUrl || _autoRedirectAttempted) return;
-  _autoRedirectAttempted = true;
-  try {
-    // Navigate the TOP frame — we're embedded in the SHOPLINE Admin iframe and
-    // OAuth needs a real window. If cross-origin policy blocks it, fall back to
-    // navigating this frame; the Admin will still pick up the redirect.
-    (window.top ?? window).location.href = authUrl;
-  } catch {
-    window.location.href = authUrl;
+  if (!authUrl) return;
+
+  // Loop detected (already redirected twice in the last 30s) → stop and show a
+  // manual link instead of hammering /auth on every reload.
+  if (recentReauthAttempts().length >= REAUTH_MAX_ATTEMPTS) {
+    showManualReauthLink(authUrl);
+    return;
   }
+
+  if (_autoRedirectAttempted) return;
+  _autoRedirectAttempted = true;
+  recordReauthAttempt();
+
+  // Navigate our own frame to /exit-iframe; it breaks out to the top window
+  // (where embedded-app OAuth must run) via a form submit.
+  window.location.href = toExitIframeUrl(authUrl);
 }
 
 // ── App Bridge session token ──────────────────────────────────────────────────
@@ -274,6 +364,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       `HTTP ${resp.status} ${resp.statusText}`;
     throw new Error(message);
   }
+
+  // Reached a healthy response → the session is valid, so reset the re-auth
+  // loop guard for any future genuine expiry.
+  clearReauthGuard();
 
   return (body as { data: T }).data ?? (body as unknown as T);
 }
