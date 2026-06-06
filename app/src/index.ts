@@ -70,16 +70,39 @@ function validateStartupConfig(): void {
 // @shoplineos/shopline-app-express reads req.query.handle everywhere
 // (validateAuthentication, confirmInstallationStatus, redirectToAuth).
 // SHOPLINE Admin may inject the shop as ?shop=, ?handle=, or ?store=.
-// SHOPLINE_DEFAULT_HANDLE provides a dev fallback so the server can find a
-// session even when the Admin doesn't inject the param (e.g. direct access).
-function resolveHandle(req: Request): { handle: string; source: string } {
+//
+// SHOPLINE_DEFAULT_HANDLE is a LOCAL DEV convenience ONLY — it lets you open the
+// app shell in a browser with no shop param. It must NEVER stand in for a real
+// shop on API/auth/exit-iframe requests: a stale default there silently
+// retargets a dead store (e.g. an expired "testlive") and fuels an OAuth
+// redirect loop. `allowEnvFallback` gates that — it's true only for plain
+// shell/page GETs (see requestAllowsDefaultHandle).
+function resolveHandle(
+  req: Request,
+  allowEnvFallback: boolean,
+): { handle: string; source: string } {
   const q = req.query as Record<string, unknown>;
   if (typeof q.handle === 'string' && q.handle) return { handle: q.handle, source: 'query.handle' };
   if (typeof q.shop   === 'string' && q.shop)   return { handle: q.shop,   source: 'query.shop' };
   if (typeof q.store  === 'string' && q.store)  return { handle: q.store,  source: 'query.store' };
-  const envHandle = process.env.SHOPLINE_DEFAULT_HANDLE;
-  if (envHandle) return { handle: envHandle, source: 'env.SHOPLINE_DEFAULT_HANDLE' };
+  if (allowEnvFallback) {
+    const envHandle = process.env.SHOPLINE_DEFAULT_HANDLE;
+    if (envHandle) return { handle: envHandle, source: 'env.SHOPLINE_DEFAULT_HANDLE' };
+  }
   return { handle: '', source: 'none' };
+}
+
+// API, auth, and exit-iframe requests MUST carry a real shop param — they may
+// not borrow SHOPLINE_DEFAULT_HANDLE. Everything else (the React shell, health,
+// legal pages) may use the dev fallback for handle-less local access.
+function requestAllowsDefaultHandle(req: Request): boolean {
+  const path = req.path;
+  const isSensitive =
+    path.startsWith('/api/') ||
+    path === '/auth' ||
+    path.startsWith('/auth/') ||
+    path === '/exit-iframe';
+  return !isSensitive;
 }
 
 async function start() {
@@ -127,7 +150,7 @@ async function start() {
   // Resolve shop handle from all known sources and normalise to req.query.handle
   // before any library middleware sees the request.
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    const { handle, source } = resolveHandle(req);
+    const { handle, source } = resolveHandle(req, requestAllowsDefaultHandle(req));
     if (handle) {
       (req.query as Record<string, unknown>).handle = handle;
       if (source !== 'query.handle') {
