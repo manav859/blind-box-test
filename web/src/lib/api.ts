@@ -297,14 +297,29 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 // ── Shop / handle parameter ───────────────────────────────────────────────────
-// SHOPLINE Admin injects ?shop=<handle> into the iframe URL.
-// The @shoplineos/shopline-app-express library expects ?handle=<handle> for
-// session fallback lookups, so we read "shop" but forward it as "handle".
+// SHOPLINE Admin injects ?shop=<handle> (and ?handle=<handle>) into the INITIAL
+// iframe URL only. With BrowserRouter, any client-side navigation (NavLink in
+// Layout, <Link>, navigate()) replaces the path and WIPES window.location.search,
+// so the handle vanishes after the first in-app click and every subsequent API
+// call goes out handle-less → backend logs `handle: (none)` → 401.
+//
+// Fix: capture the handle the first time we see it in the URL and persist it to
+// sessionStorage, then fall back to the stored value. This survives client-side
+// navigation and in-iframe reloads for the life of the tab, with no need to
+// thread search params through every Link/navigate call.
 // Exported so other modules can build auth redirect URLs.
+const HANDLE_STORAGE_KEY = 'bb_shop_handle';
+
 export function getShopHandle(): string {
   try {
     const p = new URLSearchParams(window.location.search);
-    return p.get('shop') ?? p.get('handle') ?? p.get('store') ?? '';
+    const fromUrl = p.get('shop') ?? p.get('handle') ?? p.get('store') ?? '';
+    if (fromUrl) {
+      try { sessionStorage.setItem(HANDLE_STORAGE_KEY, fromUrl); } catch { /* ignore */ }
+      return fromUrl;
+    }
+    // URL no longer carries it (post-navigation) — use the captured value.
+    try { return sessionStorage.getItem(HANDLE_STORAGE_KEY) ?? ''; } catch { return ''; }
   } catch {
     return '';
   }

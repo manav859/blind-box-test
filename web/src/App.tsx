@@ -11,12 +11,34 @@ import { initAppBridge } from './lib/api';
 
 // ── App Bridge initializer ────────────────────────────────────────────────────
 // Must run once at the top of the React tree before any API calls are made.
+const HOST_STORAGE_KEY = 'bb_shop_host';
+
 function AppBridgeInit() {
+  // ── STEP 1 diagnostic logging ──────────────────────────────────────────────
+  // Logs exactly what the SHOPLINE iframe loads with, BEFORE any routing runs,
+  // so we can confirm whether the shop handle/host are present in the URL.
+  useEffect(() => {
+    console.log('[BLINDBOX DEBUG] full URL:', window.location.href);
+    console.log('[BLINDBOX DEBUG] search params:', window.location.search);
+    console.log('[BLINDBOX DEBUG] all params:',
+      Object.fromEntries(new URLSearchParams(window.location.search)));
+    console.log('[BLINDBOX DEBUG] referrer:', document.referrer);
+    console.log('[BLINDBOX DEBUG] in iframe:', window.top !== window.self);
+  }, []);
+
   useEffect(() => {
     // The SHOPLINE Admin passes ?host=<base64> and ?shop=<handle> when loading
     // the embedded iframe. The app key is the public SHOPLINE_APP_KEY.
     const params = new URLSearchParams(window.location.search);
-    const hostParam = params.get('host') ?? '';
+    // host is on the INITIAL iframe URL only; client-side navigation wipes the
+    // query string (same failure mode as the handle). Capture-and-fall-back so
+    // App Bridge can still init after a navigation/reload within the tab.
+    let hostParam = params.get('host') ?? '';
+    if (hostParam) {
+      try { sessionStorage.setItem(HOST_STORAGE_KEY, hostParam); } catch { /* ignore */ }
+    } else {
+      try { hostParam = sessionStorage.getItem(HOST_STORAGE_KEY) ?? ''; } catch { /* ignore */ }
+    }
     const appKey =
       (import.meta.env.VITE_SHOPLINE_APP_KEY as string | undefined) ?? '';
 

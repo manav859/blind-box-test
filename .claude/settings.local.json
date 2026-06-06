@@ -23,7 +23,17 @@
       "Bash(git *)",
       "Bash(npm run *)",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts', {}\\), indent=2\\)\\)\")",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(grep -noE \"createSHA256HMAC[^;]{0,160}\" chunk-DM3N7KRI.js)",
+      "Bash(grep -noE \"return \\\\{[^}]{0,400}\" index.js)",
+      "Bash(node --test -r ts-node/register src/service/inventory/inventory-execution-service.test.ts src/service/webhook/paid-order-webhook-service.test.ts)",
+      "Bash(node --test -r ts-node/register src/lib/shop-admin-access-token.test.ts)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://blind-box-test.onrender.com/api/blind-box/stats\")",
+      "Bash(curl -s \"https://blind-box-test.onrender.com/api/blind-box/stats\")",
+      "Bash(curl -s \"https://blind-box-test.onrender.com/api/health\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://blind-box-test.onrender.com/api/blind-box/stats?shop=previewapp\")",
+      "Bash(curl -s \"https://blind-box-test.onrender.com/api/blind-box/stats?shop=previewapp\")",
+      "Bash(curl -s \"https://blind-box-test.onrender.com/exit-iframe?redirectUri=https%3A%2F%2Fblind-box-test.onrender.com%2Fauth%3Fhandle%3Dpreviewapp\")"
     ]
   }
 }
