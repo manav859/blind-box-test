@@ -399,12 +399,34 @@ export class PaidOrderAssignmentService {
 
   private async loadOrderDetectionMappings(shop: string): Promise<BlindBoxProductMapping[]> {
     const blindBoxes = await this.dependencies.blindBoxRepository.listByShop(shop);
-    const directReferenceMappings = blindBoxes
+
+    // FIX 4 — only ACTIVE blind boxes may enter the assignment flow. Activation
+    // is gated by assertReadyForActivation (blind-box-activation-readiness-service),
+    // which proves the box has a resolvable, non-empty, eligible reward pool — so
+    // an active box is, by construction, a *configured* one. Phantom/auto-detected
+    // boxes are created as DRAFT (see blind-box-discovery-service) and are excluded
+    // here, so they can never trigger reward selection or an inventory decrement.
+    // (Reward resolution is driven by the product's "blind-box-collection:" tag,
+    // not the reward-group link, so the link is NOT a reliable "configured" signal.)
+    const activeBlindBoxes = blindBoxes.filter((blindBox) => blindBox.status === 'active');
+    const activeBlindBoxIds = new Set(activeBlindBoxes.map((blindBox) => blindBox.id));
+    const skippedCount = blindBoxes.length - activeBlindBoxes.length;
+    if (skippedCount > 0) {
+      this.dependencies.logger.info('paid-order: skipped non-active blind boxes for detection', {
+        shop,
+        totalBlindBoxes: blindBoxes.length,
+        activeBlindBoxes: activeBlindBoxes.length,
+        skippedCount,
+      });
+    }
+
+    const directReferenceMappings = activeBlindBoxes
       .map(toSyntheticBlindBoxReferenceMapping)
       .filter((mapping): mapping is BlindBoxProductMapping => Boolean(mapping));
     const blindBoxIdsWithDirectReference = new Set(directReferenceMappings.map((mapping) => mapping.blindBoxId));
     const legacyMappings = (await this.dependencies.blindBoxProductMappingRepository.listByShop(shop)).filter(
-      (mapping) => !blindBoxIdsWithDirectReference.has(mapping.blindBoxId),
+      (mapping) =>
+        !blindBoxIdsWithDirectReference.has(mapping.blindBoxId) && activeBlindBoxIds.has(mapping.blindBoxId),
     );
 
     return [...directReferenceMappings, ...legacyMappings];

@@ -2,7 +2,27 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ShoplineCollection, ShoplineProduct } from '../../integration/shopline/catalog-gateway';
 import { OrderPaidWebhookPayload } from '../../domain/blind-box/order-paid';
+import { BlindBox } from '../../domain/blind-box/types';
 import { createBlindBoxTestContext } from '../../test-utils/blind-box-test-context';
+
+/**
+ * Auto-detected blind boxes are created as DRAFT (FIX 3) and are NOT
+ * reward-eligible until the merchant activates them. These tests simulate that
+ * explicit merchant activation step before exercising the assignment flow.
+ */
+async function activateBlindBox(
+  context: Awaited<ReturnType<typeof createBlindBoxTestContext>>,
+  blindBox: BlindBox,
+): Promise<BlindBox> {
+  return context.blindBoxService.updateBlindBox('blind-box', blindBox.id, {
+    name: blindBox.name,
+    status: 'active',
+    selectionStrategy: blindBox.selectionStrategy,
+    shoplineProductId: blindBox.shoplineProductId,
+    shoplineVariantId: blindBox.shoplineVariantId,
+    productTitleSnapshot: blindBox.productTitleSnapshot,
+  });
+}
 
 function buildCollection(id: string, title: string, handle?: string): ShoplineCollection {
   return {
@@ -60,7 +80,7 @@ function buildPaidOrderPayload(): OrderPaidWebhookPayload {
   };
 }
 
-test('paid-order detection auto-hydrates a tagged blind-box product without pre-registration', async () => {
+test('paid-order detection auto-hydrates a tagged blind-box product as DRAFT and refuses to assign until activated', async () => {
   const context = await createBlindBoxTestContext();
   context.testCatalogService.setProduct(
     buildProduct('product-1', 'Tagged Blind Box', 'variant-1', 25, ['blind-box']),
@@ -69,10 +89,13 @@ test('paid-order detection auto-hydrates a tagged blind-box product without pre-
   const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
   const blindBoxes = await context.blindBoxService.listBlindBoxes('blind-box');
 
+  // FIX 3: the box is auto-hydrated as DRAFT, so the webhook must NOT assign a
+  // reward — it fails fast with BLIND_BOX_NOT_ACTIVE instead.
   assert.equal(result.assignments.length, 0);
   assert.equal(result.failures.length, 1);
-  assert.equal(result.failures[0].reason, 'REWARD_COLLECTION_NOT_CONFIGURED');
+  assert.equal(result.failures[0].reason, 'BLIND_BOX_NOT_ACTIVE');
   assert.equal(blindBoxes.length, 1);
+  assert.equal(blindBoxes[0].status, 'draft');
   assert.equal(blindBoxes[0].shoplineProductId, 'product-1');
   assert.equal(blindBoxes[0].productTitleSnapshot, 'Tagged Blind Box');
 });
@@ -95,6 +118,7 @@ test('tagged blind-box products resolve the reward collection automatically and 
 
   const detectedBlindBoxes = await context.blindBoxDiscoveryService.listDetectedBlindBoxes('blind-box');
   assert.equal(detectedBlindBoxes.length, 1);
+  await activateBlindBox(context, detectedBlindBoxes[0]);
 
   const firstPass = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
   const secondPass = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
@@ -127,6 +151,7 @@ test('untagged blind-box products still use the fallback reward-group link for b
     blindBoxId: detectedBlindBoxes[0].id,
     rewardGroupId: rewardGroup.id,
   });
+  await activateBlindBox(context, detectedBlindBoxes[0]);
 
   const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
 
@@ -142,6 +167,7 @@ test('invalid blind-box collection tags fail gracefully during webhook assignmen
 
   const detectedBlindBoxes = await context.blindBoxDiscoveryService.listDetectedBlindBoxes('blind-box');
   assert.equal(detectedBlindBoxes.length, 1);
+  await activateBlindBox(context, detectedBlindBoxes[0]);
 
   const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
 
@@ -161,6 +187,7 @@ test('tagged blind-box products fail with a structured collection-not-found erro
 
   const detectedBlindBoxes = await context.blindBoxDiscoveryService.listDetectedBlindBoxes('blind-box');
   assert.equal(detectedBlindBoxes.length, 1);
+  await activateBlindBox(context, detectedBlindBoxes[0]);
 
   const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
 
@@ -191,6 +218,7 @@ test('a tagged blind-box product does not fall back to the legacy link when the 
     blindBoxId: detectedBlindBoxes[0].id,
     rewardGroupId: rewardGroup.id,
   });
+  await activateBlindBox(context, detectedBlindBoxes[0]);
 
   const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
 

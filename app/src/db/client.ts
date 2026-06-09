@@ -102,6 +102,20 @@ export async function initializeBlindBoxPersistence(): Promise<void> {
 }
 
 export async function resetBlindBoxDatabaseForTests(): Promise<void> {
+  // Unlike the old per-test SQLite file, every test shares one Postgres database
+  // (DATABASE_URL). A reset that only reconnected the pool left rows behind, so
+  // state leaked between tests. Drop and recreate the public schema for true
+  // isolation; initializeBlindBoxPersistence re-runs migrations afterwards.
+  // Test-only — never invoked by the running app.
+  if (process.env.DATABASE_URL) {
+    try {
+      const db = await getBlindBoxDatabase();
+      await db.exec('DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;');
+    } catch (err) {
+      logger.warn('resetBlindBoxDatabaseForTests: schema reset failed', { error: String(err) });
+    }
+  }
+
   dbPromise = null;
   await closePgPool();
 }

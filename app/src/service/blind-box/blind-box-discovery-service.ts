@@ -1,6 +1,5 @@
-import { ShoplineProduct } from '../../integration/shopline/catalog-gateway';
+import { extractRawTagFields, ShoplineProduct } from '../../integration/shopline/catalog-gateway';
 import {
-  getBlindBoxProductTags,
   getSupportedBlindBoxProductTags,
   isBlindBoxProduct,
 } from '../../domain/blind-box/product-detection';
@@ -21,17 +20,29 @@ function sortBlindBoxes(blindBoxes: BlindBox[]): BlindBox[] {
 }
 
 /**
- * Confirm a product fetched via the server-side `?tag=` filter really is a blind box.
- * When the SHOPLINE list payload includes tags we re-check case-insensitively (guards
- * against an API version that ignores the tag filter). When the list payload omits
- * tags entirely, we trust the server-side filter that returned the product.
+ * Confirm a product really is a blind box. FAIL CLOSED: a product is only a
+ * blind box if it explicitly carries a supported blind-box tag (case-insensitive).
+ * An empty or absent tag list is NEVER trusted — the previous "trust the
+ * server-side ?tag= filter" shortcut misclassified every untagged product as a
+ * blind box whenever SHOPLINE silently ignored the filter.
  */
 function isConfirmedBlindBoxProduct(product: ShoplineProduct): boolean {
-  if (getBlindBoxProductTags(product).length === 0) {
-    return true;
+  return isBlindBoxProduct(product);
+}
+
+/**
+ * True when the list payload actually carried a tag field for this product
+ * (any known variant: tags, tag_list, labels, categories, …). When this is
+ * false the SHOPLINE list projection/filter dropped tags entirely, so the
+ * product's tag list is unreliable and must be re-confirmed via a detail fetch.
+ */
+function listPayloadHasTagsField(product: ShoplineProduct): boolean {
+  const raw = product.raw;
+  if (!raw || typeof raw !== 'object') {
+    return false;
   }
 
-  return isBlindBoxProduct(product);
+  return Object.keys(extractRawTagFields(raw as Record<string, unknown>)).length > 0;
 }
 
 function selectExistingBlindBoxReference(
@@ -80,8 +91,9 @@ export class BlindBoxDiscoveryService {
         });
 
         for (const product of productResult.products) {
-          if (isConfirmedBlindBoxProduct(product)) {
-            detectedProducts.set(product.id, product);
+          const confirmed = await this.confirmDetectedBlindBoxProduct(shop, product, options.accessToken);
+          if (confirmed) {
+            detectedProducts.set(confirmed.id, confirmed);
           }
         }
       }
@@ -114,6 +126,55 @@ export class BlindBoxDiscoveryService {
     }
   }
 
+  /**
+   * Decide whether a product returned by the list endpoint is a blind box,
+   * returning the authoritative product record when it is (or null when it is not).
+   *
+   * - Tags present in the list payload → apply the strict tag check directly.
+   * - Tags ABSENT from the list payload → the SHOPLINE projection/filter dropped
+   *   tags, so we must NOT assume anything. Re-fetch the product detail (which
+   *   reliably includes tags) and apply the strict check against that. A warning
+   *   is logged so a misbehaving SHOPLINE filter/projection is detectable.
+   */
+  private async confirmDetectedBlindBoxProduct(
+    shop: string,
+    product: ShoplineProduct,
+    accessToken?: string,
+  ): Promise<ShoplineProduct | null> {
+    if (listPayloadHasTagsField(product)) {
+      return isConfirmedBlindBoxProduct(product) ? product : null;
+    }
+
+    this.dependencies.logger.warn(
+      'Blind-box list payload missing tags field — refetching product detail before confirming',
+      {
+        shop,
+        productId: product.id,
+      },
+    );
+
+    try {
+      const detail = await this.dependencies.catalogService.getProduct(shop, product.id, { accessToken });
+      return isConfirmedBlindBoxProduct(detail) ? detail : null;
+    } catch (error) {
+      // An expired token must surface so the caller forces re-auth — never
+      // swallow it into a silent "not a blind box".
+      if (error instanceof SessionExpiredError) {
+        throw error;
+      }
+
+      this.dependencies.logger.warn(
+        'Failed to refetch product detail for blind-box confirmation — treating as NOT a blind box',
+        {
+          shop,
+          productId: product.id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      );
+      return null;
+    }
+  }
+
   async ensureBlindBoxForDetectedProduct(
     shop: string,
     product: ShoplineProduct,
@@ -129,7 +190,9 @@ export class BlindBoxDiscoveryService {
         const createdBlindBox = await this.dependencies.blindBoxRepository.create(shop, {
           name: product.title || `Blind Box ${product.id}`,
           description: null,
-          status: 'active',
+          // Auto-detected boxes start as DRAFT — never live or reward-eligible
+          // until the merchant configures a reward pool AND explicitly activates.
+          status: 'draft',
           selectionStrategy: 'uniform',
           shoplineProductId: product.id,
           shoplineVariantId: null,
