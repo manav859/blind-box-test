@@ -42,10 +42,14 @@ export function getRuntimeConfig(): RuntimeConfig {
 
   const executionMode = rawMode as RuntimeConfig['blindBoxInventoryExecutionMode'];
 
+  // BLIND_BOX_SHOPLINE_LOCATION_ID is OPTIONAL even in execute mode. The location
+  // is resolved per shop at decrement time (variant-stock → default → single
+  // active); the env is only a dev override. Never block startup on it — just
+  // emit a soft INFO signal. (console.info, not the logger, to avoid the
+  // logger → getRuntimeConfig import cycle.)
   if (executionMode === 'execute' && !process.env.BLIND_BOX_SHOPLINE_LOCATION_ID) {
-    throw new Error(
-      'BLIND_BOX_SHOPLINE_LOCATION_ID is required when BLIND_BOX_INVENTORY_EXECUTION_MODE=execute. ' +
-      'Find your location ID in SHOPLINE admin → Settings → Locations.',
+    console.info(
+      '[config] execute mode with no BLIND_BOX_SHOPLINE_LOCATION_ID — resolving inventory location per shop at decrement time.',
     );
   }
 
