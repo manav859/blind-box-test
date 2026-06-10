@@ -198,6 +198,7 @@ export function createBlindBoxAdminRouter(): express.Router {
           title: p.title,
           status: p.status,
           published: p.published,
+          imageUrl: p.imageUrl,
           tags: p.tags ?? [],
           variantCount: p.variants.length,
           variants: p.variants.map((v) => ({
@@ -242,6 +243,7 @@ export function createBlindBoxAdminRouter(): express.Router {
           title: product.title,
           status: product.status,
           published: product.published,
+          imageUrl: product.imageUrl,
           tags: product.tags ?? [],
           variantCount: product.variants.length,
           variants: product.variants.map((v) => ({
@@ -252,6 +254,20 @@ export function createBlindBoxAdminRouter(): express.Router {
           })),
         },
       });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // Lists SHOPLINE locations (read_location) so the operator can find the id to
+  // set as BLIND_BOX_SHOPLINE_LOCATION_ID for execute-mode inventory decrements.
+  router.get('/catalog/locations', async (req, res) => {
+    const context = getContext(req, res);
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const inventoryStoreDebugService = await getInventoryStoreDebugService();
+      const locations = await inventoryStoreDebugService.listLocations(shop, { accessToken });
+      res.status(200).send({ success: true, data: locations });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
@@ -303,7 +319,8 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
-  // Create a blind box by picking the trigger product (what customers buy).
+  // Create a blind box. Default path AUTO-CREATES the sellable SHOPLINE product
+  // (name + price + optional image). Advanced path: link an existing product id.
   router.post('/pools', async (req, res) => {
     const context = getContext(req, res);
 
@@ -311,31 +328,79 @@ export function createBlindBoxAdminRouter(): express.Router {
       const { shop, accessToken } = requireShopSession(res);
       const blindBoxService = await getBlindBoxService();
       const catalogService = await getShoplineCatalogService();
-      const payload = parseJsonBody<CreateBlindBoxInput>(req.body);
+      const payload = parseJsonBody<{
+        name?: string;
+        price?: string | number;
+        description?: string | null;
+        imageUrl?: string | null;
+        triggerProductId?: string | null;
+        triggerProductTitleSnapshot?: string | null;
+      }>(req.body);
 
-      const triggerProductId = payload.triggerProductId?.trim();
-      if (!triggerProductId) {
-        throw new ValidationError('Pick the trigger product (the product customers buy) to create a blind box.');
+      const name = (payload.name ?? '').trim();
+      if (!name) {
+        throw new ValidationError('A blind box name is required.');
       }
 
-      // Snapshot the trigger product title; tolerate a catalog hiccup.
-      let triggerProductTitleSnapshot = payload.triggerProductTitleSnapshot ?? null;
+      // ── Advanced path: link an existing product ──────────────────────────
+      if (payload.triggerProductId?.trim()) {
+        const triggerProductId = payload.triggerProductId.trim();
+        let snapshot = payload.triggerProductTitleSnapshot ?? null;
+        try {
+          const product = await catalogService.getProduct(shop, triggerProductId, { accessToken });
+          snapshot = product.title ?? snapshot;
+        } catch {
+          /* non-fatal */
+        }
+        const data = await blindBoxService.createBlindBox(shop, {
+          name,
+          description: payload.description ?? null,
+          status: 'draft',
+          triggerProductId,
+          triggerProductTitleSnapshot: snapshot,
+        });
+        res.status(200).send({ success: true, data });
+        return;
+      }
+
+      // ── Default path: create the sellable SHOPLINE product ───────────────
+      const price = payload.price != null ? String(payload.price).trim() : '';
+      if (!price || !Number.isFinite(Number(price)) || Number(price) < 0) {
+        throw new ValidationError('A valid price is required to create the blind box product.');
+      }
+
+      let createdProduct;
       try {
-        const product = await catalogService.getProduct(shop, triggerProductId, { accessToken });
-        triggerProductTitleSnapshot = product.title ?? triggerProductTitleSnapshot;
-      } catch {
-        /* non-fatal — keep whatever snapshot the client supplied */
+        createdProduct = await catalogService.createProduct(
+          shop,
+          { title: name, price, description: payload.description ?? null, imageUrl: payload.imageUrl ?? null },
+          { accessToken },
+        );
+      } catch (error) {
+        // Never leave an orphaned blind box if product creation fails.
+        throw new ValidationError(
+          `Could not create the SHOPLINE product for this blind box: ${error instanceof Error ? error.message : String(error)}`,
+        );
       }
 
       const data = await blindBoxService.createBlindBox(shop, {
-        name: payload.name,
+        name,
         description: payload.description ?? null,
         status: 'draft',
-        triggerProductId,
-        triggerProductTitleSnapshot,
+        triggerProductId: createdProduct.id,
+        triggerProductTitleSnapshot: createdProduct.title ?? name,
       });
 
-      res.status(200).send({ success: true, data });
+      res.status(200).send({
+        success: true,
+        data,
+        product: {
+          id: createdProduct.id,
+          title: createdProduct.title,
+          imageUrl: createdProduct.imageUrl,
+          adminUrl: `https://${shop}.myshopline.com/admin/products/${createdProduct.id}`,
+        },
+      });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
@@ -373,7 +438,28 @@ export function createBlindBoxAdminRouter(): express.Router {
       }
       const data = await blindBoxService.updateBlindBox(shop, req.params.blindBoxId, mergedPayload);
 
-      res.status(200).send({ success: true, data });
+      // Archiving a blind box archives (never deletes) its backing SHOPLINE
+      // product, so the storefront listing comes down but order history survives.
+      let productNote: string | undefined;
+      if (
+        mergedPayload.status === 'archived' &&
+        existingBlindBox.status !== 'archived' &&
+        existingBlindBox.triggerProductId
+      ) {
+        try {
+          await catalogService.archiveProduct(shop, existingBlindBox.triggerProductId, { accessToken });
+        } catch (error) {
+          logger.warn('Failed to archive backing SHOPLINE product for blind box', {
+            shop,
+            blindBoxId: existingBlindBox.id,
+            productId: existingBlindBox.triggerProductId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          productNote = 'Blind box archived, but its SHOPLINE product could not be archived automatically — archive it manually in SHOPLINE Admin.';
+        }
+      }
+
+      res.status(200).send({ success: true, data, ...(productNote ? { warning: { message: productNote } } : {}) });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }

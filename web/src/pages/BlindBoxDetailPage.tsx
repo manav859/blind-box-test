@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, BlindBox, PoolItem, SessionExpiredError } from '../lib/api';
-import { ProductPicker, PickedProduct } from '../components/ProductPicker';
+import { api, BlindBox, PoolItem, SessionExpiredError, getShopHandle } from '../lib/api';
+import { ProductPicker, ProductThumb, PickedProduct } from '../components/ProductPicker';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 type ReadinessReport = {
@@ -19,6 +19,7 @@ type RewardCandidate = {
   productId: string;
   variantId: string | null;
   productTitle: string | null;
+  imageUrl: string | null;
   inventoryQuantity: number | null;
   selectionWeight: number;
 };
@@ -26,6 +27,7 @@ type RewardCandidate = {
 type ExcludedCandidate = {
   productId: string | null;
   productTitle: string | null;
+  imageUrl: string | null;
   reason: string;
   message: string;
   inventoryQuantity: number | null;
@@ -90,6 +92,19 @@ export function BlindBoxDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Refresh ONLY the reward pool + its preview/readiness — no full-page spinner.
+  const refreshRewards = useCallback(async () => {
+    if (!id) return;
+    const [items, p, r] = await Promise.all([
+      api.listRewards(id),
+      api.getRewardCandidates(id).catch(() => null),
+      api.getReadiness(id).catch(() => null),
+    ]);
+    setPoolItems(items);
+    if (p) setPreview(p as CandidatePreview);
+    if (r) setReadiness(r as ReadinessReport);
+  }, [id]);
+
   async function handleSaveSettings(nextStatus?: BlindBox['status']) {
     if (!blindBox) return;
     setSaving(true);
@@ -119,7 +134,7 @@ export function BlindBoxDetailPage() {
         rewardTitleSnapshot: product.productTitle,
       });
       addToast('success', 'Reward added to pool');
-      load();
+      await refreshRewards();
     } catch (e: unknown) {
       addToast('error', 'Could not add reward', e instanceof Error ? e.message : String(e));
     } finally {
@@ -129,12 +144,16 @@ export function BlindBoxDetailPage() {
 
   async function removeReward(poolItemId: string) {
     if (!blindBox) return;
+    // Optimistic: drop it from the list immediately, then confirm with the server.
+    const previous = poolItems;
+    setPoolItems((items) => items.filter((i) => i.id !== poolItemId));
     setBusy(true);
     try {
       await api.removeReward(blindBox.id, poolItemId);
       addToast('success', 'Reward removed');
-      load();
+      await refreshRewards();
     } catch (e: unknown) {
+      setPoolItems(previous); // rollback on failure
       addToast('error', 'Could not remove reward', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
@@ -169,13 +188,26 @@ export function BlindBoxDetailPage() {
     );
   }
 
-  // Build a stock + odds lookup from the live preview.
+  // Build a stock + odds + image lookup from the live preview (product-level).
   const eligible = preview?.eligibleCandidates ?? [];
   const excluded = preview?.excludedCandidates ?? [];
   const totalWeight = eligible.reduce((sum, c) => sum + c.selectionWeight, 0);
-  const stockByProduct = new Map<string, { stock: number | null; eligible: boolean; reason?: string }>();
-  for (const c of eligible) stockByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: true });
-  for (const c of excluded) if (c.productId) stockByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: false, reason: c.reason });
+  type RewardInfo = { stock: number | null; eligible: boolean; reason?: string; imageUrl: string | null };
+  const infoByProduct = new Map<string, RewardInfo>();
+  for (const c of eligible) infoByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: true, imageUrl: c.imageUrl });
+  for (const c of excluded) if (c.productId) infoByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: false, reason: c.reason, imageUrl: c.imageUrl });
+
+  // Map raw exclusion reasons to short, merchant-friendly status notes.
+  const reasonNote = (reason?: string): string => {
+    switch (reason) {
+      case 'OUT_OF_STOCK': return 'Out of stock — won’t be selected';
+      case 'INACTIVE_PRODUCT': return 'Inactive — won’t be selected';
+      case 'SELF_REWARD_PRODUCT': return 'Same as trigger — won’t be selected';
+      case 'VARIANT_NOT_FOUND': return 'Variant missing — won’t be selected';
+      case 'PRODUCT_FETCH_FAILED': return 'Could not load from SHOPLINE';
+      default: return reason ? 'Won’t be selected' : '';
+    }
+  };
   const excludedProductIds = new Set([blindBox.triggerProductId, ...poolItems.map((p) => p.rewardProductId)].filter(Boolean) as string[]);
 
   return (
@@ -232,6 +264,20 @@ export function BlindBoxDetailPage() {
             <span className="kv-label">Product ID</span>
             <span className="kv-value code">{blindBox.triggerProductId ?? '—'}</span>
           </div>
+          {blindBox.triggerProductId && getShopHandle() && (
+            <div className="kv-row">
+              <span className="kv-label">In SHOPLINE</span>
+              <span className="kv-value">
+                <a
+                  href={`https://${getShopHandle()}.myshopline.com/admin/products/${blindBox.triggerProductId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open product in SHOPLINE ↗
+                </a>
+              </span>
+            </div>
+          )}
         </div>
         <div style={{ marginTop: '.75rem' }}>
           <ProductPicker
@@ -271,12 +317,22 @@ export function BlindBoxDetailPage() {
               </thead>
               <tbody>
                 {poolItems.map((item) => {
-                  const info = stockByProduct.get(item.rewardProductId);
+                  const info = infoByProduct.get(item.rewardProductId);
                   const stock = info?.stock ?? null;
+                  // Odds are PRODUCT-LEVEL: stock / Σ(in-stock pool stock). Always a %.
                   const odds = info?.eligible && totalWeight > 0 ? (info.stock ?? 0) / totalWeight : 0;
+                  const note = info && !info.eligible ? reasonNote(info.reason) : '';
                   return (
                     <tr key={item.id}>
-                      <td className="td-primary">{item.rewardTitleSnapshot ?? item.rewardProductId}</td>
+                      <td className="td-primary">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                          <ProductThumb src={info?.imageUrl ?? null} alt={item.rewardTitleSnapshot ?? item.rewardProductId} />
+                          <div>
+                            <div>{item.rewardTitleSnapshot ?? item.rewardProductId}</div>
+                            {note && <div className="text-xs" style={{ color: 'var(--color-danger-text, #b42318)' }}>{note}</div>}
+                          </div>
+                        </div>
+                      </td>
                       <td>
                         {stock === null ? (
                           <span className="text-muted text-xs">—</span>
@@ -288,7 +344,7 @@ export function BlindBoxDetailPage() {
                         {info?.eligible ? (
                           <span className="code">{(odds * 100).toFixed(1)}%</span>
                         ) : (
-                          <span className="badge badge-danger" style={{ fontSize: '.7rem' }}>{info?.reason ?? 'excluded'}</span>
+                          <span className="text-muted">—</span>
                         )}
                       </td>
                       <td>

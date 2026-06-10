@@ -5,7 +5,6 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { api, BlindBox, SessionExpiredError } from '../lib/api';
-import { ProductPicker, PickedProduct } from '../components/ProductPicker';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 function formatDate(iso: string): string {
@@ -29,12 +28,16 @@ function CreateBlindBoxDialog({
 }) {
   const { addToast } = useToast();
   const [name, setName] = useState('');
-  const [trigger, setTrigger] = useState<PickedProduct | null>(null);
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   function handleClose() {
     setName('');
-    setTrigger(null);
+    setPrice('');
+    setDescription('');
+    setImageUrl('');
     onClose();
   }
 
@@ -43,18 +46,20 @@ function CreateBlindBoxDialog({
       addToast('error', 'Name your blind box');
       return;
     }
-    if (!trigger) {
-      addToast('error', 'Pick the trigger product', 'This is the product customers buy.');
+    const priceNum = Number(price);
+    if (!price.trim() || !Number.isFinite(priceNum) || priceNum < 0) {
+      addToast('error', 'Enter a valid price', 'The blind box is a sellable product, so it needs a price.');
       return;
     }
     setSaving(true);
     try {
       const blindBox = await api.createBlindBox({
         name: name.trim(),
-        triggerProductId: trigger.productId,
-        triggerProductTitleSnapshot: trigger.productTitle,
+        price: price.trim(),
+        description: description.trim() || null,
+        imageUrl: imageUrl.trim() || null,
       });
-      addToast('success', 'Blind box created (draft)', 'Now add reward products to its pool.');
+      addToast('success', 'Blind box + product created', 'A SHOPLINE product was created. Now add rewards to the pool.');
       onCreated(blindBox);
       handleClose();
     } catch (e: unknown) {
@@ -69,7 +74,7 @@ function CreateBlindBoxDialog({
       open={open}
       onClose={handleClose}
       title="Create Blind Box"
-      subtitle="Name it and pick the product customers buy"
+      subtitle="This creates a sellable SHOPLINE product customers buy"
       size="lg"
       footer={
         <>
@@ -77,40 +82,62 @@ function CreateBlindBoxDialog({
             Cancel
           </button>
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? <><span className="spinner spinner-sm" /> Creating…</> : 'Create draft'}
+            {saving ? <><span className="spinner spinner-sm" /> Creating…</> : 'Create blind box'}
           </button>
         </>
       }
     >
+      <div className="alert alert-neutral" style={{ marginBottom: '1rem' }}>
+        <span className="alert-icon">ℹ</span>
+        <div className="alert-body">
+          Saving creates a live, one-variant SHOPLINE product with this name &amp; price (set to oversell so it
+          never goes out of stock). Customers buy it; they receive one reward from the pool you configure next.
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label>Name *</label>
+          <input
+            className="input"
+            placeholder="e.g. Winter Blind Box"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="form-group">
+          <label>Price *</label>
+          <input
+            className="input"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="e.g. 19.99"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="form-group">
-        <label>Name *</label>
+        <label>Image URL (optional)</label>
         <input
           className="input"
-          placeholder="e.g. Summer Mystery Box"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="https://…/box.png"
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
         />
       </div>
 
       <div className="form-group" style={{ marginBottom: 0 }}>
-        <label>Trigger product * (what customers buy)</label>
-        {trigger ? (
-          <div className="alert alert-success" style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-            <span>✓</span>
-            <div style={{ flex: 1 }}>
-              <strong>{trigger.productTitle ?? trigger.productId}</strong>
-              <div className="text-xs text-muted">Stock {trigger.stock}</div>
-            </div>
-            <button className="btn btn-secondary btn-sm" type="button" onClick={() => setTrigger(null)}>
-              Change
-            </button>
-          </div>
-        ) : (
-          <ProductPicker buttonLabel="Pick trigger product" onPick={(p) => setTrigger(p)} />
-        )}
-        <div className="form-hint" style={{ marginTop: '.4rem' }}>
-          After creating, open the box to add reward products to its pool, then activate.
-        </div>
+        <label>Description (optional)</label>
+        <textarea
+          className="input"
+          placeholder="Shown on the product page…"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+        />
       </div>
     </Modal>
   );

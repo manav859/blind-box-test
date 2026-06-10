@@ -10,6 +10,7 @@ function buildProduct(id: string, title: string, variantId: string, stock: numbe
     title,
     status: 'active',
     published: true,
+    imageUrl: null,
     variants: [
       { id: variantId, title: 'Default', sku: `sku-${variantId}`, inventoryQuantity: stock, tracked: true, available: stock > 0, raw: {} },
     ],

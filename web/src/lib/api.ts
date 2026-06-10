@@ -96,6 +96,7 @@ export interface CatalogProduct {
   title: string | null;
   status: string | null;
   published: boolean | null;
+  imageUrl: string | null;
   tags: string[];
   variantCount: number;
   variants: Array<{
@@ -390,11 +391,15 @@ export const api = {
     return request<BlindBox>(`/pools/${id}`);
   },
 
+  // Default: auto-creates the sellable SHOPLINE product (name + price [+ image]).
+  // Advanced: pass triggerProductId to link an existing product instead.
   createBlindBox(payload: {
     name: string;
-    triggerProductId: string;
-    triggerProductTitleSnapshot?: string | null;
+    price?: string | number;
     description?: string | null;
+    imageUrl?: string | null;
+    triggerProductId?: string;
+    triggerProductTitleSnapshot?: string | null;
   }): Promise<BlindBox> {
     return request<BlindBox>('/pools', {
       method: 'POST',

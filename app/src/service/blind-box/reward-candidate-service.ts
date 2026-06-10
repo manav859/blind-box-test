@@ -1,7 +1,6 @@
 import { BlindBox, BlindBoxPoolItem, ExcludedRewardCandidate, RewardCandidate } from '../../domain/blind-box/types';
 
-import { ShoplineInventoryGateway, InventoryGatewayError } from '../../integration/shopline/inventory-gateway';
-import { getRuntimeConfig } from '../../lib/config';
+import { ShoplineInventoryGateway } from '../../integration/shopline/inventory-gateway';
 import type { ShopAdminAccessTokenProvider } from '../../lib/shop-admin-access-token';
 import { Logger, logger } from '../../lib/logger';
 import {
@@ -57,6 +56,7 @@ function buildExcludedCandidate(
     variantId: options.variantId || null,
     productTitle: options.productTitle || null,
     variantTitle: options.variantTitle || null,
+    imageUrl: options.imageUrl ?? null,
     reason,
     message,
     productStatus: options.productStatus ?? null,
@@ -212,7 +212,7 @@ export class RewardCandidateService {
         excluded: buildExcludedCandidate(
           'INACTIVE_PRODUCT',
           `Product status is "${product.status ?? 'unknown'}" — only active/published products are eligible`,
-          { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
+          { productId: product.id, productTitle: product.title, imageUrl: product.imageUrl, productStatus: product.status, variantCount },
         ),
       };
     }
@@ -258,6 +258,7 @@ export class RewardCandidateService {
           {
             productId: product.id,
             productTitle: product.title,
+            imageUrl: product.imageUrl,
             variantId: variant.id,
             variantTitle: variant.title,
             productStatus: product.status,
@@ -273,6 +274,7 @@ export class RewardCandidateService {
       variantId: variant.id,
       productTitle: product.title ?? poolItem.rewardTitleSnapshot,
       variantTitle: variant.title,
+      imageUrl: product.imageUrl,
       inventoryQuantity,
       // INVENTORY-WEIGHTED: weight = current stock → P = stock / Σ stock.
       selectionWeight: inventoryQuantity,
@@ -290,54 +292,11 @@ export class RewardCandidateService {
       }),
     };
 
-    const operationalExclusion = await this.validateCandidateOperationalReadiness(shop, candidate, options);
-    if (operationalExclusion) {
-      return { excluded: operationalExclusion };
-    }
-
+    // NOTE: eligibility + odds are PRODUCT-LEVEL only (active/published + stock > 0).
+    // Inventory-execution/location readiness is a SEPARATE, fulfillment-time concern
+    // and must NOT exclude candidates here — otherwise odds and activation would
+    // wrongly depend on BLIND_BOX_SHOPLINE_LOCATION_ID being configured.
     return { candidate };
-  }
-
-  private async validateCandidateOperationalReadiness(
-    shop: string,
-    candidate: RewardCandidate,
-    options: {
-      accessToken?: string;
-    },
-  ): Promise<ExcludedRewardCandidate | null> {
-    const runtimeConfig = getRuntimeConfig();
-    if (runtimeConfig.blindBoxInventoryExecutionMode !== 'execute') {
-      return null;
-    }
-
-    const accessToken = options.accessToken || (await this.dependencies.accessTokenProvider.getAccessToken(shop));
-
-    try {
-      await this.dependencies.inventoryGateway.validateExecutionReadiness({
-        shop,
-        accessToken,
-        poolItemId: `reward:${candidate.productId}:${candidate.variantId || 'product'}`,
-        sourceProductId: candidate.productId,
-        sourceVariantId: candidate.variantId,
-        quantity: 1,
-        reason: 'blind_box_reward_candidate_validation',
-        idempotencyKey: `validate:${shop}:${candidate.productId}:${candidate.variantId || 'product'}`,
-        preferredLocationId: runtimeConfig.blindBoxShoplineLocationId,
-      });
-      return null;
-    } catch (error) {
-      if (error instanceof InventoryGatewayError) {
-        return buildExcludedCandidate('EXECUTION_NOT_READY', error.message, {
-          productId: candidate.productId,
-          variantId: candidate.variantId,
-          productTitle: candidate.productTitle,
-          variantTitle: candidate.variantTitle,
-          inventoryQuantity: candidate.inventoryQuantity,
-        });
-      }
-
-      throw error;
-    }
   }
 }
 

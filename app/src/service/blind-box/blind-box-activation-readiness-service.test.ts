@@ -9,6 +9,7 @@ function buildProduct(id: string, title: string, stock: number): ShoplineProduct
     title,
     status: 'active',
     published: true,
+    imageUrl: null,
     variants: [
       { id: `${id}-v1`, title: 'Default', sku: `sku-${id}`, inventoryQuantity: stock, tracked: true, available: stock > 0, raw: {} },
     ],

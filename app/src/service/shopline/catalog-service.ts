@@ -31,6 +31,35 @@ export class ShoplineCatalogService {
     return product;
   }
 
+  /** Create the sellable SHOPLINE product that backs a blind box. */
+  async createProduct(
+    shop: string,
+    input: { title: string; price: string; description?: string | null; imageUrl?: string | null },
+    options: { accessToken?: string } = {},
+  ): Promise<ShoplineProduct> {
+    const accessToken = await this.resolveAccessToken(shop, options.accessToken);
+    const product = await this.dependencies.catalogGateway.createProduct(shop, accessToken, input);
+
+    this.dependencies.logger.info('Created SHOPLINE product for blind box', {
+      shop,
+      productId: product.id,
+      title: product.title,
+    });
+
+    return product;
+  }
+
+  /** Archive (not delete) a blind box's backing product so order history survives. */
+  async archiveProduct(
+    shop: string,
+    productId: string,
+    options: { accessToken?: string } = {},
+  ): Promise<void> {
+    const accessToken = await this.resolveAccessToken(shop, options.accessToken);
+    await this.dependencies.catalogGateway.archiveProduct(shop, accessToken, productId);
+    this.dependencies.logger.info('Archived SHOPLINE product for blind box', { shop, productId });
+  }
+
   async getCollection(
     shop: string,
     collectionId: string,

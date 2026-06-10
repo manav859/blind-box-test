@@ -240,6 +240,7 @@ export interface RewardCandidate {
   variantId: string | null;
   productTitle: string | null;
   variantTitle: string | null;
+  imageUrl: string | null;
   inventoryQuantity: number | null;
   selectionWeight: number;
   payloadJson: string | null;
@@ -252,6 +253,7 @@ export interface ExcludedRewardCandidate {
   variantId: string | null;
   productTitle: string | null;
   variantTitle: string | null;
+  imageUrl: string | null;
   reason: string;
   message: string;
   // Diagnostic fields — populated when available

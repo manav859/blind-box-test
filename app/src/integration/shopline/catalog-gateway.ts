@@ -31,8 +31,16 @@ export interface ShoplineProduct {
   tags?: string[];
   templatePath?: string | null;
   productType?: string | null;
+  imageUrl: string | null;
   variants: ShoplineProductVariant[];
   raw: unknown;
+}
+
+export interface CreateProductInput {
+  title: string;
+  price: string;
+  description?: string | null;
+  imageUrl?: string | null;
 }
 
 export interface CollectionProductsPage {
@@ -289,6 +297,38 @@ export function extractRawTagFields(productRecord: Record<string, unknown>): Rec
   return fields;
 }
 
+/**
+ * Pull a product thumbnail URL from whatever shape SHOPLINE returns: a single
+ * `image`/`featured_image` object, the first of an `images`/`media` array, or a
+ * bare string. Field names vary by API version, so we probe several.
+ */
+function extractImageUrl(productRecord: Record<string, unknown>): string | null {
+  const fromObject = (value: unknown): string | null => {
+    const record = asRecord(value);
+    if (!record) {
+      return typeof value === 'string' && value.trim() ? value.trim() : null;
+    }
+    return readStringField(record, ['src', 'url', 'original_source', 'originalSrc', 'imageUrl', 'image_url']);
+  };
+
+  const single = fromObject(productRecord.image) || fromObject(productRecord.featured_image) || fromObject(productRecord.featuredImage);
+  if (single) {
+    return single;
+  }
+
+  for (const key of ['images', 'media', 'image_list']) {
+    const arr = productRecord[key];
+    if (Array.isArray(arr) && arr.length > 0) {
+      const url = fromObject(arr[0]);
+      if (url) {
+        return url;
+      }
+    }
+  }
+
+  return null;
+}
+
 function mapProductRecord(productRecord: Record<string, unknown>): ShoplineProduct | null {
   const id = readStringField(productRecord, ['id', 'product_id']);
   if (!id) {
@@ -305,6 +345,7 @@ function mapProductRecord(productRecord: Record<string, unknown>): ShoplineProdu
     tags: normalizeTags(productRecord),
     templatePath: readStringField(productRecord, ['template_path', 'templatePath']),
     productType: readStringField(productRecord, ['product_type', 'productType']),
+    imageUrl: extractImageUrl(productRecord),
     variants: extractVariantRecords(productRecord)
       .map(mapVariantRecord)
       .filter((variant): variant is ShoplineProductVariant => Boolean(variant)),
@@ -360,6 +401,8 @@ export function collectionMatchesSlug(collection: ShoplineCollection, targetSlug
 
 export interface CatalogGateway {
   getProduct(shop: string, accessToken: string, productId: string): Promise<ShoplineProduct>;
+  createProduct(shop: string, accessToken: string, input: CreateProductInput): Promise<ShoplineProduct>;
+  archiveProduct(shop: string, accessToken: string, productId: string): Promise<void>;
   getCollection(shop: string, accessToken: string, collectionId: string): Promise<ShoplineCollection>;
   getCollectionByHandle(shop: string, accessToken: string, handle: string): Promise<ShoplineCollection>;
   resolveCollectionBySlug(shop: string, accessToken: string, slug: string): Promise<ShoplineCollection | null>;
@@ -423,6 +466,72 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     }
 
     return product;
+  }
+
+  /**
+   * Create a simple, immediately-purchasable SHOPLINE product (one variant) to
+   * back a blind box. status=active publishes it; inventory_policy=continue lets
+   * it oversell so the wrapper product never blocks a purchase (real stock lives
+   * on the reward products).
+   */
+  async createProduct(shop: string, accessToken: string, input: CreateProductInput): Promise<ShoplineProduct> {
+    const title = input.title.trim();
+    if (!title) {
+      throw new CatalogGatewayError('A product title is required', {
+        code: 'SHOPLINE_PRODUCT_TITLE_REQUIRED',
+        statusCode: 400,
+      });
+    }
+
+    const productBody: Record<string, unknown> = {
+      title,
+      status: 'active',
+      published: true,
+      body_html: input.description ?? undefined,
+      variants: [
+        {
+          price: input.price,
+          inventory_policy: 'continue',
+          inventory_management: null,
+        },
+      ],
+    };
+    if (input.imageUrl) {
+      productBody.media = [{ content_type: 'IMAGE', original_source: input.imageUrl }];
+    }
+
+    const response = await this.mutate<unknown>(shop, accessToken, 'POST', '/products/products.json', {
+      product: productBody,
+    });
+    const productRecord =
+      asRecord(asRecord(response.data)?.product) || asRecord(asRecord(response.data)?.data) || asRecord(response.data);
+    const product = productRecord ? mapProductRecord(productRecord) : null;
+
+    if (!product) {
+      throw new CatalogGatewayError('SHOPLINE product creation returned no product', {
+        code: 'SHOPLINE_PRODUCT_CREATE_FAILED',
+        statusCode: 502,
+        details: { traceId: response.traceId },
+      });
+    }
+
+    return product;
+  }
+
+  /** Archive (not delete) a product so past order history stays intact. */
+  async archiveProduct(shop: string, accessToken: string, productId: string): Promise<void> {
+    const normalizedProductId = normalizeShoplineResourceId(productId);
+    if (!normalizedProductId) {
+      return;
+    }
+
+    await this.mutate<unknown>(
+      shop,
+      accessToken,
+      'PUT',
+      `/products/${encodeURIComponent(normalizedProductId)}.json`,
+      { product: { id: normalizedProductId, status: 'archived', published: false } },
+    );
   }
 
   async getCollection(shop: string, accessToken: string, collectionId: string): Promise<ShoplineCollection> {
@@ -790,6 +899,7 @@ export class ShoplineCatalogGateway implements CatalogGateway {
           tags,
           templatePath: null,
           productType: node.product_type ?? node.productType ?? null,
+          imageUrl: null,
           variants,
           raw: node,
         };
@@ -960,6 +1070,74 @@ export class ShoplineCatalogGateway implements CatalogGateway {
       (token) => this.requestRaw<T>(shop, token, path),
       accessToken,
     );
+  }
+
+  /** POST/PUT mutation with a JSON body (create/archive product), with 401 retry. */
+  private async mutate<T>(
+    shop: string,
+    accessToken: string,
+    method: 'POST' | 'PUT',
+    path: string,
+    body: unknown,
+  ): Promise<CatalogRequestResult<T>> {
+    return this.requestWithTokenRefresh(
+      shop,
+      (token) => this.mutateRaw<T>(shop, token, method, path, body),
+      accessToken,
+    );
+  }
+
+  private async mutateRaw<T>(
+    shop: string,
+    accessToken: string,
+    method: 'POST' | 'PUT',
+    path: string,
+    body: unknown,
+  ): Promise<CatalogRequestResult<T>> {
+    const url = `https://${shop}.myshopline.com/admin/openapi/${this.apiVersion}${path}`;
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
+          'User-Agent': 'blind-box-backend/catalog-gateway',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new CatalogGatewayError(
+        error instanceof Error ? error.message : 'SHOPLINE catalog mutation failed before a response was received',
+        { code: 'SHOPLINE_CATALOG_NETWORK_ERROR', statusCode: 502 },
+      );
+    }
+
+    const traceId = response.headers.get('traceid')?.split(',')?.[0] || null;
+    const responseText = await response.text();
+
+    if (response.status === 401) {
+      throw new SessionExpiredError(
+        'Session expired — SHOPLINE rejected the access token. Please re-authenticate.',
+        { path, traceId },
+      );
+    }
+
+    if (!response.ok) {
+      throw new CatalogGatewayError(
+        `SHOPLINE catalog mutation failed with ${response.status} ${response.statusText}`,
+        {
+          code: 'SHOPLINE_CATALOG_HTTP_ERROR',
+          statusCode: response.status,
+          details: { path, traceId, responseText: responseText.slice(0, 500) },
+        },
+      );
+    }
+
+    const data = responseText ? (JSON.parse(responseText) as T) : ({} as T);
+    return { data, traceId, nextPageInfo: null };
   }
 
   private async requestRaw<T>(

@@ -14,6 +14,7 @@ function buildProduct(
     title,
     status,
     published: true,
+    imageUrl: null,
     variants: variants.map((v) => ({
       id: v.id,
       title: v.title ?? 'Default',

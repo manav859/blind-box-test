@@ -4,8 +4,30 @@ import { api, CatalogProduct } from '../lib/api';
 export interface PickedProduct {
   productId: string;
   productTitle: string | null;
+  imageUrl: string | null;
   /** Total stock across the product's variants (for display + odds). */
   stock: number;
+}
+
+/** Small square product thumbnail with a neutral placeholder fallback. */
+export function ProductThumb({ src, alt, size = 36 }: { src: string | null; alt: string; size?: number }) {
+  const style: React.CSSProperties = {
+    width: size,
+    height: size,
+    borderRadius: 6,
+    objectFit: 'cover',
+    background: 'var(--color-surface-alt, #f1f1f4)',
+    border: '1px solid var(--color-border)',
+    flexShrink: 0,
+  };
+  if (!src) {
+    return (
+      <div style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.5 }}>
+        🎁
+      </div>
+    );
+  }
+  return <img src={src} alt={alt} style={style} loading="lazy" />;
 }
 
 function totalStock(product: CatalogProduct): number {
@@ -90,7 +112,12 @@ export function ProductPicker({
                   const stock = totalStock(p);
                   return (
                     <tr key={p.id}>
-                      <td className="td-primary">{p.title ?? p.id}</td>
+                      <td className="td-primary">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                          <ProductThumb src={p.imageUrl} alt={p.title ?? p.id} />
+                          <span>{p.title ?? p.id}</span>
+                        </div>
+                      </td>
                       <td>
                         <span className={stock > 0 ? 'badge badge-success' : 'badge badge-danger'}>{stock}</span>
                       </td>
@@ -98,7 +125,7 @@ export function ProductPicker({
                         <button
                           className="btn btn-primary btn-sm"
                           type="button"
-                          onClick={() => onPick({ productId: p.id, productTitle: p.title, stock })}
+                          onClick={() => onPick({ productId: p.id, productTitle: p.title, imageUrl: p.imageUrl, stock })}
                         >
                           Select
                         </button>
