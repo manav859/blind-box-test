@@ -3,24 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
-import { api, BlindBox, CatalogCollection, CatalogProduct, SessionExpiredError } from '../lib/api';
+import { api, BlindBox, PoolItem, SessionExpiredError } from '../lib/api';
+import { ProductPicker, PickedProduct } from '../components/ProductPicker';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
-/** Extract the blind-box-collection handle from a product's tags array. */
-function deriveCollectionHandle(tags: string[]): string {
-  const tag = tags.find((t) => t.startsWith('blind-box-collection:'));
-  return tag ? tag.replace('blind-box-collection:', '').trim() : '';
-}
-
 type ReadinessReport = {
-  // Backend returns status:'ready'|'not_ready', not a boolean ready field.
   status: 'ready' | 'not_ready';
-  mode: 'collection_linked' | 'legacy_manual_pool';
-  resolutionSource: 'product_tag' | 'reward_group_link' | null;
-  collection: { id: string; title: string | null; handle: string | null } | null;
-  rawCollectionSize: number;
-  eligibleCandidates: Array<{ productId: string; productTitle: string | null; variantTitle: string | null }>;
-  excludedCandidates: Array<{ productId: string | null; productTitle: string | null; reason: string; message: string }>;
+  poolSize: number;
+  inStockCount: number;
   issues: Array<{ code: string; message: string }>;
   summary: string;
 };
@@ -29,31 +19,24 @@ type RewardCandidate = {
   productId: string;
   variantId: string | null;
   productTitle: string | null;
-  variantTitle: string | null;
   inventoryQuantity: number | null;
   selectionWeight: number;
-  eligibleVariantCount: number;
 };
 
 type ExcludedCandidate = {
   productId: string | null;
   productTitle: string | null;
-  variantTitle: string | null;
   reason: string;
   message: string;
-  productStatus: string | null;
   inventoryQuantity: number | null;
-  variantCount: number | null;
 };
 
 type CandidatePreview = {
-  collection?: { id: string; title: string | null; handle: string | null };
-  rawCollectionSize?: number;
+  poolSize?: number;
+  inStockCount?: number;
   eligibleCandidates?: RewardCandidate[];
   excludedCandidates?: ExcludedCandidate[];
 };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function Section({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
@@ -67,41 +50,24 @@ function Section({ title, children, aside }: { title: string; children: React.Re
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
-
 export function BlindBoxDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
   const [blindBox, setBlindBox] = useState<BlindBox | null>(null);
+  const [poolItems, setPoolItems] = useState<PoolItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Edit form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState<'draft' | 'active' | 'archived'>('draft');
-  const [strategy, setStrategy] = useState<'uniform' | 'weighted'>('uniform');
   const [dirty, setDirty] = useState(false);
 
-  // Reward collection
-  const [collections, setCollections] = useState<CatalogCollection[]>([]);
-  const [selectedCollectionId, setSelectedCollectionId] = useState('');
-  const [savingCollection, setSavingCollection] = useState(false);
-  const [loadingCollections, setLoadingCollections] = useState(false);
-
-  // SHOPLINE product (fetched for tags — the DB record has no tags field)
-  const [shoplineProduct, setShoplineProduct] = useState<CatalogProduct | null>(null);
-
-  // Readiness
+  const [preview, setPreview] = useState<CandidatePreview | null>(null);
   const [readiness, setReadiness] = useState<ReadinessReport | null>(null);
-  const [loadingReadiness, setLoadingReadiness] = useState(false);
-
-  // Reward preview
-  const [candidatePreview, setCandidatePreview] = useState<CandidatePreview | null>(null);
-  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -112,30 +78,11 @@ export function BlindBoxDetailPage() {
         setBlindBox(bb);
         setName(bb.name);
         setDescription(bb.description ?? '');
-        setStatus(bb.status);
-        setStrategy(bb.selectionStrategy);
-        if (bb.rewardGroup) {
-          setSelectedCollectionId(bb.rewardGroup.shoplineCollectionId);
-        }
+        setPoolItems(bb.poolItems ?? []);
         setError(null);
-
-        // Fetch the live SHOPLINE product so we can read its tags.
-        // The DB record (BlindBox) does not store tags.
-        if (bb.shoplineProductId) {
-          api.getCatalogProduct(bb.shoplineProductId)
-            .then((p) => {
-              setShoplineProduct(p);
-              console.log('[BlindBoxDetail] SHOPLINE product loaded', {
-                productId: p.id,
-                productTitle: p.title,
-                tags: p.tags,
-                extractedCollectionHandle: deriveCollectionHandle(p.tags),
-              });
-            })
-            .catch(() => {
-              // Non-fatal — fall back to DB-only state
-            });
-        }
+        // Pull the live reward preview (stock + odds) — non-fatal.
+        api.getRewardCandidates(id).then((p) => setPreview(p as CandidatePreview)).catch(() => {});
+        api.getReadiness(id).then((r) => setReadiness(r as ReadinessReport)).catch(() => {});
       })
       .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
@@ -143,108 +90,67 @@ export function BlindBoxDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  useEffect(() => {
-    setLoadingCollections(true);
-    api.listCatalogCollections()
-      .then((cols) => setCollections(cols))
-      .catch(() => {})
-      .finally(() => setLoadingCollections(false));
-  }, []);
-
-  async function handleSaveSettings() {
+  async function handleSaveSettings(nextStatus?: BlindBox['status']) {
     if (!blindBox) return;
     setSaving(true);
     try {
       const updated = await api.updateBlindBox(blindBox.id, {
         name: name.trim() || blindBox.name,
         description: description.trim() || null,
-        status,
-        selectionStrategy: strategy,
+        status: nextStatus ?? blindBox.status,
       });
       setBlindBox(updated);
       setDirty(false);
-      addToast('success', 'Settings saved');
+      addToast('success', nextStatus === 'active' ? 'Blind box activated' : 'Settings saved');
+      load();
     } catch (e: unknown) {
-      addToast('error', 'Save failed', e instanceof Error ? e.message : String(e));
+      addToast('error', nextStatus === 'active' ? 'Cannot activate' : 'Save failed', e instanceof Error ? e.message : String(e));
     } finally {
       setSaving(false);
     }
   }
 
-  // Tag-derived collection handle — primary source for "is linked" state.
-  const tagHandle = shoplineProduct ? deriveCollectionHandle(shoplineProduct.tags) : '';
-  // Effective identifier: dropdown override first, then tag, then DB snapshot.
-  const effectiveCollectionId =
-    selectedCollectionId ||
-    tagHandle ||
-    blindBox?.rewardGroup?.shoplineCollectionId ||
-    '';
-
-  async function handleSaveCollection() {
-    if (!blindBox || !effectiveCollectionId) {
-      addToast('error', 'No collection to link',
-        'Add a blind-box-collection:<handle> tag to the product or select a collection below.');
-      return;
-    }
-    setSavingCollection(true);
+  async function addReward(product: PickedProduct) {
+    if (!blindBox) return;
+    setBusy(true);
     try {
-      const rg = await api.createRewardGroup({
-        shoplineCollectionId: effectiveCollectionId,
-        status: 'active',
+      await api.addReward(blindBox.id, {
+        rewardProductId: product.productId,
+        rewardTitleSnapshot: product.productTitle,
       });
-      await api.upsertRewardGroupLink({ blindBoxId: blindBox.id, rewardGroupId: rg.id });
-      addToast('success', 'Reward collection linked!');
+      addToast('success', 'Reward added to pool');
       load();
     } catch (e: unknown) {
-      addToast('error', 'Failed to link collection', e instanceof Error ? e.message : String(e));
+      addToast('error', 'Could not add reward', e instanceof Error ? e.message : String(e));
     } finally {
-      setSavingCollection(false);
+      setBusy(false);
     }
   }
 
-  async function checkReadiness() {
-    if (!id) return;
-    setLoadingReadiness(true);
+  async function removeReward(poolItemId: string) {
+    if (!blindBox) return;
+    setBusy(true);
     try {
-      const data = await api.getReadiness(id);
-      setReadiness(data as unknown as ReadinessReport);
+      await api.removeReward(blindBox.id, poolItemId);
+      addToast('success', 'Reward removed');
+      load();
     } catch (e: unknown) {
-      addToast('error', 'Readiness check failed', e instanceof Error ? e.message : String(e));
+      addToast('error', 'Could not remove reward', e instanceof Error ? e.message : String(e));
     } finally {
-      setLoadingReadiness(false);
-    }
-  }
-
-  async function previewCandidates() {
-    if (!id) return;
-    setLoadingCandidates(true);
-    try {
-      const data = await api.getRewardCandidates(id);
-      setCandidatePreview(data as unknown as CandidatePreview);
-    } catch (e: unknown) {
-      addToast('error', 'Preview failed', e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoadingCandidates(false);
+      setBusy(false);
     }
   }
 
   if (loading) {
     return (
       <Layout title="Blind Box Detail">
-        <div className="loading-overlay">
-          <div className="spinner spinner-lg" />
-          <span>Loading…</span>
-        </div>
+        <div className="loading-overlay"><div className="spinner spinner-lg" /><span>Loading…</span></div>
       </Layout>
     );
   }
 
   if (error instanceof SessionExpiredError) {
-    return (
-      <Layout title="Session expired">
-        <SessionExpiredBanner authUrl={error.authUrl} />
-      </Layout>
-    );
+    return <Layout title="Session expired"><SessionExpiredBanner authUrl={error.authUrl} /></Layout>;
   }
 
   if (error || !blindBox) {
@@ -263,10 +169,14 @@ export function BlindBoxDetailPage() {
     );
   }
 
-  const collectionTitleDisplay =
-    blindBox.rewardGroup?.collectionTitleSnapshot ??
-    collections.find((c) => c.id === effectiveCollectionId)?.title ??
-    null;
+  // Build a stock + odds lookup from the live preview.
+  const eligible = preview?.eligibleCandidates ?? [];
+  const excluded = preview?.excludedCandidates ?? [];
+  const totalWeight = eligible.reduce((sum, c) => sum + c.selectionWeight, 0);
+  const stockByProduct = new Map<string, { stock: number | null; eligible: boolean; reason?: string }>();
+  for (const c of eligible) stockByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: true });
+  for (const c of excluded) if (c.productId) stockByProduct.set(c.productId, { stock: c.inventoryQuantity, eligible: false, reason: c.reason });
+  const excludedProductIds = new Set([blindBox.triggerProductId, ...poolItems.map((p) => p.rewardProductId)].filter(Boolean) as string[]);
 
   return (
     <Layout
@@ -274,13 +184,10 @@ export function BlindBoxDetailPage() {
       actions={
         <>
           <StatusBadge status={blindBox.status} />
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate('/blind-boxes')}>
-            ← Back
-          </button>
+          <button className="btn btn-secondary btn-sm" onClick={() => navigate('/blind-boxes')}>← Back</button>
         </>
       }
     >
-      {/* Breadcrumb */}
       <div className="breadcrumb">
         <Link to="/">Dashboard</Link>
         <span className="breadcrumb-sep">›</span>
@@ -289,345 +196,149 @@ export function BlindBoxDetailPage() {
         <span>{blindBox.name}</span>
       </div>
 
-      {/* Settings */}
+      {/* General settings */}
       <Section
         title="General Settings"
+        aside={dirty && (
+          <button className="btn btn-primary btn-sm" onClick={() => handleSaveSettings()} disabled={saving}>
+            {saving ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save Changes'}
+          </button>
+        )}
+      >
+        <div className="form-group">
+          <label>Name</label>
+          <input className="input" value={name} onChange={(e) => { setName(e.target.value); setDirty(true); }} />
+        </div>
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Description (optional)</label>
+          <textarea className="input" value={description} onChange={(e) => { setDescription(e.target.value); setDirty(true); }} rows={2} />
+        </div>
+        {dirty && (
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '.75rem' }}>
+            <button className="btn btn-primary" onClick={() => handleSaveSettings()} disabled={saving}>Save Changes</button>
+            <button className="btn btn-secondary" onClick={() => { setName(blindBox.name); setDescription(blindBox.description ?? ''); setDirty(false); }}>Discard</button>
+          </div>
+        )}
+      </Section>
+
+      {/* Trigger product */}
+      <Section title="Trigger Product (what customers buy)">
+        <div className="kv-list">
+          <div className="kv-row">
+            <span className="kv-label">Product</span>
+            <span className="kv-value">{blindBox.triggerProductTitleSnapshot ?? blindBox.triggerProductId ?? <span className="text-muted">Not set</span>}</span>
+          </div>
+          <div className="kv-row">
+            <span className="kv-label">Product ID</span>
+            <span className="kv-value code">{blindBox.triggerProductId ?? '—'}</span>
+          </div>
+        </div>
+        <div style={{ marginTop: '.75rem' }}>
+          <ProductPicker
+            buttonLabel="Change trigger product"
+            excludeIds={poolItems.map((p) => p.rewardProductId)}
+            onPick={async (p) => {
+              setBusy(true);
+              try {
+                await api.updateBlindBox(blindBox.id, { triggerProductId: p.productId });
+                addToast('success', 'Trigger product updated');
+                load();
+              } catch (e: unknown) {
+                addToast('error', 'Update failed', e instanceof Error ? e.message : String(e));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        </div>
+      </Section>
+
+      {/* Reward pool */}
+      <Section
+        title={`Reward Pool (${poolItems.length})`}
+        aside={<span className="text-xs text-muted">Selection is weighted by live stock — more stock = higher chance</span>}
+      >
+        {poolItems.length === 0 ? (
+          <div className="alert alert-warning" style={{ marginBottom: '1rem' }}>
+            <span className="alert-icon">⚠</span>
+            <div className="alert-body">No reward products yet. Add at least one in-stock product to activate this blind box.</div>
+          </div>
+        ) : (
+          <div className="table-wrapper" style={{ marginBottom: '1rem' }}>
+            <table>
+              <thead>
+                <tr><th>Reward product</th><th>Current stock</th><th>Selection odds</th><th></th></tr>
+              </thead>
+              <tbody>
+                {poolItems.map((item) => {
+                  const info = stockByProduct.get(item.rewardProductId);
+                  const stock = info?.stock ?? null;
+                  const odds = info?.eligible && totalWeight > 0 ? (info.stock ?? 0) / totalWeight : 0;
+                  return (
+                    <tr key={item.id}>
+                      <td className="td-primary">{item.rewardTitleSnapshot ?? item.rewardProductId}</td>
+                      <td>
+                        {stock === null ? (
+                          <span className="text-muted text-xs">—</span>
+                        ) : (
+                          <span className={stock > 0 ? 'badge badge-success' : 'badge badge-danger'}>{stock}</span>
+                        )}
+                      </td>
+                      <td>
+                        {info?.eligible ? (
+                          <span className="code">{(odds * 100).toFixed(1)}%</span>
+                        ) : (
+                          <span className="badge badge-danger" style={{ fontSize: '.7rem' }}>{info?.reason ?? 'excluded'}</span>
+                        )}
+                      </td>
+                      <td>
+                        <button className="btn btn-secondary btn-sm" disabled={busy} onClick={() => removeReward(item.id)}>Remove</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <ProductPicker buttonLabel="Add reward product" excludeIds={[...excludedProductIds]} onPick={addReward} />
+      </Section>
+
+      {/* Activation */}
+      <Section
+        title="Activation"
         aside={
-          dirty && (
-            <button className="btn btn-primary btn-sm" onClick={handleSaveSettings} disabled={saving}>
-              {saving ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save Changes'}
+          blindBox.status !== 'active' ? (
+            <button className="btn btn-primary btn-sm" onClick={() => handleSaveSettings('active')} disabled={saving}>
+              {saving ? <><span className="spinner spinner-sm" /> Activating…</> : '▶ Activate'}
+            </button>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleSaveSettings('draft')} disabled={saving}>
+              Pause (set draft)
             </button>
           )
         }
       >
-        <div className="form-row">
-          <div className="form-group">
-            <label>Internal Name</label>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setDirty(true); }}
-              placeholder="e.g. Summer Mystery Box"
-            />
-          </div>
-          <div className="form-group">
-            <label>Status</label>
-            <select value={status} onChange={(e) => { setStatus(e.target.value as 'draft' | 'active' | 'archived'); setDirty(true); }}>
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
-            </select>
-            <div className="form-hint">
-              Only "Active" blind boxes trigger reward assignments on purchase.
-            </div>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Description (optional)</label>
-          <textarea
-            className="input"
-            value={description}
-            onChange={(e) => { setDescription(e.target.value); setDirty(true); }}
-            placeholder="Internal notes…"
-            rows={2}
-          />
-        </div>
-
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label>Selection Strategy</label>
-          <select value={strategy} onChange={(e) => { setStrategy(e.target.value as 'uniform' | 'weighted'); setDirty(true); }}>
-            <option value="uniform">Uniform — equal probability for all rewards</option>
-            <option value="weighted">Weighted — custom probability per reward</option>
-          </select>
-          <div className="form-hint">
-            Uniform is recommended for most cases. Weighted requires pool items with configured weights.
-          </div>
-        </div>
-
-        {dirty && (
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '.75rem' }}>
-            <button className="btn btn-primary" onClick={handleSaveSettings} disabled={saving}>
-              {saving ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save Changes'}
-            </button>
-            <button className="btn btn-secondary" onClick={() => { setName(blindBox.name); setDescription(blindBox.description ?? ''); setStatus(blindBox.status); setStrategy(blindBox.selectionStrategy); setDirty(false); }}>
-              Discard
-            </button>
-          </div>
-        )}
-      </Section>
-
-      {/* Product info */}
-      <Section title="Linked Storefront Product">
-        <div className="kv-list">
-          <div className="kv-row">
-            <span className="kv-label">SHOPLINE Product</span>
-            <span className="kv-value">
-              {blindBox.productTitleSnapshot ?? blindBox.shoplineProductId ?? (
-                <span className="text-muted">Not linked</span>
-              )}
-            </span>
-          </div>
-          <div className="kv-row">
-            <span className="kv-label">Product ID</span>
-            <span className="kv-value code">{blindBox.shoplineProductId ?? '—'}</span>
-          </div>
-          <div className="kv-row">
-            <span className="kv-label">Variant ID</span>
-            <span className="kv-value code">{blindBox.shoplineVariantId ?? 'Product-level (all variants)'}</span>
-          </div>
-        </div>
-        <div className="alert alert-neutral" style={{ marginTop: '1rem' }}>
-          <span className="alert-icon">ℹ</span>
-          <div className="alert-body">
-            The product link is set automatically when a SHOPLINE product has the <strong>blind-box</strong> tag.
-            To change the linked product, update the tag in SHOPLINE Admin.
-          </div>
-        </div>
-      </Section>
-
-      {/* Reward collection */}
-      <Section title="Reward Collection">
-        {/* ── Status badge ── */}
-        {tagHandle ? (
-          <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
-            <span className="alert-icon">✓</span>
+        {readiness ? (
+          <div className={`alert ${readiness.status === 'ready' ? 'alert-success' : 'alert-warning'}`}>
+            <span className="alert-icon">{readiness.status === 'ready' ? '✓' : '⚠'}</span>
             <div className="alert-body">
-              <div className="alert-title">Auto-linked via product tag</div>
-              <div style={{ fontFamily: 'monospace', fontSize: '.85rem', marginTop: '.2rem' }}>
-                blind-box-collection:<strong>{tagHandle}</strong>
-              </div>
-              {(collectionTitleDisplay || blindBox.rewardGroup?.collectionTitleSnapshot) && (
-                <div style={{ fontSize: '.85rem', marginTop: '.25rem', color: 'var(--color-text-muted)' }}>
-                  {collectionTitleDisplay ?? blindBox.rewardGroup?.collectionTitleSnapshot}
-                </div>
+              <div className="alert-title">{readiness.status === 'ready' ? 'Ready to activate' : 'Not ready'}</div>
+              <div style={{ fontSize: '.85rem' }}>{readiness.summary}</div>
+              {readiness.issues.length > 0 && (
+                <ul style={{ margin: '.5rem 0 0', paddingLeft: '1.1rem', fontSize: '.85rem' }}>
+                  {readiness.issues.map((i) => <li key={i.code}>{i.message}</li>)}
+                </ul>
               )}
-              {blindBox.rewardGroup && (
-                <div style={{ fontSize: '.8rem', marginTop: '.2rem', color: 'var(--color-text-muted)' }}>
-                  Saved to DB — collection ID: <span className="code">{blindBox.rewardGroup.shoplineCollectionId}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : blindBox.rewardGroup ? (
-          <div className="alert alert-success" style={{ marginBottom: '1.25rem' }}>
-            <span className="alert-icon">✓</span>
-            <div className="alert-body">
-              <div className="alert-title">Collection linked</div>
-              {blindBox.rewardGroup.collectionTitleSnapshot}{' '}
-              (ID: <span className="code">{blindBox.rewardGroup.shoplineCollectionId}</span>)
             </div>
           </div>
         ) : (
-          <div className="alert alert-warning" style={{ marginBottom: '1.25rem' }}>
-            <span className="alert-icon">⚠</span>
-            <div className="alert-body">
-              <div className="alert-title">No reward collection linked</div>
-              Add a <code>blind-box-collection:&lt;handle&gt;</code> tag to the SHOPLINE product,
-              or select a collection below to link manually.
-            </div>
-          </div>
+          <div className="text-muted text-sm">Readiness will appear here.</div>
         )}
-
-        {/* ── Optional collection dropdown override ── */}
-        {collections.length > 0 && (
-          <div className="form-group">
-            <label>Override Collection{tagHandle && <span className="form-hint" style={{ display: 'inline', marginLeft: '.5rem' }}>(optional — tag value used by default)</span>}</label>
-            {loadingCollections ? (
-              <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', padding: '.5rem 0' }}>
-                <span className="spinner spinner-sm" /> Loading…
-              </div>
-            ) : (
-              <select value={selectedCollectionId} onChange={(e) => setSelectedCollectionId(e.target.value)}>
-                <option value="">{tagHandle ? `— use tag: ${tagHandle} —` : '— select a collection —'}</option>
-                {collections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title ?? c.id}{c.handle ? ` (${c.handle})` : ''}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: '.75rem' }}>
-          <button
-            className="btn btn-primary"
-            onClick={handleSaveCollection}
-            disabled={savingCollection || !effectiveCollectionId}
-          >
-            {savingCollection ? <><span className="spinner spinner-sm" /> Saving…</> : '💾 Link Collection'}
-          </button>
-          <button
-            className="btn btn-secondary"
-            onClick={previewCandidates}
-            disabled={loadingCandidates || (!blindBox.rewardGroup && !tagHandle)}
-          >
-            {loadingCandidates ? <><span className="spinner spinner-sm" /> Loading…</> : '👁 Preview Reward Pool'}
-          </button>
+        <div className="form-hint" style={{ marginTop: '.6rem' }}>
+          Only <strong>active</strong> blind boxes assign rewards when the trigger product is purchased.
         </div>
-
-        {candidatePreview && (() => {
-          const eligible = candidatePreview.eligibleCandidates ?? [];
-          const excluded = candidatePreview.excludedCandidates ?? [];
-          const total = candidatePreview.rawCollectionSize ?? (eligible.length + excluded.length);
-          return (
-            <div style={{ marginTop: '1.25rem' }}>
-              {/* Summary banner */}
-              <div className={`alert ${eligible.length > 0 ? 'alert-success' : 'alert-warning'} mb-4`} style={{ marginBottom: '1rem' }}>
-                <span className="alert-icon">{eligible.length > 0 ? '✓' : '⚠'}</span>
-                <div className="alert-body">
-                  <div className="alert-title">
-                    {eligible.length > 0
-                      ? `${eligible.length} eligible reward${eligible.length !== 1 ? 's' : ''}`
-                      : `0 eligible — ${total} product${total !== 1 ? 's' : ''} found, all excluded`}
-                  </div>
-                  {total > 0 && (
-                    <div style={{ fontSize: '.85rem' }}>
-                      {total} in collection · {eligible.length} eligible · {excluded.length} excluded
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Eligible */}
-              {eligible.length > 0 && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '.5rem', fontSize: '.875rem' }}>Eligible rewards</div>
-                  <div className="table-wrapper">
-                    <table>
-                      <thead><tr><th>Product</th><th>Variant</th><th>Inventory</th><th>Weight</th></tr></thead>
-                      <tbody>
-                        {eligible.map((c, i) => (
-                          <tr key={i}>
-                            <td className="td-primary">
-                              {c.productTitle ?? c.productId}
-                              {c.eligibleVariantCount > 1 && (
-                                <span className="badge badge-info" style={{ marginLeft: '.4rem', fontSize: '.7rem' }}>
-                                  {c.eligibleVariantCount} variants
-                                </span>
-                              )}
-                            </td>
-                            <td>{c.variantTitle ?? '—'}</td>
-                            <td>
-                              {c.inventoryQuantity !== null
-                                ? <span className={c.inventoryQuantity > 0 ? 'badge badge-success' : 'badge badge-danger'}>{c.inventoryQuantity}</span>
-                                : '—'}
-                            </td>
-                            <td className="code">{c.selectionWeight}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Excluded */}
-              {excluded.length > 0 && (
-                <div>
-                  <div style={{ fontWeight: 600, marginBottom: '.5rem', fontSize: '.875rem', color: 'var(--color-danger-text)' }}>
-                    Excluded ({excluded.length})
-                  </div>
-                  <div className="table-wrapper">
-                    <table>
-                      <thead><tr><th>Product</th><th>Reason</th><th>Status</th><th>Inventory</th><th>Detail</th></tr></thead>
-                      <tbody>
-                        {excluded.map((c, i) => (
-                          <tr key={i}>
-                            <td className="td-primary">{c.productTitle ?? c.productId ?? '—'}</td>
-                            <td><span className="badge badge-danger" style={{ fontSize: '.7rem' }}>{c.reason}</span></td>
-                            <td><span className="code" style={{ fontSize: '.75rem' }}>{c.productStatus ?? '—'}</span></td>
-                            <td>{c.inventoryQuantity !== null ? <span className="badge badge-danger">{c.inventoryQuantity}</span> : '—'}</td>
-                            <td className="text-xs text-muted">{c.message}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-      </Section>
-
-      {/* Readiness */}
-      <Section
-        title="Activation Readiness"
-        aside={
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={checkReadiness}
-            disabled={loadingReadiness}
-          >
-            {loadingReadiness ? <><span className="spinner spinner-sm" /> Checking…</> : '▶ Run Check'}
-          </button>
-        }
-      >
-        {!readiness && !loadingReadiness && (
-          <div className="text-muted text-sm">
-            Click "Run Check" to verify this blind box is ready for assignments.
-          </div>
-        )}
-
-        {readiness && (() => {
-          const isReady = readiness.status === 'ready';
-          return (
-            <>
-              <div className={`alert ${isReady ? 'alert-success' : 'alert-warning'} mb-4`} style={{ marginBottom: '1rem' }}>
-                <span className="alert-icon">{isReady ? '✓' : '⚠'}</span>
-                <div className="alert-body">
-                  <div className="alert-title">
-                    {isReady ? 'Ready for assignments' : 'Not ready — resolve issues below'}
-                  </div>
-                  <div style={{ fontSize: '.85rem', marginTop: '.25rem' }}>{readiness.summary}</div>
-                </div>
-              </div>
-
-              {readiness.collection && (
-                <div className="kv-list" style={{ marginBottom: '1rem' }}>
-                  <div className="kv-row">
-                    <span className="kv-label">Reward collection</span>
-                    <span className="kv-value">
-                      {readiness.collection.title ?? readiness.collection.id}
-                      {readiness.resolutionSource === 'product_tag' && (
-                        <span className="badge badge-info" style={{ marginLeft: '.5rem', fontSize: '.75rem' }}>via product tag</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="kv-row">
-                    <span className="kv-label">Reward products</span>
-                    <span className="kv-value">
-                      {readiness.rawCollectionSize} in collection
-                      {' · '}
-                      <span className={readiness.eligibleCandidates.length > 0 ? 'text-success' : 'text-danger'}>
-                        {readiness.eligibleCandidates.length} eligible
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {readiness.issues.length > 0 && (
-                <div className="health-grid">
-                  {readiness.issues.map((issue, i) => (
-                    <div className="health-row" key={i}>
-                      <div className="health-row-left">
-                        <span className="health-row-icon">❌</span>
-                        <div>
-                          <div className="health-row-label">{issue.code}</div>
-                          <div className="health-row-sub">{issue.message}</div>
-                        </div>
-                      </div>
-                      <StatusBadge status="failed" label="Fail" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
-          );
-        })()}
       </Section>
     </Layout>
   );

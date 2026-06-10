@@ -7,18 +7,15 @@ import {
   WebhookEventStatus,
 } from './status';
 
-export type RewardGroupSourceType = 'shopline_collection';
-
 export interface BlindBox {
   id: string;
   shop: string;
   name: string;
   description: string | null;
   status: BlindBoxStatus;
-  selectionStrategy: BlindBoxSelectionStrategy;
-  shoplineProductId: string | null;
-  shoplineVariantId: string | null;
-  productTitleSnapshot: string | null;
+  /** The SHOPLINE product the customer buys to trigger this blind box. */
+  triggerProductId: string | null;
+  triggerProductTitleSnapshot: string | null;
   configJson: string | null;
   createdAt: string;
   updatedAt: string;
@@ -28,10 +25,8 @@ export interface CreateBlindBoxInput {
   name: string;
   description?: string | null;
   status?: BlindBoxStatus;
-  selectionStrategy?: BlindBoxSelectionStrategy;
-  shoplineProductId?: string | null;
-  shoplineVariantId?: string | null;
-  productTitleSnapshot?: string | null;
+  triggerProductId?: string | null;
+  triggerProductTitleSnapshot?: string | null;
   configJson?: string | null;
 }
 
@@ -39,24 +34,22 @@ export interface NormalizedCreateBlindBoxInput {
   name: string;
   description: string | null;
   status: BlindBoxStatus;
-  selectionStrategy: BlindBoxSelectionStrategy;
-  shoplineProductId: string | null;
-  shoplineVariantId: string | null;
-  productTitleSnapshot: string | null;
+  triggerProductId: string | null;
+  triggerProductTitleSnapshot: string | null;
   configJson: string | null;
 }
 
+/**
+ * A reward product in a blind box's pool. Selection is inventory-weighted at
+ * resolution time (no stored weight): P(item) = live_stock / Σ live_stock.
+ */
 export interface BlindBoxPoolItem {
   id: string;
   shop: string;
   blindBoxId: string;
-  label: string;
-  sourceProductId: string | null;
-  sourceVariantId: string | null;
-  enabled: boolean;
-  weight: number;
-  inventoryQuantity: number;
-  metadata: string | null;
+  rewardProductId: string;
+  rewardVariantId: string | null;
+  rewardTitleSnapshot: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,25 +57,17 @@ export interface BlindBoxPoolItem {
 export interface UpsertBlindBoxPoolItemInput {
   id?: string;
   blindBoxId: string;
-  label: string;
-  sourceProductId?: string | null;
-  sourceVariantId?: string | null;
-  enabled?: boolean;
-  weight?: number;
-  inventoryQuantity?: number;
-  metadata?: string | null;
+  rewardProductId: string;
+  rewardVariantId?: string | null;
+  rewardTitleSnapshot?: string | null;
 }
 
 export interface NormalizedUpsertBlindBoxPoolItemInput {
   id: string | null;
   blindBoxId: string;
-  label: string;
-  sourceProductId: string | null;
-  sourceVariantId: string | null;
-  enabled: boolean;
-  weight: number;
-  inventoryQuantity: number;
-  metadata: string | null;
+  rewardProductId: string;
+  rewardVariantId: string | null;
+  rewardTitleSnapshot: string | null;
 }
 
 export interface BlindBoxProductMapping {
@@ -110,56 +95,6 @@ export interface NormalizedUpsertBlindBoxProductMappingInput {
   productId: string;
   productVariantId: string | null;
   enabled: boolean;
-}
-
-export interface RewardGroup {
-  id: string;
-  shop: string;
-  sourceType: RewardGroupSourceType;
-  shoplineCollectionId: string;
-  collectionTitleSnapshot: string | null;
-  status: BlindBoxStatus;
-  configJson: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpsertRewardGroupInput {
-  id?: string;
-  shoplineCollectionId: string;
-  collectionTitleSnapshot?: string | null;
-  status?: BlindBoxStatus;
-  configJson?: string | null;
-}
-
-export interface NormalizedUpsertRewardGroupInput {
-  id: string | null;
-  sourceType: RewardGroupSourceType;
-  shoplineCollectionId: string;
-  collectionTitleSnapshot: string | null;
-  status: BlindBoxStatus;
-  configJson: string | null;
-}
-
-export interface BlindBoxRewardGroupLink {
-  id: string;
-  shop: string;
-  blindBoxId: string;
-  rewardGroupId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpsertBlindBoxRewardGroupLinkInput {
-  id?: string;
-  blindBoxId: string;
-  rewardGroupId: string;
-}
-
-export interface NormalizedUpsertBlindBoxRewardGroupLinkInput {
-  id: string | null;
-  blindBoxId: string;
-  rewardGroupId: string;
 }
 
 export interface BlindBoxAssignment {

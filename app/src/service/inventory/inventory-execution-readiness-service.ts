@@ -215,9 +215,9 @@ export class InventoryExecutionReadinessService {
         shop,
         {
           id: poolItem.id,
-          label: poolItem.label,
-          sourceProductId: poolItem.sourceProductId,
-          sourceVariantId: poolItem.sourceVariantId,
+          label: poolItem.rewardTitleSnapshot,
+          sourceProductId: poolItem.rewardProductId,
+          sourceVariantId: poolItem.rewardVariantId,
         },
         options,
       );
@@ -250,9 +250,9 @@ export class InventoryExecutionReadinessService {
       shop,
       {
         id: poolItem.id,
-        label: poolItem.label,
-        sourceProductId: poolItem.sourceProductId,
-        sourceVariantId: poolItem.sourceVariantId,
+        label: poolItem.rewardTitleSnapshot,
+        sourceProductId: poolItem.rewardProductId,
+        sourceVariantId: poolItem.rewardVariantId,
       },
       options,
     );

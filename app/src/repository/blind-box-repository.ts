@@ -6,7 +6,6 @@ import {
   isSqliteUniqueConstraintError,
   normalizeNullableString,
   nowIsoString,
-  sqliteVariantKey,
 } from './helpers';
 
 interface BlindBoxRow {
@@ -15,10 +14,8 @@ interface BlindBoxRow {
   name: string;
   description: string | null;
   status: BlindBox['status'];
-  selection_strategy: BlindBox['selectionStrategy'];
-  shopline_product_id: string | null;
-  shopline_variant_id: string | null;
-  product_title_snapshot: string | null;
+  trigger_product_id: string | null;
+  trigger_product_title_snapshot: string | null;
   config_json: string | null;
   created_at: string;
   updated_at: string;
@@ -29,24 +26,35 @@ function mapBlindBoxRow(row: BlindBoxRow): BlindBox {
     id: row.id,
     shop: row.shop,
     name: row.name,
-    description: row.description,
+    description: normalizeNullableString(row.description),
     status: row.status,
-    selectionStrategy: row.selection_strategy,
-    shoplineProductId: normalizeNullableString(row.shopline_product_id),
-    shoplineVariantId: normalizeNullableString(row.shopline_variant_id),
-    productTitleSnapshot: normalizeNullableString(row.product_title_snapshot),
+    triggerProductId: normalizeNullableString(row.trigger_product_id),
+    triggerProductTitleSnapshot: normalizeNullableString(row.trigger_product_title_snapshot),
     configJson: normalizeNullableString(row.config_json),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
+const SELECT_COLUMNS = `
+  id,
+  shop,
+  name,
+  description,
+  status,
+  trigger_product_id,
+  trigger_product_title_snapshot,
+  config_json,
+  created_at,
+  updated_at
+`;
+
 export interface BlindBoxRepository {
   create(shop: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
   update(shop: string, blindBoxId: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox>;
   listByShop(shop: string): Promise<BlindBox[]>;
-  listByShoplineProductId(shop: string, shoplineProductId: string): Promise<BlindBox[]>;
   findById(shop: string, blindBoxId: string): Promise<BlindBox | null>;
+  delete(shop: string, blindBoxId: string): Promise<void>;
 }
 
 export class SqliteBlindBoxRepository implements BlindBoxRepository {
@@ -65,14 +73,12 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
             name,
             description,
             status,
-            selection_strategy,
-            shopline_product_id,
-            shopline_variant_id,
-            product_title_snapshot,
+            trigger_product_id,
+            trigger_product_title_snapshot,
             config_json,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           id,
@@ -80,10 +86,8 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
           input.name,
           input.description,
           input.status,
-          input.selectionStrategy,
-          input.shoplineProductId,
-          sqliteVariantKey(input.shoplineVariantId),
-          input.productTitleSnapshot,
+          input.triggerProductId,
+          input.triggerProductTitleSnapshot,
           input.configJson,
           timestamp,
           timestamp,
@@ -91,7 +95,7 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
       );
     } catch (error) {
       if (isSqliteUniqueConstraintError(error)) {
-        throw new ConflictError('A blind box with the same unique key already exists');
+        throw new ConflictError('Another blind box already uses this trigger product');
       }
 
       throw error;
@@ -108,35 +112,39 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
   async update(shop: string, blindBoxId: string, input: NormalizedCreateBlindBoxInput): Promise<BlindBox> {
     const timestamp = nowIsoString();
 
-    await this.db.run(
-      `
-        UPDATE blind_boxes
-        SET
-          name = ?,
-          description = ?,
-          status = ?,
-          selection_strategy = ?,
-          shopline_product_id = ?,
-          shopline_variant_id = ?,
-          product_title_snapshot = ?,
-          config_json = ?,
-          updated_at = ?
-        WHERE shop = ? AND id = ?
-      `,
-      [
-        input.name,
-        input.description,
-        input.status,
-        input.selectionStrategy,
-        input.shoplineProductId,
-        sqliteVariantKey(input.shoplineVariantId),
-        input.productTitleSnapshot,
-        input.configJson,
-        timestamp,
-        shop,
-        blindBoxId,
-      ],
-    );
+    try {
+      await this.db.run(
+        `
+          UPDATE blind_boxes
+          SET
+            name = ?,
+            description = ?,
+            status = ?,
+            trigger_product_id = ?,
+            trigger_product_title_snapshot = ?,
+            config_json = ?,
+            updated_at = ?
+          WHERE shop = ? AND id = ?
+        `,
+        [
+          input.name,
+          input.description,
+          input.status,
+          input.triggerProductId,
+          input.triggerProductTitleSnapshot,
+          input.configJson,
+          timestamp,
+          shop,
+          blindBoxId,
+        ],
+      );
+    } catch (error) {
+      if (isSqliteUniqueConstraintError(error)) {
+        throw new ConflictError('Another blind box already uses this trigger product');
+      }
+
+      throw error;
+    }
 
     const blindBox = await this.findById(shop, blindBoxId);
     if (!blindBox) {
@@ -149,19 +157,7 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
   async listByShop(shop: string): Promise<BlindBox[]> {
     const rows = await this.db.all<BlindBoxRow>(
       `
-        SELECT
-          id,
-          shop,
-          name,
-          description,
-          status,
-          selection_strategy,
-          shopline_product_id,
-          shopline_variant_id,
-          product_title_snapshot,
-          config_json,
-          created_at,
-          updated_at
+        SELECT ${SELECT_COLUMNS}
         FROM blind_boxes
         WHERE shop = ?
         ORDER BY created_at DESC
@@ -172,48 +168,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
     return rows.map(mapBlindBoxRow);
   }
 
-  async listByShoplineProductId(shop: string, shoplineProductId: string): Promise<BlindBox[]> {
-    const rows = await this.db.all<BlindBoxRow>(
-      `
-        SELECT
-          id,
-          shop,
-          name,
-          description,
-          status,
-          selection_strategy,
-          shopline_product_id,
-          shopline_variant_id,
-          product_title_snapshot,
-          config_json,
-          created_at,
-          updated_at
-        FROM blind_boxes
-        WHERE shop = ? AND shopline_product_id = ?
-        ORDER BY updated_at DESC, created_at DESC
-      `,
-      [shop, shoplineProductId],
-    );
-
-    return rows.map(mapBlindBoxRow);
-  }
-
   async findById(shop: string, blindBoxId: string): Promise<BlindBox | null> {
     const row = await this.db.get<BlindBoxRow>(
       `
-        SELECT
-          id,
-          shop,
-          name,
-          description,
-          status,
-          selection_strategy,
-          shopline_product_id,
-          shopline_variant_id,
-          product_title_snapshot,
-          config_json,
-          created_at,
-          updated_at
+        SELECT ${SELECT_COLUMNS}
         FROM blind_boxes
         WHERE shop = ? AND id = ?
       `,
@@ -221,6 +179,10 @@ export class SqliteBlindBoxRepository implements BlindBoxRepository {
     );
 
     return row ? mapBlindBoxRow(row) : null;
+  }
+
+  async delete(shop: string, blindBoxId: string): Promise<void> {
+    await this.db.run('DELETE FROM blind_boxes WHERE shop = ? AND id = ?', [shop, blindBoxId]);
   }
 }
 

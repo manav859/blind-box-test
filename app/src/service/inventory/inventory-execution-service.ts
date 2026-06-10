@@ -515,17 +515,17 @@ export class InventoryExecutionService {
       productId:
         operation.rewardProductId ||
         assignment.selectedRewardProductId ||
-        poolItem?.sourceProductId ||
+        poolItem?.rewardProductId ||
         null,
       variantId:
         operation.rewardVariantId ||
         assignment.selectedRewardVariantId ||
-        poolItem?.sourceVariantId ||
+        poolItem?.rewardVariantId ||
         null,
       titleSnapshot:
         operation.rewardTitleSnapshot ||
         assignment.selectedRewardTitleSnapshot ||
-        poolItem?.label ||
+        poolItem?.rewardTitleSnapshot ||
         null,
       variantTitleSnapshot:
         operation.rewardVariantTitleSnapshot ||

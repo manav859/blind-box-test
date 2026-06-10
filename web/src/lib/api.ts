@@ -6,34 +6,23 @@ export interface BlindBox {
   name: string;
   description: string | null;
   status: 'draft' | 'active' | 'archived';
-  selectionStrategy: 'uniform' | 'weighted';
-  shoplineProductId: string | null;
-  shoplineVariantId: string | null;
-  productTitleSnapshot: string | null;
+  triggerProductId: string | null;
+  triggerProductTitleSnapshot: string | null;
   configJson: string | null;
   createdAt: string;
   updatedAt: string;
-  rewardGroupLink?: RewardGroupLink | null;
-  rewardGroup?: RewardGroup | null;
+  /** Present on the single-box GET (/pools/:id). */
+  poolItems?: PoolItem[];
 }
 
-export interface RewardGroup {
-  id: string;
-  shop: string;
-  sourceType: 'shopline_collection';
-  shoplineCollectionId: string;
-  collectionTitleSnapshot: string | null;
-  status: 'draft' | 'active' | 'archived';
-  configJson: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface RewardGroupLink {
+/** A reward product in a blind box's pool. Selection is inventory-weighted. */
+export interface PoolItem {
   id: string;
   shop: string;
   blindBoxId: string;
-  rewardGroupId: string;
+  rewardProductId: string;
+  rewardVariantId: string | null;
+  rewardTitleSnapshot: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -115,13 +104,6 @@ export interface CatalogProduct {
     sku: string | null;
     inventoryQuantity: number | null;
   }>;
-}
-
-export interface CatalogCollection {
-  id: string;
-  title: string | null;
-  handle: string | null;
-  status: string | null;
 }
 
 export interface HealthStatus {
@@ -408,13 +390,25 @@ export const api = {
     return request<BlindBox>(`/pools/${id}`);
   },
 
+  createBlindBox(payload: {
+    name: string;
+    triggerProductId: string;
+    triggerProductTitleSnapshot?: string | null;
+    description?: string | null;
+  }): Promise<BlindBox> {
+    return request<BlindBox>('/pools', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   updateBlindBox(
     id: string,
     payload: {
       name?: string;
       description?: string | null;
       status?: string;
-      selectionStrategy?: string;
+      triggerProductId?: string | null;
     },
   ): Promise<BlindBox> {
     return request<BlindBox>(`/pools/${id}`, {
@@ -431,34 +425,24 @@ export const api = {
     return request<unknown>(`/pools/${blindBoxId}/reward-candidates`);
   },
 
-  // Reward Groups (collections)
-  listRewardGroups(): Promise<RewardGroup[]> {
-    return request<RewardGroup[]>('/reward-groups');
+  // Reward pool (blind_box_pool_items)
+  listRewards(blindBoxId: string): Promise<PoolItem[]> {
+    return request<PoolItem[]>(`/pools/${blindBoxId}/rewards`);
   },
 
-  createRewardGroup(payload: {
-    shoplineCollectionId: string;
-    collectionTitleSnapshot?: string | null;
-    status?: string;
-  }): Promise<RewardGroup> {
-    return request<RewardGroup>('/reward-groups', {
+  addReward(
+    blindBoxId: string,
+    payload: { rewardProductId: string; rewardVariantId?: string | null; rewardTitleSnapshot?: string | null },
+  ): Promise<PoolItem> {
+    return request<PoolItem>(`/pools/${blindBoxId}/rewards`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
-  // Reward Group Links
-  listRewardGroupLinks(): Promise<RewardGroupLink[]> {
-    return request<RewardGroupLink[]>('/reward-group-links');
-  },
-
-  upsertRewardGroupLink(payload: {
-    blindBoxId: string;
-    rewardGroupId: string;
-  }): Promise<RewardGroupLink> {
-    return request<RewardGroupLink>('/reward-group-links', {
-      method: 'POST',
-      body: JSON.stringify(payload),
+  removeReward(blindBoxId: string, poolItemId: string): Promise<{ id: string }> {
+    return request<{ id: string }>(`/pools/${blindBoxId}/rewards/${poolItemId}`, {
+      method: 'DELETE',
     });
   },
 
@@ -509,9 +493,5 @@ export const api = {
 
   getCatalogProduct(productId: string): Promise<CatalogProduct> {
     return request<CatalogProduct>(`/catalog/products/${encodeURIComponent(productId)}`);
-  },
-
-  listCatalogCollections(): Promise<CatalogCollection[]> {
-    return request<CatalogCollection[]>('/catalog/collections');
   },
 };

@@ -1,25 +1,18 @@
 import {
   BlindBox,
-  BlindBoxPoolItem,
   BlindBoxProductMapping,
   InventoryOperation,
   RewardCandidate,
 } from '../../domain/blind-box/types';
+import { BlindBoxSelectionStrategy } from '../../domain/blind-box/status';
 import { OrderPaidLineItem, OrderPaidWebhookPayload } from '../../domain/blind-box/order-paid';
 import {
   BlindBoxOrderDetectionResult,
   detectBlindBoxOrderLines,
 } from '../../domain/blind-box/order-detection';
-import { isBlindBoxProduct, getBlindBoxProductTags, parseBlindBoxCollectionTag } from '../../domain/blind-box/product-detection';
-import { extractRawTagFields, normalizeTags as normalizeTagsFromRecord } from '../../integration/shopline/catalog-gateway';
-import { evaluateEligiblePoolItems, selectPoolItemForBlindBox } from '../../domain/blind-box/selection';
 import { ValidationError } from '../../lib/errors';
 import { logger, Logger } from '../../lib/logger';
 import { BlindBoxRepository, getBlindBoxRepository } from '../../repository/blind-box-repository';
-import {
-  BlindBoxPoolItemRepository,
-  getBlindBoxPoolItemRepository,
-} from '../../repository/blind-box-pool-item-repository';
 import {
   BlindBoxProductMappingRepository,
   getBlindBoxProductMappingRepository,
@@ -38,27 +31,16 @@ import {
   getAssignmentInventoryBoundaryService,
 } from '../inventory/assignment-inventory-boundary-service';
 import { getRuntimeConfig } from '../../lib/config';
-import {
-  getRewardCandidateService,
-  RewardCandidateResolutionError,
-  RewardCandidateService,
-} from './reward-candidate-service';
-import {
-  BlindBoxDiscoveryService,
-  getBlindBoxDiscoveryService,
-} from './blind-box-discovery-service';
-import { getShoplineCatalogService, ShoplineCatalogService } from '../shopline/catalog-service';
-import { getOrderLineItems } from '../../domain/blind-box/order-paid';
+import { getRewardCandidateService, RewardCandidateService } from './reward-candidate-service';
+import { getOrderLineItems, getOrderContext, OrderContext } from '../../domain/blind-box/order-paid';
+
+// Selection is always inventory-weighted in the explicit-product-selection model.
+const SELECTION_STRATEGY: BlindBoxSelectionStrategy = 'weighted';
 
 export type AssignmentFailureReason =
   | 'BLIND_BOX_NOT_ACTIVE'
-  | 'REWARD_GROUP_NOT_LINKED'
-  | 'REWARD_COLLECTION_NOT_CONFIGURED'
-  | 'REWARD_COLLECTION_NOT_FOUND'
-  | 'EMPTY_REWARD_GROUP'
-  | 'NO_ELIGIBLE_REWARDS'
   | 'EMPTY_POOL'
-  | 'NO_ELIGIBLE_ITEMS'
+  | 'REWARD_POOL_OUT_OF_STOCK'
   | 'UNSUPPORTED_QUANTITY'
   | 'INVALID_WEIGHTING'
   | 'INVENTORY_WORKFLOW_FAILURE'
@@ -81,7 +63,7 @@ export interface AssignedBlindBoxOrderLine {
   selectedRewardProductId: string | null;
   selectedRewardVariantId: string | null;
   selectedRewardTitleSnapshot: string | null;
-  selectionStrategy: BlindBox['selectionStrategy'];
+  selectionStrategy: BlindBoxSelectionStrategy | null;
   inventoryOperationId: string;
   inventoryStatus: InventoryOperation['status'];
   wasExistingAssignment: boolean;
@@ -97,11 +79,8 @@ export interface PaidOrderProcessingSummary {
 
 export interface PaidOrderAssignmentServiceDependencies {
   blindBoxRepository: BlindBoxRepository;
-  blindBoxPoolItemRepository: BlindBoxPoolItemRepository;
   blindBoxProductMappingRepository: BlindBoxProductMappingRepository;
   blindBoxAssignmentRepository: BlindBoxAssignmentRepository;
-  blindBoxDiscoveryService: BlindBoxDiscoveryService;
-  catalogService: ShoplineCatalogService;
   rewardCandidateService: RewardCandidateService;
   assignmentInventoryBoundaryService: AssignmentInventoryBoundaryService;
   inventoryExecutionService: InventoryExecutionService;
@@ -131,31 +110,23 @@ function toAssignmentFailure(
   reason: AssignmentFailureReason,
   message: string,
 ): AssignmentProcessingFailure {
-  return {
-    blindBoxId,
-    lineItemId,
-    orderId,
-    reason,
-    message,
-  };
+  return { blindBoxId, lineItemId, orderId, reason, message };
 }
 
-function toAssignedBlindBoxOrderLine(
-  executionResult: {
-    assignmentId: string;
-    blindBoxId: string;
-    selectedPoolItemId: string | null;
-    selectedRewardProductId: string | null;
-    selectedRewardVariantId: string | null;
-    selectedRewardTitleSnapshot: string | null;
-    selectionStrategy: BlindBox['selectionStrategy'];
-    inventoryOperationId: string;
-    inventoryStatus: InventoryOperation['status'];
-    lineItemId: string;
-    orderId: string;
-    wasExistingAssignment: boolean;
-  },
-): AssignedBlindBoxOrderLine {
+function toAssignedBlindBoxOrderLine(executionResult: {
+  assignmentId: string;
+  blindBoxId: string;
+  selectedPoolItemId: string | null;
+  selectedRewardProductId: string | null;
+  selectedRewardVariantId: string | null;
+  selectedRewardTitleSnapshot: string | null;
+  selectionStrategy: BlindBoxSelectionStrategy | null;
+  inventoryOperationId: string;
+  inventoryStatus: InventoryOperation['status'];
+  lineItemId: string;
+  orderId: string;
+  wasExistingAssignment: boolean;
+}): AssignedBlindBoxOrderLine {
   return {
     blindBoxId: executionResult.blindBoxId,
     lineItemId: executionResult.lineItemId,
@@ -172,54 +143,53 @@ function toAssignedBlindBoxOrderLine(
   };
 }
 
-function toSyntheticBlindBoxReferenceMapping(blindBox: BlindBox): BlindBoxProductMapping | null {
-  if (!blindBox.shoplineProductId) {
+/**
+ * Synthetic mapping: order line product_id → blind box, keyed on the box's
+ * trigger product. This is how a paid order finds its blind box (DB lookup, no tags).
+ */
+function toTriggerProductMapping(blindBox: BlindBox): BlindBoxProductMapping | null {
+  if (!blindBox.triggerProductId) {
     return null;
   }
 
   return {
-    id: `blind-box-reference:${blindBox.id}`,
+    id: `blind-box-trigger:${blindBox.id}`,
     shop: blindBox.shop,
     blindBoxId: blindBox.id,
-    productId: blindBox.shoplineProductId,
-    productVariantId: blindBox.shoplineVariantId,
+    productId: blindBox.triggerProductId,
+    productVariantId: null,
     enabled: true,
     createdAt: blindBox.createdAt,
     updatedAt: blindBox.updatedAt,
   };
 }
 
-function selectRewardCandidate(
-  blindBox: BlindBox,
-  candidates: RewardCandidate[],
-  random: () => number,
-): RewardCandidate {
+/**
+ * Inventory-weighted random selection: P(item) = item.selectionWeight / Σ weight,
+ * where selectionWeight is the candidate's live inventory. Callers pass only
+ * in-stock candidates, so every weight is ≥ 1.
+ */
+function selectRewardCandidate(candidates: RewardCandidate[], random: () => number): RewardCandidate {
   if (!candidates.length) {
     throw new ValidationError('No eligible reward candidates are available for this blind box');
   }
 
-  if (blindBox.selectionStrategy === 'weighted') {
-    const totalWeight = candidates.reduce((sum, candidate) => {
-      if (!Number.isFinite(candidate.selectionWeight) || candidate.selectionWeight <= 0) {
-        throw new ValidationError('Weighted selection requires every reward candidate to have a positive weight');
-      }
-
-      return sum + candidate.selectionWeight;
-    }, 0);
-
-    let threshold = random() * totalWeight;
-    for (const candidate of candidates) {
-      threshold -= candidate.selectionWeight;
-      if (threshold < 0) {
-        return candidate;
-      }
+  const totalWeight = candidates.reduce((sum, candidate) => {
+    if (!Number.isFinite(candidate.selectionWeight) || candidate.selectionWeight <= 0) {
+      throw new ValidationError('Inventory-weighted selection requires every candidate to have positive stock');
     }
+    return sum + candidate.selectionWeight;
+  }, 0);
 
-    return candidates[candidates.length - 1];
+  let threshold = random() * totalWeight;
+  for (const candidate of candidates) {
+    threshold -= candidate.selectionWeight;
+    if (threshold < 0) {
+      return candidate;
+    }
   }
 
-  const index = Math.floor(random() * candidates.length);
-  return candidates[Math.min(index, candidates.length - 1)];
+  return candidates[candidates.length - 1];
 }
 
 export class PaidOrderAssignmentService {
@@ -239,12 +209,12 @@ export class PaidOrderAssignmentService {
       })),
     });
 
+    const orderContext = getOrderContext(payload);
     const detectionMappings = await this.loadOrderDetectionMappings(shop);
-    const productCache = await this.loadProductCache(shop, payload);
     const detections: BlindBoxOrderDetectionResult[] = [];
 
-    for (const lineItem of getOrderLineItems(payload)) {
-      detections.push(await this.detectBlindBoxOrderLine(shop, lineItem, detectionMappings, productCache));
+    for (const lineItem of lineItems) {
+      detections.push(...detectBlindBoxOrderLines({ id: lineItem.id, line_items: [lineItem] }, detectionMappings));
     }
 
     const matchedDetections = detections.filter((result) => result.reason === 'BLIND_BOX_MATCH');
@@ -255,8 +225,7 @@ export class PaidOrderAssignmentService {
 
     for (const detection of matchedDetections) {
       const mapping = detection.mapping as BlindBoxProductMapping;
-      const outcome = await this.processMatchedBlindBoxLine(shop, payload.id, mapping, detection.lineItem);
-
+      const outcome = await this.processMatchedBlindBoxLine(shop, payload.id, mapping, detection.lineItem, orderContext);
       if ('reason' in outcome) {
         failures.push(outcome);
       } else {
@@ -283,131 +252,10 @@ export class PaidOrderAssignmentService {
     };
   }
 
-  private async loadProductCache(
-    shop: string,
-    payload: OrderPaidWebhookPayload,
-  ): Promise<Map<string, Awaited<ReturnType<ShoplineCatalogService['getProduct']>> | null>> {
-    const productIds = [...new Set(getOrderLineItems(payload).map((lineItem) => lineItem.product_id).filter(Boolean))];
-    const entries = await Promise.all(
-      productIds.map(async (productId) => {
-        try {
-          const product = await this.dependencies.catalogService.getProduct(shop, productId);
-          const rawRecord = product.raw as Record<string, unknown>;
-          const rawTagFields = extractRawTagFields(rawRecord);
-          const tagsNormalized = normalizeTagsFromRecord(rawRecord);
-          const collectionHandle = parseBlindBoxCollectionTag(getBlindBoxProductTags(product));
-
-          this.dependencies.logger.info('paid-order: product detail fetched', {
-            shop,
-            orderId: payload.id,
-            productId: product.id,
-            title: product.title,
-            rawTagFields,
-            tagsNormalized,
-            isBlindBox: isBlindBoxProduct(product),
-            extractedCollectionHandle: collectionHandle,
-          });
-
-          if (isBlindBoxProduct(product) && !collectionHandle) {
-            this.dependencies.logger.warn('paid-order: MISSING_COLLECTION_TAG — blind-box product has no blind-box-collection: tag', {
-              shop,
-              orderId: payload.id,
-              productId: product.id,
-              title: product.title,
-              tagsNormalized,
-            });
-          }
-
-          return [productId, product] as const;
-        } catch (error) {
-          this.dependencies.logger.warn('paid-order: failed to load SHOPLINE product — falling back to legacy mappings', {
-            shop,
-            orderId: payload.id,
-            productId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-          return [productId, null] as const;
-        }
-      }),
-    );
-
-    return new Map(entries);
-  }
-
-  private async detectBlindBoxOrderLine(
-    shop: string,
-    lineItem: OrderPaidLineItem,
-    detectionMappings: BlindBoxProductMapping[],
-    productCache: Map<string, Awaited<ReturnType<ShoplineCatalogService['getProduct']>> | null>,
-  ): Promise<BlindBoxOrderDetectionResult> {
-    if (!lineItem.id) {
-      return {
-        lineItem,
-        reason: 'MISSING_LINE_ITEM_ID',
-      };
-    }
-
-    if (!lineItem.product_id) {
-      return {
-        lineItem,
-        reason: 'MISSING_PRODUCT_ID',
-      };
-    }
-
-    const product = productCache.get(lineItem.product_id) || null;
-    const productIsBlindBox = product ? isBlindBoxProduct(product) : false;
-
-    this.dependencies.logger.info('paid-order: line item detection', {
-      shop,
-      lineItemId: lineItem.id,
-      productId: lineItem.product_id,
-      title: lineItem.title ?? null,
-      productFound: Boolean(product),
-      isBlindBox: productIsBlindBox,
-      tags: product?.tags ?? [],
-    });
-
-    if (product && productIsBlindBox) {
-      const blindBox = await this.dependencies.blindBoxDiscoveryService.ensureBlindBoxForDetectedProduct(shop, product, {
-        productVariantId: lineItem.variant_id || null,
-      });
-      const syntheticMapping = toSyntheticBlindBoxReferenceMapping(blindBox);
-
-      if (syntheticMapping) {
-        this.dependencies.logger.info('paid-order: blind-box match via product tag', {
-          shop,
-          lineItemId: lineItem.id,
-          productId: lineItem.product_id,
-          blindBoxId: blindBox.id,
-        });
-        return {
-          lineItem,
-          reason: 'BLIND_BOX_MATCH',
-          mapping: syntheticMapping,
-        };
-      }
-    }
-
-    return detectBlindBoxOrderLines(
-      {
-        id: lineItem.id,
-        line_items: [lineItem],
-      },
-      detectionMappings,
-    )[0];
-  }
-
   private async loadOrderDetectionMappings(shop: string): Promise<BlindBoxProductMapping[]> {
     const blindBoxes = await this.dependencies.blindBoxRepository.listByShop(shop);
 
-    // FIX 4 — only ACTIVE blind boxes may enter the assignment flow. Activation
-    // is gated by assertReadyForActivation (blind-box-activation-readiness-service),
-    // which proves the box has a resolvable, non-empty, eligible reward pool — so
-    // an active box is, by construction, a *configured* one. Phantom/auto-detected
-    // boxes are created as DRAFT (see blind-box-discovery-service) and are excluded
-    // here, so they can never trigger reward selection or an inventory decrement.
-    // (Reward resolution is driven by the product's "blind-box-collection:" tag,
-    // not the reward-group link, so the link is NOT a reliable "configured" signal.)
+    // Only ACTIVE boxes participate. Match by trigger product (DB lookup, no tags).
     const activeBlindBoxes = blindBoxes.filter((blindBox) => blindBox.status === 'active');
     const activeBlindBoxIds = new Set(activeBlindBoxes.map((blindBox) => blindBox.id));
     const skippedCount = blindBoxes.length - activeBlindBoxes.length;
@@ -420,16 +268,18 @@ export class PaidOrderAssignmentService {
       });
     }
 
-    const directReferenceMappings = activeBlindBoxes
-      .map(toSyntheticBlindBoxReferenceMapping)
+    const triggerMappings = activeBlindBoxes
+      .map(toTriggerProductMapping)
       .filter((mapping): mapping is BlindBoxProductMapping => Boolean(mapping));
-    const blindBoxIdsWithDirectReference = new Set(directReferenceMappings.map((mapping) => mapping.blindBoxId));
+    const blindBoxIdsWithTrigger = new Set(triggerMappings.map((mapping) => mapping.blindBoxId));
+
+    // Legacy explicit product mappings (still supported) for active boxes only.
     const legacyMappings = (await this.dependencies.blindBoxProductMappingRepository.listByShop(shop)).filter(
       (mapping) =>
-        !blindBoxIdsWithDirectReference.has(mapping.blindBoxId) && activeBlindBoxIds.has(mapping.blindBoxId),
+        !blindBoxIdsWithTrigger.has(mapping.blindBoxId) && activeBlindBoxIds.has(mapping.blindBoxId),
     );
 
-    return [...directReferenceMappings, ...legacyMappings];
+    return [...triggerMappings, ...legacyMappings];
   }
 
   private async processMatchedBlindBoxLine(
@@ -437,9 +287,10 @@ export class PaidOrderAssignmentService {
     orderId: string,
     mapping: BlindBoxProductMapping,
     lineItem: OrderPaidLineItem,
+    orderContext: OrderContext,
   ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
     const assignmentIdempotencyKey = createIdempotencyKey(shop, orderId, lineItem.id);
-    let existingAssignment = await this.dependencies.blindBoxAssignmentRepository.findByOrderLine(
+    const existingAssignment = await this.dependencies.blindBoxAssignmentRepository.findByOrderLine(
       shop,
       orderId,
       lineItem.id,
@@ -455,7 +306,7 @@ export class PaidOrderAssignmentService {
         lineItem.id,
         orderId,
         'BLIND_BOX_NOT_ACTIVE',
-        'Mapped blind-box product reference is missing or not active',
+        'Matched blind box is missing or not active',
       );
     }
 
@@ -469,62 +320,44 @@ export class PaidOrderAssignmentService {
       );
     }
 
-    const usesCollectionLinkedRewards =
-      Boolean(existingAssignment?.selectedRewardProductId) || Boolean(blindBox.shoplineProductId);
-
-    if (!usesCollectionLinkedRewards) {
-      return toAssignmentFailure(
-        blindBox.id,
-        lineItem.id,
-        orderId,
-        'REWARD_COLLECTION_NOT_CONFIGURED',
-        'Blind-box product is missing a SHOPLINE product ID. ' +
-        'Ensure the product is tagged with "blind-box" and "blind-box-collection:<handle>" in SHOPLINE.',
-      );
-    }
-
-    return this.processCollectionLinkedLine(
+    return this.processPoolLine(
       shop,
       orderId,
       blindBox,
       lineItem,
       existingAssignment,
       assignmentIdempotencyKey,
+      orderContext,
     );
   }
 
-  private async processCollectionLinkedLine(
+  private async processPoolLine(
     shop: string,
     orderId: string,
     blindBox: BlindBox,
     lineItem: OrderPaidLineItem,
-    existingAssignment:
-      | Awaited<ReturnType<BlindBoxAssignmentRepository['findByOrderLine']>>
-      | null,
+    existingAssignment: Awaited<ReturnType<BlindBoxAssignmentRepository['findByOrderLine']>> | null,
     assignmentIdempotencyKey: string,
+    orderContext: OrderContext,
   ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
+    // Replay: a reward was already chosen for this order line — re-persist the
+    // same selection (idempotent), never re-roll.
     if (existingAssignment?.selectedRewardProductId) {
       const persistedBoundary =
-        await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
-          shop,
-          {
-            blindBoxId: existingAssignment.blindBoxId,
-            orderId,
-            orderLineId: lineItem.id,
-            rewardGroupId: existingAssignment.rewardGroupId,
-            selectedRewardProductId: existingAssignment.selectedRewardProductId,
-            selectedRewardVariantId: existingAssignment.selectedRewardVariantId,
-            selectedRewardTitleSnapshot: existingAssignment.selectedRewardTitleSnapshot,
-            selectedRewardVariantTitleSnapshot: existingAssignment.selectedRewardVariantTitleSnapshot,
-            selectedRewardPayloadJson: existingAssignment.selectedRewardPayloadJson,
-            selectionStrategy:
-              (existingAssignment.selectionStrategy || blindBox.selectionStrategy) as NonNullable<
-                BlindBox['selectionStrategy']
-              >,
-            idempotencyKey: assignmentIdempotencyKey,
-            assignmentMetadata: existingAssignment.metadata,
-          },
-        );
+        await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(shop, {
+          blindBoxId: existingAssignment.blindBoxId,
+          orderId,
+          orderLineId: lineItem.id,
+          rewardGroupId: existingAssignment.rewardGroupId,
+          selectedRewardProductId: existingAssignment.selectedRewardProductId,
+          selectedRewardVariantId: existingAssignment.selectedRewardVariantId,
+          selectedRewardTitleSnapshot: existingAssignment.selectedRewardTitleSnapshot,
+          selectedRewardVariantTitleSnapshot: existingAssignment.selectedRewardVariantTitleSnapshot,
+          selectedRewardPayloadJson: existingAssignment.selectedRewardPayloadJson,
+          selectionStrategy: existingAssignment.selectionStrategy || SELECTION_STRATEGY,
+          idempotencyKey: assignmentIdempotencyKey,
+          assignmentMetadata: existingAssignment.metadata,
+        });
 
       return this.handlePersistedBoundary(
         shop,
@@ -537,56 +370,15 @@ export class PaidOrderAssignmentService {
       );
     }
 
-    let preview;
-    try {
-      preview = await this.dependencies.rewardCandidateService.previewCandidatesForBlindBox(shop, blindBox.id);
-    } catch (error) {
-      if (error instanceof RewardCandidateResolutionError) {
-        if (
-          error.code === 'BLIND_BOX_COLLECTION_NOT_CONFIGURED' ||
-          error.code === 'BLIND_BOX_COLLECTION_TAG_INVALID' ||
-          error.code === 'BLIND_BOX_REWARD_GROUP_MISSING'
-        ) {
-          return toAssignmentFailure(
-            blindBox.id,
-            lineItem.id,
-            orderId,
-            'REWARD_COLLECTION_NOT_CONFIGURED',
-            error.message,
-          );
-        }
+    const preview = await this.dependencies.rewardCandidateService.previewCandidatesForBlindBox(shop, blindBox.id);
 
-        if (error.code === 'BLIND_BOX_COLLECTION_NOT_FOUND') {
-          return toAssignmentFailure(
-            blindBox.id,
-            lineItem.id,
-            orderId,
-            'REWARD_COLLECTION_NOT_FOUND',
-            error.message,
-          );
-        }
-      }
-
-      if (error instanceof Error && error.message.toLowerCase().includes('reward group')) {
-        return toAssignmentFailure(
-          blindBox.id,
-          lineItem.id,
-          orderId,
-          'REWARD_GROUP_NOT_LINKED',
-          error.message,
-        );
-      }
-
-      throw error;
-    }
-
-    if (preview.rawCollectionSize === 0) {
+    if (preview.poolSize === 0) {
       return toAssignmentFailure(
         blindBox.id,
         lineItem.id,
         orderId,
-        'EMPTY_REWARD_GROUP',
-        'The linked SHOPLINE reward collection does not contain any products',
+        'EMPTY_POOL',
+        'This blind box has no reward products in its pool',
       );
     }
 
@@ -595,59 +387,60 @@ export class PaidOrderAssignmentService {
         blindBox.id,
         lineItem.id,
         orderId,
-        'NO_ELIGIBLE_REWARDS',
+        'REWARD_POOL_OUT_OF_STOCK',
         preview.excludedCandidates[0]?.message ||
-          'The linked SHOPLINE reward collection does not currently expose any eligible candidates',
+          'Every reward product in this blind box is currently out of stock',
       );
     }
 
     let selectedReward: RewardCandidate;
     try {
-      selectedReward = selectRewardCandidate(blindBox, preview.eligibleCandidates, this.dependencies.random);
+      selectedReward = selectRewardCandidate(preview.eligibleCandidates, this.dependencies.random);
     } catch (error) {
       if (error instanceof ValidationError) {
         return toAssignmentFailure(blindBox.id, lineItem.id, orderId, 'INVALID_WEIGHTING', error.message);
       }
-
       throw error;
     }
 
+    const totalWeight = preview.eligibleCandidates.reduce((sum, candidate) => sum + candidate.selectionWeight, 0);
     const assignmentMetadata = JSON.stringify({
+      order: {
+        name: orderContext.orderName,
+        customerName: orderContext.customerName,
+        customerEmail: orderContext.customerEmail,
+      },
       orderLine: summarizeLineItem(lineItem),
-      rewardGroup: {
-        id: preview.rewardGroup?.id || null,
-        collectionId: preview.collection.id,
-        collectionHandle: preview.collection.handle,
-        resolutionSource: preview.resolutionSource,
-        rawCollectionSize: preview.rawCollectionSize,
+      pool: {
+        poolSize: preview.poolSize,
+        eligibleCandidateCount: preview.eligibleCandidates.length,
         excludedCandidateCount: preview.excludedCandidates.length,
       },
       selection: {
-        eligibleCandidateCount: preview.eligibleCandidates.length,
+        strategy: 'inventory_weighted',
         selectedRewardProductId: selectedReward.productId,
         selectedRewardVariantId: selectedReward.variantId,
-        strategy: blindBox.selectionStrategy,
+        selectedRewardStock: selectedReward.selectionWeight,
+        totalPoolStock: totalWeight,
+        selectionProbability: totalWeight > 0 ? selectedReward.selectionWeight / totalWeight : null,
       },
     });
 
     const persistedBoundary =
-      await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
-        shop,
-        {
-          blindBoxId: blindBox.id,
-          orderId,
-          orderLineId: lineItem.id,
-          rewardGroupId: preview.rewardGroup?.id || null,
-          selectedRewardProductId: selectedReward.productId,
-          selectedRewardVariantId: selectedReward.variantId,
-          selectedRewardTitleSnapshot: selectedReward.productTitle,
-          selectedRewardVariantTitleSnapshot: selectedReward.variantTitle,
-          selectedRewardPayloadJson: selectedReward.payloadJson,
-          selectionStrategy: blindBox.selectionStrategy,
-          idempotencyKey: assignmentIdempotencyKey,
-          assignmentMetadata,
-        },
-      );
+      await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(shop, {
+        blindBoxId: blindBox.id,
+        orderId,
+        orderLineId: lineItem.id,
+        rewardGroupId: null,
+        selectedRewardProductId: selectedReward.productId,
+        selectedRewardVariantId: selectedReward.variantId,
+        selectedRewardTitleSnapshot: selectedReward.productTitle,
+        selectedRewardVariantTitleSnapshot: selectedReward.variantTitle,
+        selectedRewardPayloadJson: selectedReward.payloadJson,
+        selectionStrategy: SELECTION_STRATEGY,
+        idempotencyKey: assignmentIdempotencyKey,
+        assignmentMetadata,
+      });
 
     return this.handlePersistedBoundary(
       shop,
@@ -657,141 +450,6 @@ export class PaidOrderAssignmentService {
       persistedBoundary.assignment,
       persistedBoundary.inventoryOperation,
       persistedBoundary.wasExistingAssignment,
-    );
-  }
-
-  private async processLegacyManualPoolLine(
-    shop: string,
-    orderId: string,
-    blindBox: BlindBox,
-    lineItem: OrderPaidLineItem,
-    existingAssignment:
-      | Awaited<ReturnType<BlindBoxAssignmentRepository['findByOrderLine']>>
-      | null,
-    assignmentIdempotencyKey: string,
-  ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
-    this.dependencies.logger.warn('Using deprecated legacy manual pool blind-box path', {
-      shop,
-      blindBoxId: blindBox.id,
-      orderId,
-      orderLineId: lineItem.id,
-    });
-
-    let selectedPoolItemId = existingAssignment?.selectedPoolItemId || null;
-    const wasExistingAssignment = Boolean(existingAssignment?.selectedPoolItemId);
-
-    if (!selectedPoolItemId) {
-      const poolItems = await this.dependencies.blindBoxPoolItemRepository.listByBlindBoxId(shop, blindBox.id);
-      if (!poolItems.length) {
-        return toAssignmentFailure(
-          blindBox.id,
-          lineItem.id,
-          orderId,
-          'EMPTY_POOL',
-          'Blind box has no configured legacy pool items',
-        );
-      }
-
-      const { eligibleItems } = evaluateEligiblePoolItems(poolItems);
-      if (!eligibleItems.length) {
-        return toAssignmentFailure(
-          blindBox.id,
-          lineItem.id,
-          orderId,
-          'NO_ELIGIBLE_ITEMS',
-          'Blind box has no enabled in-stock legacy pool items',
-        );
-      }
-
-      let selectedPoolItem: BlindBoxPoolItem;
-      try {
-        selectedPoolItem = selectPoolItemForBlindBox(blindBox, poolItems, {
-          random: this.dependencies.random,
-        });
-      } catch (error) {
-        if (error instanceof ValidationError) {
-          return toAssignmentFailure(
-            blindBox.id,
-            lineItem.id,
-            orderId,
-            'INVALID_WEIGHTING',
-            error.message,
-          );
-        }
-
-        throw error;
-      }
-
-      const assignmentMetadata = JSON.stringify({
-        orderLine: summarizeLineItem(lineItem),
-        selection: {
-          eligibleItemCount: eligibleItems.length,
-          selectedPoolItemId: selectedPoolItem.id,
-          strategy: blindBox.selectionStrategy,
-          mode: 'legacy_manual_pool',
-        },
-      });
-
-      const persistedBoundary =
-        await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
-          shop,
-          {
-            blindBoxId: blindBox.id,
-            orderId,
-            orderLineId: lineItem.id,
-            selectedPoolItemId: selectedPoolItem.id,
-            selectionStrategy: blindBox.selectionStrategy,
-            idempotencyKey: assignmentIdempotencyKey,
-            assignmentMetadata,
-          },
-        );
-
-      return this.handlePersistedBoundary(
-        shop,
-        blindBox,
-        lineItem,
-        orderId,
-        persistedBoundary.assignment,
-        persistedBoundary.inventoryOperation,
-        persistedBoundary.wasExistingAssignment,
-      );
-    }
-
-    if (!existingAssignment || !selectedPoolItemId) {
-      return toAssignmentFailure(
-        blindBox.id,
-        lineItem.id,
-        orderId,
-        'INVENTORY_WORKFLOW_FAILURE',
-        'Legacy blind-box assignment could not be finalized for inventory execution',
-      );
-    }
-
-    const persistedBoundary =
-      await this.dependencies.assignmentInventoryBoundaryService.persistAssignmentInventoryBoundary(
-        shop,
-        {
-          blindBoxId: existingAssignment.blindBoxId,
-          orderId,
-          orderLineId: lineItem.id,
-          selectedPoolItemId,
-          selectionStrategy:
-            (existingAssignment.selectionStrategy || blindBox.selectionStrategy) as NonNullable<
-              BlindBox['selectionStrategy']
-            >,
-          idempotencyKey: assignmentIdempotencyKey,
-          assignmentMetadata: existingAssignment.metadata,
-        },
-      );
-
-    return this.handlePersistedBoundary(
-      shop,
-      blindBox,
-      lineItem,
-      orderId,
-      persistedBoundary.assignment,
-      persistedBoundary.inventoryOperation,
-      persistedBoundary.wasExistingAssignment || wasExistingAssignment,
     );
   }
 
@@ -807,18 +465,18 @@ export class PaidOrderAssignmentService {
       selectedRewardProductId: string | null;
       selectedRewardVariantId: string | null;
       selectedRewardTitleSnapshot: string | null;
-      selectionStrategy: BlindBox['selectionStrategy'] | null;
+      selectionStrategy: BlindBoxSelectionStrategy | null;
     },
     inventoryOperation: InventoryOperation,
     wasExistingAssignment: boolean,
   ): Promise<AssignedBlindBoxOrderLine | AssignmentProcessingFailure> {
-    if (!assignment.selectedPoolItemId && !assignment.selectedRewardProductId) {
+    if (!assignment.selectedRewardProductId) {
       return toAssignmentFailure(
         blindBox.id,
         lineItem.id,
         orderId,
         'INVENTORY_WORKFLOW_FAILURE',
-        'Inventory operation is missing both legacy pool-item and selected reward-product context',
+        'Inventory operation is missing the selected reward-product context',
       );
     }
 
@@ -833,7 +491,7 @@ export class PaidOrderAssignmentService {
         selectedRewardVariantId: assignment.selectedRewardVariantId || inventoryOperation.rewardVariantId,
         selectedRewardTitleSnapshot:
           assignment.selectedRewardTitleSnapshot || inventoryOperation.rewardTitleSnapshot,
-        selectionStrategy: assignment.selectionStrategy || blindBox.selectionStrategy,
+        selectionStrategy: assignment.selectionStrategy || SELECTION_STRATEGY,
         inventoryOperationId: inventoryOperation.id,
         inventoryStatus: inventoryOperation.status,
         wasExistingAssignment,
@@ -881,7 +539,7 @@ export class PaidOrderAssignmentService {
         selectedRewardVariantId: assignment.selectedRewardVariantId || inventoryOperation.rewardVariantId,
         selectedRewardTitleSnapshot:
           assignment.selectedRewardTitleSnapshot || inventoryOperation.rewardTitleSnapshot,
-        selectionStrategy: assignment.selectionStrategy || blindBox.selectionStrategy,
+        selectionStrategy: assignment.selectionStrategy || SELECTION_STRATEGY,
         inventoryOperationId: inventoryOperation.id,
         inventoryStatus: inventoryOperation.status,
         wasExistingAssignment,
@@ -891,18 +549,10 @@ export class PaidOrderAssignmentService {
     const executionResult = await this.dependencies.inventoryExecutionService.executeInventoryOperation(
       shop,
       inventoryOperation.id,
-      {
-        trigger: 'webhook',
-      },
+      { trigger: 'webhook' },
     );
 
-    return this.mapExecutionResultToOutcome(
-      blindBox,
-      lineItem,
-      orderId,
-      executionResult,
-      wasExistingAssignment,
-    );
+    return this.mapExecutionResultToOutcome(blindBox, lineItem, orderId, executionResult, wasExistingAssignment);
   }
 
   private mapExecutionResultToOutcome(
@@ -927,7 +577,7 @@ export class PaidOrderAssignmentService {
           executionResult.assignment.selectedRewardTitleSnapshot ||
           executionResult.operation.rewardTitleSnapshot ||
           executionResult.rewardTarget.titleSnapshot,
-        selectionStrategy: executionResult.assignment.selectionStrategy || blindBox.selectionStrategy,
+        selectionStrategy: executionResult.assignment.selectionStrategy || SELECTION_STRATEGY,
         inventoryOperationId: executionResult.operation.id,
         inventoryStatus: executionResult.operation.status,
         wasExistingAssignment,
@@ -956,11 +606,8 @@ export class PaidOrderAssignmentService {
 
 export async function getPaidOrderAssignmentService(): Promise<PaidOrderAssignmentService> {
   const blindBoxRepository = await getBlindBoxRepository();
-  const blindBoxPoolItemRepository = await getBlindBoxPoolItemRepository();
   const blindBoxProductMappingRepository = await getBlindBoxProductMappingRepository();
   const blindBoxAssignmentRepository = await getBlindBoxAssignmentRepository();
-  const blindBoxDiscoveryService = await getBlindBoxDiscoveryService();
-  const catalogService = await getShoplineCatalogService();
   const rewardCandidateService = await getRewardCandidateService();
   const assignmentInventoryBoundaryService = await getAssignmentInventoryBoundaryService();
   const inventoryExecutionService = await getInventoryExecutionService();
@@ -968,11 +615,8 @@ export async function getPaidOrderAssignmentService(): Promise<PaidOrderAssignme
 
   return new PaidOrderAssignmentService({
     blindBoxRepository,
-    blindBoxPoolItemRepository,
     blindBoxProductMappingRepository,
     blindBoxAssignmentRepository,
-    blindBoxDiscoveryService,
-    catalogService,
     rewardCandidateService,
     assignmentInventoryBoundaryService,
     inventoryExecutionService,

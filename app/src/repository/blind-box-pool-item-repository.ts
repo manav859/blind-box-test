@@ -2,20 +2,15 @@ import { randomUUID } from 'crypto';
 import { BlindBoxDatabase, getBlindBoxDatabase } from '../db/client';
 import { NotFoundError } from '../lib/errors';
 import { BlindBoxPoolItem, NormalizedUpsertBlindBoxPoolItemInput } from '../domain/blind-box/types';
-import { fromSqliteBoolean, toSqliteBoolean } from '../domain/blind-box/validation';
 import { normalizeNullableString, nowIsoString } from './helpers';
 
 interface BlindBoxPoolItemRow {
   id: string;
   shop: string;
   blind_box_id: string;
-  label: string;
-  source_product_id: string | null;
-  source_variant_id: string | null;
-  enabled: number;
-  weight: number;
-  inventory_quantity: number;
-  metadata: string | null;
+  reward_product_id: string;
+  reward_variant_id: string | null;
+  reward_title_snapshot: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,22 +20,30 @@ function mapBlindBoxPoolItemRow(row: BlindBoxPoolItemRow): BlindBoxPoolItem {
     id: row.id,
     shop: row.shop,
     blindBoxId: row.blind_box_id,
-    label: row.label,
-    sourceProductId: normalizeNullableString(row.source_product_id),
-    sourceVariantId: normalizeNullableString(row.source_variant_id),
-    enabled: fromSqliteBoolean(row.enabled),
-    weight: row.weight,
-    inventoryQuantity: row.inventory_quantity,
-    metadata: normalizeNullableString(row.metadata),
+    rewardProductId: row.reward_product_id,
+    rewardVariantId: normalizeNullableString(row.reward_variant_id),
+    rewardTitleSnapshot: normalizeNullableString(row.reward_title_snapshot),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
+const SELECT_COLUMNS = `
+  id,
+  shop,
+  blind_box_id,
+  reward_product_id,
+  reward_variant_id,
+  reward_title_snapshot,
+  created_at,
+  updated_at
+`;
+
 export interface BlindBoxPoolItemRepository {
   upsert(shop: string, input: NormalizedUpsertBlindBoxPoolItemInput): Promise<BlindBoxPoolItem>;
   listByBlindBoxId(shop: string, blindBoxId: string): Promise<BlindBoxPoolItem[]>;
   findById(shop: string, poolItemId: string): Promise<BlindBoxPoolItem | null>;
+  deleteById(shop: string, blindBoxId: string, poolItemId: string): Promise<void>;
 }
 
 export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemRepository {
@@ -57,25 +60,17 @@ export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemReposit
           UPDATE blind_box_pool_items
           SET
             blind_box_id = ?,
-            label = ?,
-            source_product_id = ?,
-            source_variant_id = ?,
-            enabled = ?,
-            weight = ?,
-            inventory_quantity = ?,
-            metadata = ?,
+            reward_product_id = ?,
+            reward_variant_id = ?,
+            reward_title_snapshot = ?,
             updated_at = ?
           WHERE shop = ? AND id = ?
         `,
         [
           input.blindBoxId,
-          input.label,
-          input.sourceProductId,
-          input.sourceVariantId,
-          toSqliteBoolean(input.enabled),
-          input.weight,
-          input.inventoryQuantity,
-          input.metadata,
+          input.rewardProductId,
+          input.rewardVariantId,
+          input.rewardTitleSnapshot,
           timestamp,
           shop,
           id,
@@ -88,28 +83,20 @@ export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemReposit
             id,
             shop,
             blind_box_id,
-            label,
-            source_product_id,
-            source_variant_id,
-            enabled,
-            weight,
-            inventory_quantity,
-            metadata,
+            reward_product_id,
+            reward_variant_id,
+            reward_title_snapshot,
             created_at,
             updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           id,
           shop,
           input.blindBoxId,
-          input.label,
-          input.sourceProductId,
-          input.sourceVariantId,
-          toSqliteBoolean(input.enabled),
-          input.weight,
-          input.inventoryQuantity,
-          input.metadata,
+          input.rewardProductId,
+          input.rewardVariantId,
+          input.rewardTitleSnapshot,
           timestamp,
           timestamp,
         ],
@@ -127,19 +114,7 @@ export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemReposit
   async listByBlindBoxId(shop: string, blindBoxId: string): Promise<BlindBoxPoolItem[]> {
     const rows = await this.db.all<BlindBoxPoolItemRow>(
       `
-        SELECT
-          id,
-          shop,
-          blind_box_id,
-          label,
-          source_product_id,
-          source_variant_id,
-          enabled,
-          weight,
-          inventory_quantity,
-          metadata,
-          created_at,
-          updated_at
+        SELECT ${SELECT_COLUMNS}
         FROM blind_box_pool_items
         WHERE shop = ? AND blind_box_id = ?
         ORDER BY created_at DESC
@@ -153,19 +128,7 @@ export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemReposit
   async findById(shop: string, poolItemId: string): Promise<BlindBoxPoolItem | null> {
     const row = await this.db.get<BlindBoxPoolItemRow>(
       `
-        SELECT
-          id,
-          shop,
-          blind_box_id,
-          label,
-          source_product_id,
-          source_variant_id,
-          enabled,
-          weight,
-          inventory_quantity,
-          metadata,
-          created_at,
-          updated_at
+        SELECT ${SELECT_COLUMNS}
         FROM blind_box_pool_items
         WHERE shop = ? AND id = ?
       `,
@@ -173,6 +136,13 @@ export class SqliteBlindBoxPoolItemRepository implements BlindBoxPoolItemReposit
     );
 
     return row ? mapBlindBoxPoolItemRow(row) : null;
+  }
+
+  async deleteById(shop: string, blindBoxId: string, poolItemId: string): Promise<void> {
+    await this.db.run(
+      'DELETE FROM blind_box_pool_items WHERE shop = ? AND blind_box_id = ? AND id = ?',
+      [shop, blindBoxId, poolItemId],
+    );
   }
 }
 

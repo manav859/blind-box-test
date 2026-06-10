@@ -8,7 +8,8 @@ import {
 export class BlindBoxPoolItemService {
   constructor(private readonly blindBoxPoolItemRepository: BlindBoxPoolItemRepository) {}
 
-  async upsertPoolItem(shop: string, input: UpsertBlindBoxPoolItemInput): Promise<BlindBoxPoolItem> {
+  /** Add (or update) a reward product in a blind box's pool. */
+  async addReward(shop: string, input: UpsertBlindBoxPoolItemInput): Promise<BlindBoxPoolItem> {
     const normalizedInput = validateUpsertBlindBoxPoolItemInput(input);
     return this.blindBoxPoolItemRepository.upsert(shop, normalizedInput);
   }
@@ -17,19 +18,9 @@ export class BlindBoxPoolItemService {
     return this.blindBoxPoolItemRepository.listByBlindBoxId(shop, blindBoxId);
   }
 
-  async decrementInventory(shop: string, poolItem: BlindBoxPoolItem, by = 1): Promise<BlindBoxPoolItem> {
-    const newQty = Math.max(0, poolItem.inventoryQuantity - by);
-    return this.blindBoxPoolItemRepository.upsert(shop, {
-      id: poolItem.id,
-      blindBoxId: poolItem.blindBoxId,
-      label: poolItem.label,
-      sourceProductId: poolItem.sourceProductId,
-      sourceVariantId: poolItem.sourceVariantId,
-      enabled: poolItem.enabled,
-      weight: poolItem.weight,
-      inventoryQuantity: newQty,
-      metadata: poolItem.metadata,
-    });
+  /** Remove a reward product from a blind box's pool. */
+  async removeReward(shop: string, blindBoxId: string, poolItemId: string): Promise<void> {
+    return this.blindBoxPoolItemRepository.deleteById(shop, blindBoxId, poolItemId);
   }
 }
 

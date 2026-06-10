@@ -5,10 +5,8 @@ import { randomUUID } from 'crypto';
 import { initializeBlindBoxPersistence, resetBlindBoxDatabaseForTests } from '../db/client';
 import { resetRuntimeConfigForTests } from '../lib/config';
 import { BlindBoxService } from '../service/blind-box/blind-box-service';
-import { BlindBoxRewardGroupLinkService } from '../service/blind-box/blind-box-reward-group-link-service';
 import { BlindBoxPoolItemService } from '../service/blind-box/pool-item-service';
 import { BlindBoxProductMappingService } from '../service/blind-box/product-mapping-service';
-import { RewardGroupService } from '../service/blind-box/reward-group-service';
 import { RewardCandidateService } from '../service/blind-box/reward-candidate-service';
 import { BlindBoxAssignmentService } from '../service/blind-box/assignment-service';
 import { InventoryOperationService } from '../service/inventory/inventory-operation-service';
@@ -19,8 +17,6 @@ import { WebhookEventService } from '../service/webhook/webhook-event-service';
 import { PaidOrderAssignmentService } from '../service/blind-box/paid-order-assignment-service';
 import { PaidOrderWebhookService } from '../service/webhook/paid-order-webhook-service';
 import { BlindBoxActivationReadinessService } from '../service/blind-box/blind-box-activation-readiness-service';
-import { BlindBoxDiscoveryService } from '../service/blind-box/blind-box-discovery-service';
-import { SqliteBlindBoxRewardGroupLinkRepository } from '../repository/blind-box-reward-group-link-repository';
 import { SqliteBlindBoxRepository } from '../repository/blind-box-repository';
 import { SqliteBlindBoxPoolItemRepository } from '../repository/blind-box-pool-item-repository';
 import { SqliteBlindBoxProductMappingRepository } from '../repository/blind-box-product-mapping-repository';
@@ -28,7 +24,6 @@ import { SqliteBlindBoxAssignmentRepository } from '../repository/blind-box-assi
 import { SqliteAssignmentInventoryBoundaryRepository } from '../repository/assignment-inventory-boundary-repository';
 import { SqliteInventoryOperationRepository } from '../repository/inventory-operation-repository';
 import { SqliteInventoryExecutionRepository } from '../repository/inventory-execution-repository';
-import { SqliteRewardGroupRepository } from '../repository/reward-group-repository';
 import { SqliteWebhookEventRepository } from '../repository/webhook-event-repository';
 import { getBlindBoxDatabase } from '../db/client';
 import { Logger } from '../lib/logger';
@@ -320,8 +315,6 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
   const blindBoxRepository = new SqliteBlindBoxRepository(db);
   const blindBoxPoolItemRepository = new SqliteBlindBoxPoolItemRepository(db);
   const blindBoxProductMappingRepository = new SqliteBlindBoxProductMappingRepository(db);
-  const rewardGroupRepository = new SqliteRewardGroupRepository(db);
-  const blindBoxRewardGroupLinkRepository = new SqliteBlindBoxRewardGroupLinkRepository(db);
   const blindBoxAssignmentRepository = new SqliteBlindBoxAssignmentRepository(db);
   const assignmentInventoryBoundaryRepository = new SqliteAssignmentInventoryBoundaryRepository(db);
   const inventoryOperationRepository = new SqliteInventoryOperationRepository(db);
@@ -330,8 +323,6 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
 
   const testCatalogService = new TestCatalogService();
   const blindBoxService = new BlindBoxService(blindBoxRepository);
-  const rewardGroupService = new RewardGroupService(rewardGroupRepository);
-  const blindBoxRewardGroupLinkService = new BlindBoxRewardGroupLinkService(blindBoxRewardGroupLinkRepository);
   const blindBoxPoolItemService = new BlindBoxPoolItemService(blindBoxPoolItemRepository);
   const blindBoxProductMappingService = new BlindBoxProductMappingService(blindBoxProductMappingRepository);
   const blindBoxAssignmentService = new BlindBoxAssignmentService(blindBoxAssignmentRepository);
@@ -369,29 +360,18 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
   });
   const rewardCandidateService = new RewardCandidateService({
     blindBoxRepository,
-    rewardGroupRepository,
-    rewardGroupLinkRepository: blindBoxRewardGroupLinkRepository,
+    poolItemRepository: blindBoxPoolItemRepository,
     catalogService: testCatalogService as unknown as any,
     inventoryGateway: inventoryGateway as any,
     accessTokenProvider: new TestAccessTokenProvider(),
     logger: new Logger({ service: 'blind-box-test' }),
     random: options.random ?? (() => 0.25),
   });
-  const blindBoxDiscoveryService = new BlindBoxDiscoveryService({
-    blindBoxRepository,
-    catalogService: testCatalogService as unknown as any,
-    logger: new Logger({
-      service: 'blind-box-test',
-    }),
-  });
 
   const paidOrderAssignmentService = new PaidOrderAssignmentService({
     blindBoxRepository,
-    blindBoxPoolItemRepository,
     blindBoxProductMappingRepository,
     blindBoxAssignmentRepository,
-    blindBoxDiscoveryService,
-    catalogService: testCatalogService as unknown as any,
     rewardCandidateService,
     assignmentInventoryBoundaryService,
     inventoryExecutionService,
@@ -411,13 +391,7 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
   });
   const blindBoxActivationReadinessService = new BlindBoxActivationReadinessService({
     blindBoxRepository,
-    rewardGroupRepository,
-    rewardGroupLinkRepository: blindBoxRewardGroupLinkRepository,
     rewardCandidateService,
-    catalogService: testCatalogService as unknown as any,
-    poolItemRepository: blindBoxPoolItemRepository,
-    productMappingRepository: blindBoxProductMappingRepository,
-    inventoryExecutionReadinessService,
     logger: new Logger({
       service: 'blind-box-test',
     }),
@@ -426,8 +400,6 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
   return {
     blindBoxService,
     blindBoxActivationReadinessService,
-    rewardGroupService,
-    blindBoxRewardGroupLinkService,
     blindBoxPoolItemService,
     blindBoxProductMappingService,
     blindBoxAssignmentService,
@@ -435,7 +407,6 @@ export async function createBlindBoxTestContext(options: BlindBoxTestContextOpti
     inventoryExecutionReadinessService,
     inventoryExecutionService,
     webhookEventService,
-    blindBoxDiscoveryService,
     rewardCandidateService,
     paidOrderAssignmentService,
     paidOrderWebhookService,

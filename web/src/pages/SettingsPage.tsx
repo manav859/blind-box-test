@@ -124,16 +124,6 @@ export function SettingsPage() {
     }
   }
 
-  async function testCollectionFetch() {
-    addToast('info', 'Testing collection access…');
-    try {
-      const cols = await api.listCatalogCollections();
-      addToast('success', `Collections accessible — ${cols.length} collections found`);
-    } catch (e: unknown) {
-      addToast('error', 'Collection access failed', e instanceof Error ? e.message : String(e));
-    }
-  }
-
   async function retryEvent(event: WebhookEvent) {
     setRetryingId(event.id);
     try {
@@ -287,9 +277,6 @@ export function SettingsPage() {
               <div style={{ display: 'flex', gap: '.75rem', flexWrap: 'wrap' }}>
                 <button className="btn btn-secondary" onClick={testProductFetch}>
                   🛒 Test Product Access
-                </button>
-                <button className="btn btn-secondary" onClick={testCollectionFetch}>
-                  📦 Test Collection Access
                 </button>
               </div>
             </div>

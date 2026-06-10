@@ -7,21 +7,16 @@ import {
   INVENTORY_OPERATION_TYPES,
 } from './status';
 import {
-  BlindBoxRewardGroupLink,
   CreateBlindBoxAssignmentInput,
   CreateBlindBoxInput,
   CreateInventoryOperationInput,
   NormalizedCreateBlindBoxAssignmentInput,
   NormalizedCreateBlindBoxInput,
   NormalizedCreateInventoryOperationInput,
-  NormalizedUpsertBlindBoxRewardGroupLinkInput,
   NormalizedUpsertBlindBoxPoolItemInput,
   NormalizedUpsertBlindBoxProductMappingInput,
-  NormalizedUpsertRewardGroupInput,
-  UpsertBlindBoxRewardGroupLinkInput,
   UpsertBlindBoxPoolItemInput,
   UpsertBlindBoxProductMappingInput,
-  UpsertRewardGroupInput,
 } from './types';
 
 export function requireNonEmptyString(value: unknown, fieldName: string): string {
@@ -106,15 +101,8 @@ export function validateCreateBlindBoxInput(input: CreateBlindBoxInput): Normali
     name: requireNonEmptyString(input.name, 'name'),
     description: normalizeOptionalString(input.description),
     status: requireIncludedValue(input.status, 'status', BLIND_BOX_STATUSES, 'draft'),
-    selectionStrategy: requireIncludedValue(
-      input.selectionStrategy,
-      'selectionStrategy',
-      BLIND_BOX_SELECTION_STRATEGIES,
-      'uniform',
-    ),
-    shoplineProductId: normalizeOptionalString(input.shoplineProductId),
-    shoplineVariantId: normalizeOptionalString(input.shoplineVariantId),
-    productTitleSnapshot: normalizeOptionalString(input.productTitleSnapshot),
+    triggerProductId: normalizeOptionalString(input.triggerProductId),
+    triggerProductTitleSnapshot: normalizeOptionalString(input.triggerProductTitleSnapshot),
     configJson: normalizeOptionalString(input.configJson),
   };
 }
@@ -125,13 +113,9 @@ export function validateUpsertBlindBoxPoolItemInput(
   return {
     id: normalizeOptionalString(input.id),
     blindBoxId: requireNonEmptyString(input.blindBoxId, 'blindBoxId'),
-    label: requireNonEmptyString(input.label, 'label'),
-    sourceProductId: normalizeOptionalString(input.sourceProductId),
-    sourceVariantId: normalizeOptionalString(input.sourceVariantId),
-    enabled: normalizeBoolean(input.enabled, true),
-    weight: requirePositiveInteger(input.weight ?? 1, 'weight'),
-    inventoryQuantity: requireNonNegativeInteger(input.inventoryQuantity ?? 0, 'inventoryQuantity'),
-    metadata: normalizeOptionalString(input.metadata),
+    rewardProductId: requireNonEmptyString(input.rewardProductId, 'rewardProductId'),
+    rewardVariantId: normalizeOptionalString(input.rewardVariantId),
+    rewardTitleSnapshot: normalizeOptionalString(input.rewardTitleSnapshot),
   };
 }
 
@@ -144,27 +128,6 @@ export function validateUpsertBlindBoxProductMappingInput(
     productId: requireNonEmptyString(input.productId, 'productId'),
     productVariantId: normalizeOptionalString(input.productVariantId),
     enabled: normalizeBoolean(input.enabled, true),
-  };
-}
-
-export function validateUpsertRewardGroupInput(input: UpsertRewardGroupInput): NormalizedUpsertRewardGroupInput {
-  return {
-    id: normalizeOptionalString(input.id),
-    sourceType: 'shopline_collection',
-    shoplineCollectionId: requireNonEmptyString(input.shoplineCollectionId, 'shoplineCollectionId'),
-    collectionTitleSnapshot: normalizeOptionalString(input.collectionTitleSnapshot),
-    status: requireIncludedValue(input.status, 'status', BLIND_BOX_STATUSES, 'draft'),
-    configJson: normalizeOptionalString(input.configJson),
-  };
-}
-
-export function validateUpsertBlindBoxRewardGroupLinkInput(
-  input: UpsertBlindBoxRewardGroupLinkInput,
-): NormalizedUpsertBlindBoxRewardGroupLinkInput {
-  return {
-    id: normalizeOptionalString(input.id),
-    blindBoxId: requireNonEmptyString(input.blindBoxId, 'blindBoxId'),
-    rewardGroupId: requireNonEmptyString(input.rewardGroupId, 'rewardGroupId'),
   };
 }
 

@@ -1,20 +1,16 @@
 import express, { Request, Response } from 'express';
 import {
+  BlindBox,
   CreateBlindBoxInput,
-  UpsertBlindBoxRewardGroupLinkInput,
   UpsertBlindBoxPoolItemInput,
   UpsertBlindBoxProductMappingInput,
-  UpsertRewardGroupInput,
 } from '../../../domain/blind-box/types';
 
 import { getBlindBoxService } from '../../../service/blind-box/blind-box-service';
 import { getBlindBoxActivationReadinessService } from '../../../service/blind-box/blind-box-activation-readiness-service';
-import { getBlindBoxDiscoveryService } from '../../../service/blind-box/blind-box-discovery-service';
-import { getBlindBoxRewardGroupLinkService } from '../../../service/blind-box/blind-box-reward-group-link-service';
 import { getBlindBoxPoolItemService } from '../../../service/blind-box/pool-item-service';
 import { getBlindBoxProductMappingService } from '../../../service/blind-box/product-mapping-service';
 import { getRewardCandidateService } from '../../../service/blind-box/reward-candidate-service';
-import { getRewardGroupService } from '../../../service/blind-box/reward-group-service';
 import { getBlindBoxAssignmentService } from '../../../service/blind-box/assignment-service';
 import { getInventoryOperationService } from '../../../service/inventory/inventory-operation-service';
 import { getInventoryExecutionService } from '../../../service/inventory/inventory-execution-service';
@@ -63,67 +59,22 @@ async function validateStorefrontProductMappingInput(
 }
 
 function mergeBlindBoxSettingsInput(
-  existingBlindBox: CreateBlindBoxInput,
+  existingBlindBox: BlindBox,
   payload: CreateBlindBoxInput,
-  productTitleSnapshot?: string | null,
+  triggerProductTitleSnapshot?: string | null,
 ): CreateBlindBoxInput {
   return {
     name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : existingBlindBox.name,
     description:
       payload.description === undefined ? existingBlindBox.description || null : payload.description,
     status: payload.status || existingBlindBox.status,
-    selectionStrategy: payload.selectionStrategy || existingBlindBox.selectionStrategy,
-    shoplineProductId: payload.shoplineProductId !== undefined ? payload.shoplineProductId : (existingBlindBox.shoplineProductId || null),
-    shoplineVariantId: payload.shoplineVariantId !== undefined ? payload.shoplineVariantId : (existingBlindBox.shoplineVariantId || null),
-    productTitleSnapshot: productTitleSnapshot || existingBlindBox.productTitleSnapshot || null,
+    triggerProductId:
+      payload.triggerProductId !== undefined
+        ? payload.triggerProductId
+        : existingBlindBox.triggerProductId || null,
+    triggerProductTitleSnapshot:
+      triggerProductTitleSnapshot || existingBlindBox.triggerProductTitleSnapshot || null,
     configJson: payload.configJson === undefined ? existingBlindBox.configJson || null : payload.configJson,
-  };
-}
-
-async function validateRewardGroupInput(
-  shop: string,
-  accessToken: string | undefined,
-  payload: UpsertRewardGroupInput,
-): Promise<UpsertRewardGroupInput> {
-  const { ShoplineCatalogGateway } = await import('../../../integration/shopline/catalog-gateway');
-  const gateway = new ShoplineCatalogGateway();
-  const token = accessToken ?? '';
-
-  // If it looks like a numeric SHOPLINE ID try direct lookup; otherwise it's a
-  // handle/slug that must be resolved first (e.g. "fashion-blindbox" from tag).
-  const isNumericId = /^\d+$/.test(payload.shoplineCollectionId.trim());
-
-  if (isNumericId) {
-    try {
-      const catalogService = await getShoplineCatalogService();
-      const collection = await catalogService.getCollection(shop, payload.shoplineCollectionId, { accessToken });
-      return { ...payload, collectionTitleSnapshot: payload.collectionTitleSnapshot || collection.title || null };
-    } catch {
-      // Fall through to slug resolution below.
-    }
-  }
-
-  // Resolve by handle/slug — tries GraphQL first, then REST title match.
-  const resolved = await gateway.resolveCollectionBySlug(shop, token, payload.shoplineCollectionId);
-  if (resolved) {
-    logger.info('validateRewardGroupInput: collection resolved', {
-      shop, inputSlug: payload.shoplineCollectionId, resolvedId: resolved.id, resolvedTitle: resolved.title,
-    });
-    return {
-      ...payload,
-      shoplineCollectionId: resolved.id,
-      collectionTitleSnapshot: payload.collectionTitleSnapshot || resolved.title || null,
-    };
-  }
-
-  // Could not resolve — store the slug as-is and log; the reward group will still
-  // be created (the snapshot is optional) so the operator can fix it later.
-  logger.warn('validateRewardGroupInput: collection not resolved, storing slug as-is', {
-    shop, slug: payload.shoplineCollectionId,
-  });
-  return {
-    ...payload,
-    collectionTitleSnapshot: payload.collectionTitleSnapshot || payload.shoplineCollectionId,
   };
 }
 
@@ -306,53 +257,14 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
-  router.get('/catalog/collections', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop, accessToken } = requireShopSession(res);
-      const catalogService = await getShoplineCatalogService();
-      const result = await catalogService.listAllCollections(shop, { accessToken });
-
-      res.status(200).send({
-        success: true,
-        data: result.collections.map((c) => ({
-          id: c.id,
-          title: c.title,
-          handle: c.handle,
-          status: c.status,
-        })),
-      });
-    } catch (error) {
-      // Collections endpoint may be unavailable (wrong path / unsupported API version).
-      // Return 200 with empty array so the UI degrades gracefully instead of crashing.
-      if (error instanceof Error && error.name === 'CatalogGatewayError') {
-        const gwErr = error as Error & { code: string; statusCode: number; details?: Record<string, unknown> };
-        res.status(200).send({
-          success: true,
-          data: [],
-          warning: {
-            code: gwErr.code,
-            message: gwErr.message,
-            shoplineStatus: gwErr.statusCode,
-            hint: 'Collections are not available from the SHOPLINE API. Product pickers will still work.',
-          },
-        });
-        return;
-      }
-      sendErrorResponse(res, error, context);
-    }
-  });
-
-  // ── Single blind box ───────────────────────────────────────────────────────
+  // ── Single blind box (with its reward pool) ─────────────────────────────────
   router.get('/pools/:blindBoxId', async (req, res) => {
     const context = getContext(req, res);
 
     try {
       const { shop } = requireShopSession(res);
       const blindBoxService = await getBlindBoxService();
-      const blindBoxRewardGroupLinkService = await getBlindBoxRewardGroupLinkService();
-      const rewardGroupService = await getRewardGroupService();
+      const poolItemService = await getBlindBoxPoolItemService();
 
       const blindBox = await blindBoxService.getBlindBox(shop, req.params.blindBoxId);
       if (!blindBox) {
@@ -360,20 +272,13 @@ export function createBlindBoxAdminRouter(): express.Router {
         return;
       }
 
-      const [links, rewardGroups] = await Promise.all([
-        blindBoxRewardGroupLinkService.listLinks(shop),
-        rewardGroupService.listRewardGroups(shop),
-      ]);
-
-      const link = links.find((l) => l.blindBoxId === blindBox.id);
-      const rewardGroup = link ? rewardGroups.find((g) => g.id === link.rewardGroupId) : null;
+      const poolItems = await poolItemService.listPoolItems(shop, blindBox.id);
 
       res.status(200).send({
         success: true,
         data: {
           ...blindBox,
-          rewardGroupLink: link ?? null,
-          rewardGroup: rewardGroup ?? null,
+          poolItems,
         },
       });
     } catch (error) {
@@ -385,11 +290,9 @@ export function createBlindBoxAdminRouter(): express.Router {
     const context = getContext(req, res);
 
     try {
-      const { shop, accessToken } = requireShopSession(res);
-      const blindBoxDiscoveryService = await getBlindBoxDiscoveryService();
-      const data = await blindBoxDiscoveryService.listDetectedBlindBoxes(shop, {
-        accessToken,
-      });
+      const { shop } = requireShopSession(res);
+      const blindBoxService = await getBlindBoxService();
+      const data = await blindBoxService.listBlindBoxes(shop);
 
       res.status(200).send({
         success: true,
@@ -400,13 +303,39 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
+  // Create a blind box by picking the trigger product (what customers buy).
   router.post('/pools', async (req, res) => {
     const context = getContext(req, res);
 
     try {
-      throw new ValidationError(
-        'Manual blind-box product registration is deprecated. Tag the product in SHOPLINE with "blind-box" and refresh the detected list instead.',
-      );
+      const { shop, accessToken } = requireShopSession(res);
+      const blindBoxService = await getBlindBoxService();
+      const catalogService = await getShoplineCatalogService();
+      const payload = parseJsonBody<CreateBlindBoxInput>(req.body);
+
+      const triggerProductId = payload.triggerProductId?.trim();
+      if (!triggerProductId) {
+        throw new ValidationError('Pick the trigger product (the product customers buy) to create a blind box.');
+      }
+
+      // Snapshot the trigger product title; tolerate a catalog hiccup.
+      let triggerProductTitleSnapshot = payload.triggerProductTitleSnapshot ?? null;
+      try {
+        const product = await catalogService.getProduct(shop, triggerProductId, { accessToken });
+        triggerProductTitleSnapshot = product.title ?? triggerProductTitleSnapshot;
+      } catch {
+        /* non-fatal — keep whatever snapshot the client supplied */
+      }
+
+      const data = await blindBoxService.createBlindBox(shop, {
+        name: payload.name,
+        description: payload.description ?? null,
+        status: 'draft',
+        triggerProductId,
+        triggerProductTitleSnapshot,
+      });
+
+      res.status(200).send({ success: true, data });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
@@ -426,38 +355,32 @@ export function createBlindBoxAdminRouter(): express.Router {
       }
 
       const payload = parseJsonBody<CreateBlindBoxInput>(req.body);
-      const detectedProduct = existingBlindBox.shoplineProductId
-        ? await catalogService.getProduct(shop, existingBlindBox.shoplineProductId, {
-            accessToken,
-          })
+      const nextTriggerProductId =
+        payload.triggerProductId !== undefined ? payload.triggerProductId : existingBlindBox.triggerProductId;
+      const triggerProduct = nextTriggerProductId
+        ? await catalogService.getProduct(shop, nextTriggerProductId, { accessToken }).catch(() => null)
         : null;
       const mergedPayload = mergeBlindBoxSettingsInput(
         existingBlindBox,
         payload,
-        detectedProduct?.title || existingBlindBox.productTitleSnapshot,
+        triggerProduct?.title || existingBlindBox.triggerProductTitleSnapshot,
       );
 
       if (mergedPayload.status === 'active') {
-        await blindBoxActivationReadinessService.assertReadyForActivation(
-          shop,
-          req.params.blindBoxId,
-          {
-            accessToken,
-          },
-        );
+        await blindBoxActivationReadinessService.assertReadyForActivation(shop, req.params.blindBoxId, {
+          accessToken,
+        });
       }
       const data = await blindBoxService.updateBlindBox(shop, req.params.blindBoxId, mergedPayload);
 
-      res.status(200).send({
-        success: true,
-        data,
-      });
+      res.status(200).send({ success: true, data });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
   });
 
-  router.get('/pools/:blindBoxId/items', async (req, res) => {
+  // ── Reward pool management (blind_box_pool_items) ───────────────────────────
+  router.get('/pools/:blindBoxId/rewards', async (req, res) => {
     const context = getContext(req, res);
 
     try {
@@ -465,34 +388,66 @@ export function createBlindBoxAdminRouter(): express.Router {
       const poolItemService = await getBlindBoxPoolItemService();
       const data = await poolItemService.listPoolItems(shop, req.params.blindBoxId);
 
-      res.status(200).send({
-        success: true,
-        data,
-      });
+      res.status(200).send({ success: true, data });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
   });
 
-  router.post('/pools/:blindBoxId/items', async (req, res) => {
+  router.post('/pools/:blindBoxId/rewards', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const blindBoxService = await getBlindBoxService();
+      const poolItemService = await getBlindBoxPoolItemService();
+      const catalogService = await getShoplineCatalogService();
+      const payload = parseJsonBody<UpsertBlindBoxPoolItemInput>(req.body);
+
+      const blindBox = await blindBoxService.getBlindBox(shop, req.params.blindBoxId);
+      if (!blindBox) {
+        throw new ValidationError('Blind-box reference not found');
+      }
+
+      const rewardProductId = payload?.rewardProductId?.trim();
+      if (!rewardProductId) {
+        throw new ValidationError('Pick a reward product to add to the pool.');
+      }
+      if (blindBox.triggerProductId && rewardProductId === blindBox.triggerProductId) {
+        throw new ValidationError('The trigger product cannot also be a reward in its own pool.');
+      }
+
+      // Snapshot the reward title; tolerate a catalog hiccup.
+      let rewardTitleSnapshot = payload.rewardTitleSnapshot ?? null;
+      try {
+        const product = await catalogService.getProduct(shop, rewardProductId, { accessToken });
+        rewardTitleSnapshot = product.title ?? rewardTitleSnapshot;
+      } catch {
+        /* non-fatal */
+      }
+
+      const data = await poolItemService.addReward(shop, {
+        blindBoxId: req.params.blindBoxId,
+        rewardProductId,
+        rewardVariantId: payload.rewardVariantId ?? null,
+        rewardTitleSnapshot,
+      });
+
+      res.status(200).send({ success: true, data });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  router.delete('/pools/:blindBoxId/rewards/:poolItemId', async (req, res) => {
     const context = getContext(req, res);
 
     try {
       const { shop } = requireShopSession(res);
-      const payload = parseJsonBody<UpsertBlindBoxPoolItemInput>(req.body);
       const poolItemService = await getBlindBoxPoolItemService();
-      const data = await poolItemService.upsertPoolItem(
-        shop,
-        {
-          ...(payload || {}),
-          blindBoxId: req.params.blindBoxId,
-        } as UpsertBlindBoxPoolItemInput,
-      );
+      await poolItemService.removeReward(shop, req.params.blindBoxId, req.params.poolItemId);
 
-      res.status(200).send({
-        success: true,
-        data,
-      });
+      res.status(200).send({ success: true, data: { id: req.params.poolItemId } });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }
@@ -625,80 +580,6 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
-  router.get('/reward-groups', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop } = requireShopSession(res);
-      const rewardGroupService = await getRewardGroupService();
-      const data = await rewardGroupService.listRewardGroups(shop);
-
-      res.status(200).send({
-        success: true,
-        data,
-      });
-    } catch (error) {
-      sendErrorResponse(res, error, context);
-    }
-  });
-
-  router.post('/reward-groups', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop, accessToken } = requireShopSession(res);
-      const rewardGroupService = await getRewardGroupService();
-      const payload = await validateRewardGroupInput(
-        shop,
-        accessToken,
-        parseJsonBody<UpsertRewardGroupInput>(req.body),
-      );
-      const data = await rewardGroupService.upsertRewardGroup(shop, payload);
-
-      res.status(200).send({
-        success: true,
-        data,
-      });
-    } catch (error) {
-      sendErrorResponse(res, error, context);
-    }
-  });
-
-  router.get('/reward-group-links', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop } = requireShopSession(res);
-      const blindBoxRewardGroupLinkService = await getBlindBoxRewardGroupLinkService();
-      const data = await blindBoxRewardGroupLinkService.listLinks(shop);
-
-      res.status(200).send({
-        success: true,
-        data,
-      });
-    } catch (error) {
-      sendErrorResponse(res, error, context);
-    }
-  });
-
-  router.post('/reward-group-links', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop } = requireShopSession(res);
-      const blindBoxRewardGroupLinkService = await getBlindBoxRewardGroupLinkService();
-      const payload = parseJsonBody<UpsertBlindBoxRewardGroupLinkInput>(req.body);
-      const data = await blindBoxRewardGroupLinkService.upsertLink(shop, payload);
-
-      res.status(200).send({
-        success: true,
-        data,
-      });
-    } catch (error) {
-      sendErrorResponse(res, error, context);
-    }
-  });
-
   router.get('/inventory-operations/:operationId/execution-readiness', async (req, res) => {
     const context = getContext(req, res);
 
@@ -708,29 +589,6 @@ export function createBlindBoxAdminRouter(): express.Router {
       const data = await inventoryExecutionReadinessService.validateInventoryOperationExecutionReadiness(
         shop,
         req.params.operationId,
-        {
-          accessToken,
-        },
-      );
-
-      res.status(200).send({
-        success: true,
-        data,
-      });
-    } catch (error) {
-      sendErrorResponse(res, error, context);
-    }
-  });
-
-  router.get('/pool-items/:poolItemId/execution-readiness', async (req, res) => {
-    const context = getContext(req, res);
-
-    try {
-      const { shop, accessToken } = requireShopSession(res);
-      const inventoryExecutionReadinessService = await getInventoryExecutionReadinessService();
-      const data = await inventoryExecutionReadinessService.validatePoolItemExecutionReadiness(
-        shop,
-        req.params.poolItemId,
         {
           accessToken,
         },

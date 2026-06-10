@@ -2,11 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { normalizeTags, slugifyTitle, collectionMatchesSlug } from './catalog-gateway';
 import type { ShoplineCollection } from './catalog-gateway';
-import {
-  getBlindBoxProductTags,
-  detectBlindBoxProduct,
-  parseBlindBoxCollectionTag,
-} from '../../domain/blind-box/product-detection';
 
 // ── normalizeTags ─────────────────────────────────────────────────────────────
 
@@ -44,61 +39,6 @@ test('normalizeTags: unknown value returns empty array', () => {
 test('normalizeTags: filters empty strings', () => {
   const result = normalizeTags({ tags: ['blind-box', '', '  '] });
   assert.deepEqual(result, ['blind-box']);
-});
-
-// ── blind-box tag detection ───────────────────────────────────────────────────
-
-test('detectBlindBoxProduct: detects blind-box tag (array)', () => {
-  const result = detectBlindBoxProduct({ tags: ['blind-box', 'sale'] });
-  assert.equal(result.isBlindBox, true);
-  assert.equal(result.method, 'tag');
-});
-
-test('detectBlindBoxProduct: detects blind-box tag (comma string)', () => {
-  const result = detectBlindBoxProduct({ tags: 'sale, blind-box' });
-  assert.equal(result.isBlindBox, true);
-});
-
-test('detectBlindBoxProduct: case-insensitive match', () => {
-  const result = detectBlindBoxProduct({ tags: ['Blind-Box'] });
-  assert.equal(result.isBlindBox, true);
-});
-
-test('detectBlindBoxProduct: no blind-box tag returns false', () => {
-  const result = detectBlindBoxProduct({ tags: ['sale', 'new-arrival'] });
-  assert.equal(result.isBlindBox, false);
-});
-
-test('detectBlindBoxProduct: null product returns false', () => {
-  const result = detectBlindBoxProduct(null);
-  assert.equal(result.isBlindBox, false);
-});
-
-test('detectBlindBoxProduct: tags on raw field are checked', () => {
-  const result = detectBlindBoxProduct({ tags: [], raw: { tags: ['blind-box'] } });
-  assert.equal(result.isBlindBox, true);
-});
-
-// ── blind-box-collection: tag extraction ─────────────────────────────────────
-
-test('parseBlindBoxCollectionTag: extracts handle from array', () => {
-  const tags = getBlindBoxProductTags({ tags: ['blind-box', 'blind-box-collection:winter-rewards'] });
-  assert.equal(parseBlindBoxCollectionTag(tags), 'winter-rewards');
-});
-
-test('parseBlindBoxCollectionTag: extracts handle case-insensitively', () => {
-  const tags = getBlindBoxProductTags({ tags: ['Blind-Box-Collection:Fashion-Blindbox'] });
-  assert.equal(parseBlindBoxCollectionTag(tags), 'fashion-blindbox');
-});
-
-test('parseBlindBoxCollectionTag: returns null when no collection tag', () => {
-  const tags = getBlindBoxProductTags({ tags: ['blind-box'] });
-  assert.equal(parseBlindBoxCollectionTag(tags), null);
-});
-
-test('parseBlindBoxCollectionTag: handles comma-string tags', () => {
-  const tags = getBlindBoxProductTags({ tags: 'blind-box, blind-box-collection:summer-drop' });
-  assert.equal(parseBlindBoxCollectionTag(tags), 'summer-drop');
 });
 
 // ── product endpoint URL construction ────────────────────────────────────────

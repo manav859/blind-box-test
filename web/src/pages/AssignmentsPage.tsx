@@ -24,6 +24,31 @@ function shortId(id: string): string {
   return id.slice(-8);
 }
 
+/** Order/customer details captured into assignment.metadata at webhook time. */
+function parseOrderMeta(metadata: string | null): {
+  orderName: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
+} {
+  if (!metadata) return { orderName: null, customerName: null, customerEmail: null };
+  try {
+    const parsed = JSON.parse(metadata) as { order?: { name?: string; customerName?: string; customerEmail?: string } };
+    const order = parsed.order ?? {};
+    return {
+      orderName: order.name ?? null,
+      customerName: order.customerName ?? null,
+      customerEmail: order.customerEmail ?? null,
+    };
+  } catch {
+    return { orderName: null, customerName: null, customerEmail: null };
+  }
+}
+
+/** A reward has been picked and is awaiting (manual) fulfillment by the merchant. */
+function needsShipping(a: BlindBoxAssignment): boolean {
+  return Boolean(a.selectedRewardTitleSnapshot) && a.status !== 'pending';
+}
+
 export function AssignmentsPage() {
   const { addToast } = useToast();
   const [tab, setTab] = useState<Tab>('assignments');
@@ -50,14 +75,21 @@ export function AssignmentsPage() {
   useEffect(() => { load(); }, [load]);
 
   const filteredAssignments = assignments.filter((a) => {
+    const meta = parseOrderMeta(a.metadata);
+    const q = search.toLowerCase();
     const matchSearch =
       !search ||
       a.orderId.includes(search) ||
-      (a.selectedRewardTitleSnapshot ?? '').toLowerCase().includes(search.toLowerCase()) ||
-      (a.selectedRewardVariantTitleSnapshot ?? '').toLowerCase().includes(search.toLowerCase());
+      (meta.orderName ?? '').toLowerCase().includes(q) ||
+      (meta.customerName ?? '').toLowerCase().includes(q) ||
+      (meta.customerEmail ?? '').toLowerCase().includes(q) ||
+      (a.selectedRewardTitleSnapshot ?? '').toLowerCase().includes(q) ||
+      (a.selectedRewardVariantTitleSnapshot ?? '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const toShipCount = assignments.filter(needsShipping).length;
 
   const filteredOps = operations.filter((o) => {
     const matchSearch = !search || o.id.includes(search) || (o.rewardTitleSnapshot ?? '').toLowerCase().includes(search.toLowerCase());
@@ -191,62 +223,88 @@ export function AssignmentsPage() {
               </p>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Line ID</th>
-                    <th>Reward</th>
-                    <th>Variant</th>
-                    <th>Status</th>
-                    <th>Strategy</th>
-                    <th>Assigned At</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAssignments.map((a) => (
-                    <tr key={a.id}>
-                      <td>
-                        <span className="code">#{shortId(a.orderId)}</span>
-                      </td>
-                      <td>
-                        <span className="code" style={{ fontSize: '.7rem' }}>
-                          {shortId(a.orderLineId)}
-                        </span>
-                      </td>
-                      <td className="td-primary">
-                        {a.selectedRewardTitleSnapshot ?? (
-                          <span className="text-muted text-xs">
-                            {a.status === 'assigned' || a.status.startsWith('inventory') ? 'Assigned' : 'Pending'}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {a.selectedRewardVariantTitleSnapshot ? (
-                          <span className="text-sm">{a.selectedRewardVariantTitleSnapshot}</span>
-                        ) : (
-                          <span className="text-muted text-xs">—</span>
-                        )}
-                      </td>
-                      <td>
-                        <StatusBadge status={a.status} />
-                      </td>
-                      <td>
-                        {a.selectionStrategy ? (
-                          <span className="badge badge-primary" style={{ textTransform: 'capitalize' }}>
-                            {a.selectionStrategy}
-                          </span>
-                        ) : (
-                          <span className="text-muted text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="text-xs text-muted">{formatDate(a.createdAt)}</td>
+            <>
+              {/* Manual-fulfillment guidance — this app records the won reward and
+                  decrements its stock, but the merchant ships the reward. */}
+              <div className="alert alert-neutral" style={{ marginBottom: '1rem' }}>
+                <span className="alert-icon">📦</span>
+                <div className="alert-body">
+                  <div className="alert-title">
+                    Ship the won reward to each customer
+                    {toShipCount > 0 ? ` — ${toShipCount} awaiting fulfillment` : ''}
+                  </div>
+                  <div style={{ fontSize: '.85rem' }}>
+                    Each row below is a paid blind-box order and the reward the customer won. Open the order
+                    in SHOPLINE Admin (by its order number) and ship the listed reward product to the customer.
+                  </div>
+                </div>
+              </div>
+              <div className="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Customer</th>
+                      <th>Reward to ship</th>
+                      <th>Status</th>
+                      <th>Fulfillment</th>
+                      <th>Assigned At</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredAssignments.map((a) => {
+                      const meta = parseOrderMeta(a.metadata);
+                      return (
+                        <tr key={a.id}>
+                          <td className="td-primary">
+                            {meta.orderName ? (
+                              <span>{meta.orderName.startsWith('#') ? meta.orderName : `#${meta.orderName}`}</span>
+                            ) : (
+                              <span className="code">#{shortId(a.orderId)}</span>
+                            )}
+                          </td>
+                          <td>
+                            {meta.customerName || meta.customerEmail ? (
+                              <div>
+                                {meta.customerName && <div className="text-sm">{meta.customerName}</div>}
+                                {meta.customerEmail && (
+                                  <div className="text-xs text-muted">{meta.customerEmail}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted text-xs">See order in SHOPLINE</span>
+                            )}
+                          </td>
+                          <td className="td-primary">
+                            {a.selectedRewardTitleSnapshot ?? (
+                              <span className="text-muted text-xs">
+                                {a.status === 'assigned' || a.status.startsWith('inventory') ? 'Assigned' : 'Pending'}
+                              </span>
+                            )}
+                            {a.selectedRewardVariantTitleSnapshot && (
+                              <div className="text-xs text-muted">{a.selectedRewardVariantTitleSnapshot}</div>
+                            )}
+                          </td>
+                          <td>
+                            <StatusBadge status={a.status} />
+                          </td>
+                          <td>
+                            {needsShipping(a) ? (
+                              <span className="badge badge-warning" title="Ship this reward to the customer">
+                                📦 Ship to customer
+                              </span>
+                            ) : (
+                              <span className="text-muted text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="text-xs text-muted">{formatDate(a.createdAt)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </>
       )}

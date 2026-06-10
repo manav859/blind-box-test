@@ -1,21 +1,14 @@
-import {
-  getBlindBoxProductTags,
-  hasBlindBoxCollectionTag,
-  parseBlindBoxCollectionTag,
-  parseBlindBoxWeightTag,
-} from '../../domain/blind-box/product-detection';
-import { BlindBox, ExcludedRewardCandidate, RewardCandidate, RewardGroup } from '../../domain/blind-box/types';
+import { BlindBox, BlindBoxPoolItem, ExcludedRewardCandidate, RewardCandidate } from '../../domain/blind-box/types';
 
 import { ShoplineInventoryGateway, InventoryGatewayError } from '../../integration/shopline/inventory-gateway';
 import { getRuntimeConfig } from '../../lib/config';
 import type { ShopAdminAccessTokenProvider } from '../../lib/shop-admin-access-token';
 import { Logger, logger } from '../../lib/logger';
 import {
-  BlindBoxRewardGroupLinkRepository,
-  getBlindBoxRewardGroupLinkRepository,
-} from '../../repository/blind-box-reward-group-link-repository';
+  BlindBoxPoolItemRepository,
+  getBlindBoxPoolItemRepository,
+} from '../../repository/blind-box-pool-item-repository';
 import { BlindBoxRepository, getBlindBoxRepository } from '../../repository/blind-box-repository';
-import { getRewardGroupRepository, RewardGroupRepository } from '../../repository/reward-group-repository';
 import { getShoplineCatalogService, ShoplineCatalogService } from '../shopline/catalog-service';
 
 const INACTIVE_PRODUCT_STATUSES = new Set(['draft', 'archived', 'inactive', 'disabled']);
@@ -28,55 +21,30 @@ interface CandidateVariantLike {
   available: boolean | null;
 }
 
+/**
+ * Inventory-weighted reward preview for a blind box. Candidates come from the
+ * box's pool (blind_box_pool_items); each candidate's `selectionWeight` is its
+ * CURRENT live inventory, so downstream weighted selection yields
+ * P(item) = item_stock / Σ item_stock. Out-of-stock items are excluded.
+ */
 export interface RewardCandidatePreview {
   blindBox: BlindBox;
-  rewardGroup: RewardGroup | null;
-  collection: {
-    id: string;
-    title: string | null;
-    handle: string | null;
-  };
-  resolutionSource: 'product_tag' | 'reward_group_link';
-  rawCollectionSize: number;
+  /** Total reward products configured in the pool. */
+  poolSize: number;
+  /** How many pool items are eligible (active + in stock). */
+  inStockCount: number;
   eligibleCandidates: RewardCandidate[];
   excludedCandidates: ExcludedRewardCandidate[];
 }
 
 export interface RewardCandidateServiceDependencies {
   blindBoxRepository: BlindBoxRepository;
-  rewardGroupRepository: RewardGroupRepository;
-  rewardGroupLinkRepository: BlindBoxRewardGroupLinkRepository;
+  poolItemRepository: BlindBoxPoolItemRepository;
   catalogService: ShoplineCatalogService;
   inventoryGateway: ShoplineInventoryGateway;
   accessTokenProvider: ShopAdminAccessTokenProvider;
   logger: Logger;
   random: () => number;
-}
-
-type RewardCandidateResolutionErrorCode =
-  | 'BLIND_BOX_COLLECTION_NOT_CONFIGURED'
-  | 'BLIND_BOX_COLLECTION_TAG_INVALID'
-  | 'BLIND_BOX_COLLECTION_NOT_FOUND'
-  | 'BLIND_BOX_REWARD_GROUP_MISSING';
-
-export class RewardCandidateResolutionError extends Error {
-  constructor(
-    readonly code: RewardCandidateResolutionErrorCode,
-    message: string,
-  ) {
-    super(message);
-    this.name = 'RewardCandidateResolutionError';
-  }
-}
-
-interface RewardCollectionContext {
-  rewardGroup: RewardGroup | null;
-  collection: {
-    id: string;
-    title: string | null;
-    handle: string | null;
-  };
-  resolutionSource: 'product_tag' | 'reward_group_link';
 }
 
 function buildExcludedCandidate(
@@ -95,10 +63,6 @@ function buildExcludedCandidate(
     inventoryQuantity: options.inventoryQuantity ?? null,
     variantCount: options.variantCount ?? null,
   };
-}
-
-function isBlindBoxProduct(productId: string, blindBox: BlindBox): boolean {
-  return Boolean(blindBox.shoplineProductId) && blindBox.shoplineProductId === productId;
 }
 
 function isProductOperationallyActive(product: {
@@ -157,8 +121,6 @@ function chooseVariant(
     };
   }
 
-  // Pick uniformly at random — variant selection is always uniform regardless
-  // of the blind-box product selection strategy (which applies to products).
   const idx = Math.min(Math.floor(random() * availableVariants.length), availableVariants.length - 1);
   return {
     variant: availableVariants[idx],
@@ -180,200 +142,160 @@ export class RewardCandidateService {
     if (!blindBox) {
       throw new Error('Blind-box reference not found');
     }
-    const collectionContext = await this.resolveRewardCollectionContext(shop, blindBox, options);
-    const collectionResult = await this.dependencies.catalogService.listAllCollectionProducts(
-      shop,
-      collectionContext.collection.id,
-      {
-        accessToken: options.accessToken,
-      },
-    );
 
+    const poolItems = await this.dependencies.poolItemRepository.listByBlindBoxId(shop, blindBoxId);
     const eligibleCandidates: RewardCandidate[] = [];
     const excludedCandidates: ExcludedRewardCandidate[] = [];
 
-    for (const product of collectionResult.products) {
-      const variantCount = product.variants.length;
-      const firstVariantQty = product.variants[0]?.inventoryQuantity ?? null;
-
-      if (isBlindBoxProduct(product.id, blindBox)) {
-        excludedCandidates.push(
-          buildExcludedCandidate(
-            'SELF_REWARD_PRODUCT',
-            'The blind-box product cannot be present in its own reward collection',
-            { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
-          ),
-        );
-        continue;
+    for (const poolItem of poolItems) {
+      const result = await this.buildCandidateForPoolItem(shop, blindBox, poolItem, options);
+      if ('candidate' in result) {
+        eligibleCandidates.push(result.candidate);
+      } else {
+        excludedCandidates.push(result.excluded);
       }
-
-      if (!isProductOperationallyActive(product)) {
-        excludedCandidates.push(
-          buildExcludedCandidate(
-            'INACTIVE_PRODUCT',
-            `Product status is "${product.status ?? 'unknown'}" — only active/published products are eligible`,
-            { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
-          ),
-        );
-        continue;
-      }
-
-      const variantChoice = chooseVariant(product.variants, this.dependencies.random);
-
-      if (variantChoice.variant) {
-        this.dependencies.logger.debug('variant selection', {
-          shop,
-          productId: product.id,
-          productTitle: product.title,
-          variantCount: product.variants.length,
-          eligibleVariantCount: variantChoice.eligibleVariantCount,
-          selectedVariantId: variantChoice.variant.id,
-        });
-      }
-
-      if (!variantChoice.variant) {
-        const outOfStockQty = variantChoice.exclusion!.reason === 'OUT_OF_STOCK' ? firstVariantQty : null;
-        excludedCandidates.push(
-          buildExcludedCandidate(variantChoice.exclusion!.reason, variantChoice.exclusion!.message, {
-            productId: product.id,
-            productTitle: product.title,
-            productStatus: product.status,
-            variantCount,
-            inventoryQuantity: outOfStockQty,
-          }),
-        );
-        continue;
-      }
-
-      const candidate: RewardCandidate = {
-        productId: product.id,
-        variantId: variantChoice.variant.id,
-        productTitle: product.title,
-        variantTitle: variantChoice.variant.title,
-        inventoryQuantity: variantChoice.variant.inventoryQuantity,
-        eligibleVariantCount: variantChoice.eligibleVariantCount,
-        selectionWeight: parseBlindBoxWeightTag(Array.isArray(product.tags) ? product.tags : []),
-        payloadJson: JSON.stringify({
-          collectionId: collectionContext.collection.id,
-          collectionHandle: collectionContext.collection.handle,
-          resolutionSource: collectionContext.resolutionSource,
-          product: {
-            id: product.id,
-            title: product.title,
-            status: product.status,
-            published: product.published,
-          },
-          variant: {
-            id: variantChoice.variant.id,
-            title: variantChoice.variant.title,
-            inventoryQuantity: variantChoice.variant.inventoryQuantity,
-            tracked: variantChoice.variant.tracked,
-            available: variantChoice.variant.available,
-          },
-        }),
-      };
-
-      const operationalExclusion = await this.validateCandidateOperationalReadiness(
-        shop,
-        candidate,
-        {
-          accessToken: options.accessToken,
-        },
-      );
-      if (operationalExclusion) {
-        excludedCandidates.push(operationalExclusion);
-        continue;
-      }
-
-      eligibleCandidates.push(candidate);
     }
 
-    this.dependencies.logger.info('Resolved blind-box reward candidates from SHOPLINE collection', {
+    this.dependencies.logger.info('Resolved blind-box reward candidates from pool', {
       shop,
       blindBoxId: blindBox.id,
-      rewardGroupId: collectionContext.rewardGroup?.id || null,
-      collectionId: collectionContext.collection.id,
-      collectionHandle: collectionContext.collection.handle,
-      resolutionSource: collectionContext.resolutionSource,
-      rawCollectionSize: collectionResult.products.length,
+      poolSize: poolItems.length,
       eligibleCandidateCount: eligibleCandidates.length,
       excludedCandidateCount: excludedCandidates.length,
     });
 
     return {
       blindBox,
-      rewardGroup: collectionContext.rewardGroup,
-      collection: {
-        id: collectionResult.collection.id,
-        title: collectionResult.collection.title,
-        handle: collectionResult.collection.handle,
-      },
-      resolutionSource: collectionContext.resolutionSource,
-      rawCollectionSize: collectionResult.products.length,
+      poolSize: poolItems.length,
+      inStockCount: eligibleCandidates.length,
       eligibleCandidates,
       excludedCandidates,
     };
   }
 
-  private async resolveRewardCollectionContext(
+  private async buildCandidateForPoolItem(
     shop: string,
     blindBox: BlindBox,
-    options: {
-      accessToken?: string;
-    },
-  ): Promise<RewardCollectionContext> {
-    if (!blindBox.shoplineProductId) {
-      throw new RewardCandidateResolutionError(
-        'BLIND_BOX_COLLECTION_NOT_CONFIGURED',
-        'Blind-box reference is missing its SHOPLINE product id',
-      );
+    poolItem: BlindBoxPoolItem,
+    options: { accessToken?: string },
+  ): Promise<{ candidate: RewardCandidate } | { excluded: ExcludedRewardCandidate }> {
+    // A blind box can never reward its own trigger product.
+    if (blindBox.triggerProductId && poolItem.rewardProductId === blindBox.triggerProductId) {
+      return {
+        excluded: buildExcludedCandidate(
+          'SELF_REWARD_PRODUCT',
+          'The trigger product cannot also be a reward in its own pool',
+          { productId: poolItem.rewardProductId, productTitle: poolItem.rewardTitleSnapshot },
+        ),
+      };
     }
 
-    const product = await this.dependencies.catalogService.getProduct(shop, blindBox.shoplineProductId, {
-      accessToken: options.accessToken,
-    });
-    const productTags = getBlindBoxProductTags(product);
-    const collectionHandle = parseBlindBoxCollectionTag(productTags);
+    let product;
+    try {
+      product = await this.dependencies.catalogService.getProduct(shop, poolItem.rewardProductId, {
+        accessToken: options.accessToken,
+      });
+    } catch (error) {
+      return {
+        excluded: buildExcludedCandidate(
+          'PRODUCT_FETCH_FAILED',
+          error instanceof Error ? error.message : 'Failed to load the reward product from SHOPLINE',
+          { productId: poolItem.rewardProductId, productTitle: poolItem.rewardTitleSnapshot },
+        ),
+      };
+    }
 
-    if (collectionHandle) {
-      // resolveCollectionBySlug tries GraphQL collectionByHandle first, then
-      // falls back to REST title-slug matching.  This handles the case where
-      // SHOPLINE does not expose a handle field on the collection (the GraphQL
-      // query returns null) but the collection can still be matched by title.
-      const collection = await this.dependencies.catalogService.resolveCollectionBySlug(
-        shop,
-        collectionHandle,
-        { accessToken: options.accessToken },
-      );
+    const variantCount = product.variants.length;
 
-      if (collection) {
+    if (!isProductOperationallyActive(product)) {
+      return {
+        excluded: buildExcludedCandidate(
+          'INACTIVE_PRODUCT',
+          `Product status is "${product.status ?? 'unknown'}" — only active/published products are eligible`,
+          { productId: product.id, productTitle: product.title, productStatus: product.status, variantCount },
+        ),
+      };
+    }
+
+    // Pick the variant: the merchant-selected one if set, else weight within the
+    // product by availability.
+    let variant: CandidateVariantLike | undefined;
+    let eligibleVariantCount = 1;
+    if (poolItem.rewardVariantId) {
+      variant = product.variants.find((candidate) => candidate.id === poolItem.rewardVariantId);
+      if (!variant) {
         return {
-          rewardGroup: null,
-          collection: { id: collection.id, title: collection.title, handle: collection.handle },
-          resolutionSource: 'product_tag',
+          excluded: buildExcludedCandidate(
+            'VARIANT_NOT_FOUND',
+            'The selected reward variant no longer exists on the SHOPLINE product',
+            { productId: product.id, productTitle: product.title, variantCount },
+          ),
         };
       }
-
-      throw new RewardCandidateResolutionError(
-        'BLIND_BOX_COLLECTION_NOT_FOUND',
-        `The blind-box product tag points to a SHOPLINE collection that could not be resolved: "${collectionHandle}". ` +
-        'Verify the collection exists in SHOPLINE Admin.',
-      );
+    } else {
+      const variantChoice = chooseVariant(product.variants, this.dependencies.random);
+      if (!variantChoice.variant) {
+        return {
+          excluded: buildExcludedCandidate(variantChoice.exclusion!.reason, variantChoice.exclusion!.message, {
+            productId: product.id,
+            productTitle: product.title,
+            productStatus: product.status,
+            variantCount,
+            inventoryQuantity: product.variants[0]?.inventoryQuantity ?? null,
+          }),
+        };
+      }
+      variant = variantChoice.variant;
+      eligibleVariantCount = variantChoice.eligibleVariantCount;
     }
 
-    if (hasBlindBoxCollectionTag(productTags)) {
-      throw new RewardCandidateResolutionError(
-        'BLIND_BOX_COLLECTION_TAG_INVALID',
-        'The blind-box product has a "blind-box-collection:" tag but the collection handle is empty. ' +
-        'Fix the tag in SHOPLINE: e.g. "blind-box-collection:my-rewards".',
-      );
+    const inventoryQuantity = variant.inventoryQuantity;
+    if (inventoryQuantity === null || inventoryQuantity <= 0) {
+      return {
+        excluded: buildExcludedCandidate(
+          'OUT_OF_STOCK',
+          'The reward variant is out of stock and cannot be selected',
+          {
+            productId: product.id,
+            productTitle: product.title,
+            variantId: variant.id,
+            variantTitle: variant.title,
+            productStatus: product.status,
+            variantCount,
+            inventoryQuantity,
+          },
+        ),
+      };
     }
 
-    throw new RewardCandidateResolutionError(
-      'BLIND_BOX_COLLECTION_NOT_CONFIGURED',
-      'No reward collection configured. Add tag "blind-box-collection:<handle>" to the blind-box product in SHOPLINE. ' +
-      'The handle is the collection URL slug (e.g. "blind-box-collection:anime-figures").',
-    );
+    const candidate: RewardCandidate = {
+      productId: product.id,
+      variantId: variant.id,
+      productTitle: product.title ?? poolItem.rewardTitleSnapshot,
+      variantTitle: variant.title,
+      inventoryQuantity,
+      // INVENTORY-WEIGHTED: weight = current stock → P = stock / Σ stock.
+      selectionWeight: inventoryQuantity,
+      eligibleVariantCount,
+      payloadJson: JSON.stringify({
+        poolItemId: poolItem.id,
+        product: { id: product.id, title: product.title, status: product.status, published: product.published },
+        variant: {
+          id: variant.id,
+          title: variant.title,
+          inventoryQuantity: variant.inventoryQuantity,
+          tracked: variant.tracked,
+          available: variant.available,
+        },
+      }),
+    };
+
+    const operationalExclusion = await this.validateCandidateOperationalReadiness(shop, candidate, options);
+    if (operationalExclusion) {
+      return { excluded: operationalExclusion };
+    }
+
+    return { candidate };
   }
 
   private async validateCandidateOperationalReadiness(
@@ -405,17 +327,13 @@ export class RewardCandidateService {
       return null;
     } catch (error) {
       if (error instanceof InventoryGatewayError) {
-        return buildExcludedCandidate(
-          'EXECUTION_NOT_READY',
-          error.message,
-          {
-            productId: candidate.productId,
-            variantId: candidate.variantId,
-            productTitle: candidate.productTitle,
-            variantTitle: candidate.variantTitle,
-            inventoryQuantity: candidate.inventoryQuantity,
-          },
-        );
+        return buildExcludedCandidate('EXECUTION_NOT_READY', error.message, {
+          productId: candidate.productId,
+          variantId: candidate.variantId,
+          productTitle: candidate.productTitle,
+          variantTitle: candidate.variantTitle,
+          inventoryQuantity: candidate.inventoryQuantity,
+        });
       }
 
       throw error;
@@ -426,14 +344,12 @@ export class RewardCandidateService {
 export async function getRewardCandidateService(): Promise<RewardCandidateService> {
   const { ShoplineSessionAccessTokenProvider } = await import('../../lib/shop-admin-access-token');
   const blindBoxRepository = await getBlindBoxRepository();
-  const rewardGroupRepository = await getRewardGroupRepository();
-  const rewardGroupLinkRepository = await getBlindBoxRewardGroupLinkRepository();
+  const poolItemRepository = await getBlindBoxPoolItemRepository();
   const catalogService = await getShoplineCatalogService();
 
   return new RewardCandidateService({
     blindBoxRepository,
-    rewardGroupRepository,
-    rewardGroupLinkRepository,
+    poolItemRepository,
     catalogService,
     inventoryGateway: new ShoplineInventoryGateway(),
     accessTokenProvider: new ShoplineSessionAccessTokenProvider(),
