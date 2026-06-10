@@ -70,6 +70,7 @@ export interface InventoryOperation {
   quantity: number;
   attemptCount: number;
   rewardTitleSnapshot: string | null;
+  reason: string | null;
   idempotencyKey: string;
   createdAt: string;
   updatedAt: string;

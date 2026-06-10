@@ -67,10 +67,26 @@ export interface InventoryExecutionContext {
 }
 
 export interface InventoryExecutionResult extends InventoryExecutionContext {
-  outcome: 'succeeded' | 'failed' | 'processing' | 'noop';
+  outcome: 'succeeded' | 'failed' | 'processing' | 'noop' | 'deferred';
   gatewayResult?: InventoryAdjustmentResult | null;
   message?: string;
 }
+
+/**
+ * Config/setup gaps (not delivery failures): when the commit throws one of
+ * these, defer the op (keep it pending + re-runnable) instead of marking it
+ * failed, so a config gap never looks like a failed reward.
+ */
+const CONFIG_SETUP_ERROR_CODES = new Set<string>([
+  'SHOPLINE_LOCATION_UNRESOLVED',
+  'SHOPLINE_LOCATION_CONFIGURED_NOT_FOUND',
+  'SHOPLINE_CONFIGURED_LOCATION_NOT_LINKED',
+  'SHOPLINE_INVENTORY_NOT_TRACKED',
+  'SHOPLINE_INVENTORY_LEVEL_MISSING',
+  'SHOPLINE_CONFIGURED_SCOPES_MISSING',
+]);
+
+export const NEEDS_SETUP_REASON_PREFIX = 'NEEDS_SETUP';
 
 export interface InventoryExecutionOptions {
   accessToken?: string;
@@ -386,6 +402,47 @@ export class InventoryExecutionService {
           outcome: 'processing',
           gatewayResult: null,
           message,
+        };
+      }
+
+      // FIX 2 — a config/setup gap is NOT a delivery failure. Defer (keep the
+      // op pending + re-runnable) so the reward stays recorded for manual ship.
+      if (error instanceof InventoryGatewayError && CONFIG_SETUP_ERROR_CODES.has(error.code)) {
+        const setupReason = `${NEEDS_SETUP_REASON_PREFIX}:${error.code} — ${message}`;
+        await this.dependencies.inventoryExecutionRepository.markDeferred(
+          shop,
+          operationId,
+          setupReason,
+          withAttemptEntry(startedContext.operation.metadata, {
+            attemptNumber,
+            trigger: options.trigger,
+            finishedAt: new Date().toISOString(),
+            state: 'deferred',
+            reason: setupReason,
+            disposition,
+          }, {
+            lastKnownState: 'pending',
+          }),
+          withInventorySummary(startedContext.assignment.metadata, {
+            status: 'inventory_pending',
+            lastError: setupReason,
+          }),
+        );
+
+        const deferredContext = await this.loadExecutionContext(shop, operationId);
+        this.dependencies.logger.warn('Inventory execution deferred — needs setup (recorded, not failed)', {
+          shop,
+          operationId,
+          assignmentId: deferredContext.assignment.id,
+          code: error.code,
+          message,
+        });
+
+        return {
+          ...deferredContext,
+          outcome: 'deferred',
+          gatewayResult: null,
+          message: setupReason,
         };
       }
 

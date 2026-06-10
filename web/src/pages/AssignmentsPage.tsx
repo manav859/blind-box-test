@@ -49,6 +49,32 @@ function needsShipping(a: BlindBoxAssignment): boolean {
   return Boolean(a.selectedRewardTitleSnapshot) && a.status !== 'pending';
 }
 
+/**
+ * Classify an inventory op for display. "Failed" is reserved for genuine,
+ * retryable API errors; config/setup gaps surface as "Needs setup" (not failed),
+ * and uncommitted ops as "Pending".
+ */
+type OpDisplay = { label: string; kind: 'success' | 'warning' | 'danger' | 'info'; note: string | null; retryable: boolean };
+function classifyOp(op: InventoryOperation): OpDisplay {
+  const reason = op.reason ?? '';
+  const isNeedsSetup = reason.startsWith('NEEDS_SETUP');
+  const setupNote = isNeedsSetup ? reason.replace(/^NEEDS_SETUP:?/, '').trim() : '';
+  switch (op.status) {
+    case 'succeeded':
+      return { label: 'Committed', kind: 'success', note: null, retryable: false };
+    case 'processing':
+      return { label: 'Processing', kind: 'info', note: op.reason, retryable: false };
+    case 'failed':
+      return { label: 'Failed', kind: 'danger', note: op.reason, retryable: true };
+    case 'pending':
+      return isNeedsSetup
+        ? { label: 'Needs setup', kind: 'warning', note: setupNote || 'Inventory location/setup required — reward recorded; ship manually.', retryable: true }
+        : { label: 'Pending', kind: 'info', note: null, retryable: false };
+    default:
+      return { label: op.status, kind: 'info', note: op.reason, retryable: false };
+  }
+}
+
 export function AssignmentsPage() {
   const { addToast } = useToast();
   const [tab, setTab] = useState<Tab>('assignments');
@@ -338,7 +364,9 @@ export function AssignmentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOps.map((op) => (
+                  {filteredOps.map((op) => {
+                    const display = classifyOp(op);
+                    return (
                     <tr key={op.id}>
                       <td>
                         <span className="code" style={{ fontSize: '.7rem' }}>
@@ -352,13 +380,18 @@ export function AssignmentsPage() {
                         <StatusBadge status={op.operationType} dot={false} label={op.operationType} />
                       </td>
                       <td>
-                        <StatusBadge status={op.status} />
+                        <span className={`badge badge-${display.kind === 'danger' ? 'danger' : display.kind === 'success' ? 'success' : display.kind === 'warning' ? 'warning' : 'info'}`}>
+                          {display.label}
+                        </span>
+                        {display.note && (
+                          <div className="text-xs text-muted" style={{ maxWidth: 280, marginTop: '.2rem' }}>{display.note}</div>
+                        )}
                       </td>
                       <td className="code">{op.quantity}</td>
                       <td className="text-sm">{op.attemptCount}</td>
                       <td className="text-xs text-muted">{formatDate(op.createdAt)}</td>
                       <td>
-                        {op.status === 'failed' && (
+                        {display.retryable && (
                           <button
                             className="btn btn-warning btn-sm"
                             onClick={() => retryOperation(op.id)}
@@ -367,13 +400,14 @@ export function AssignmentsPage() {
                             {retryingId === op.id ? (
                               <span className="spinner spinner-sm" />
                             ) : (
-                              '↺ Retry'
+                              display.label === 'Needs setup' ? '↺ Retry after setup' : '↺ Retry'
                             )}
                           </button>
                         )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

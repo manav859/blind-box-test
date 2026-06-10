@@ -153,6 +153,50 @@ test('draft blind boxes never resolve (must be activated first)', async () => {
   assert.equal(result.matchedLineCount, 0);
 });
 
+test('config gap (location unresolved) DEFERS — assignment recorded, op pending, NOT failed', async () => {
+  const gateway = new TestInventoryGateway({
+    commitError: { code: 'SHOPLINE_LOCATION_UNRESOLVED', message: 'no location' },
+  });
+  const context = await createBlindBoxTestContext({
+    random: () => 0.5,
+    inventoryExecutionMode: 'execute',
+    inventoryGateway: gateway,
+    configuredLocationId: 'test-location-1',
+  });
+  await seedActiveBox(context, [{ productId: 'reward-1', variantId: 'r1v1', title: 'Prize A', stock: 5 }]);
+
+  const result = await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
+
+  // Reward is recorded (not a failure); op is deferred (pending) with a NEEDS_SETUP reason.
+  assert.equal(result.assignments.length, 1);
+  assert.equal(result.failures.length, 0);
+  assert.equal(result.assignments[0].selectedRewardProductId, 'reward-1');
+
+  const assignments = await context.blindBoxAssignmentService.listAssignments('blind-box');
+  assert.equal(assignments[0].status, 'inventory_pending');
+
+  const ops = await context.inventoryOperationService.listInventoryOperations('blind-box');
+  assert.equal(ops[0].status, 'pending');
+  assert.match(ops[0].reason ?? '', /^NEEDS_SETUP/);
+});
+
+test('genuine API error still FAILS (retryable)', async () => {
+  const gateway = new TestInventoryGateway({ commit: 'definitive' });
+  const context = await createBlindBoxTestContext({
+    random: () => 0.5,
+    inventoryExecutionMode: 'execute',
+    inventoryGateway: gateway,
+    configuredLocationId: 'test-location-1',
+  });
+  await seedActiveBox(context, [{ productId: 'reward-1', variantId: 'r1v1', title: 'Prize A', stock: 5 }]);
+
+  await context.paidOrderAssignmentService.processPaidOrder('blind-box', buildPaidOrderPayload());
+
+  const ops = await context.inventoryOperationService.listInventoryOperations('blind-box');
+  assert.equal(ops[0].status, 'failed');
+  assert.doesNotMatch(ops[0].reason ?? '', /NEEDS_SETUP/);
+});
+
 test('execute mode decrements the chosen reward inventory via the gateway', async () => {
   const gateway = new TestInventoryGateway();
   const context = await createBlindBoxTestContext({

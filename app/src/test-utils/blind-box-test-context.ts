@@ -49,6 +49,11 @@ export interface TestInventoryGatewayFailureMode {
     message: string;
     disposition?: 'definitive' | 'indeterminate';
   };
+  /** Make commit throw a specific gateway error code (e.g. a config/setup code). */
+  commitError?: {
+    code: string;
+    message: string;
+  };
 }
 
 export class TestInventoryGateway implements InventoryGateway {
@@ -70,6 +75,13 @@ export class TestInventoryGateway implements InventoryGateway {
 
   async commit(request: InventoryAdjustmentRequest): Promise<InventoryAdjustmentResult> {
     this.commitRequests.push(request);
+
+    if (this.failureMode.commitError) {
+      throw new InventoryGatewayError(this.failureMode.commitError.message, {
+        code: this.failureMode.commitError.code,
+        disposition: 'definitive',
+      });
+    }
 
     if (this.failureMode.commit === 'definitive') {
       throw new InventoryGatewayError('Simulated inventory commit failure', {

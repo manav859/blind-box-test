@@ -74,6 +74,13 @@ export interface InventoryExecutionRepository {
     operationMetadata: string,
     assignmentMetadata: string,
   ): Promise<void>;
+  markDeferred(
+    shop: string,
+    operationId: string,
+    reason: string,
+    operationMetadata: string,
+    assignmentMetadata: string,
+  ): Promise<void>;
 }
 
 export class SqliteInventoryExecutionRepository implements InventoryExecutionRepository {
@@ -308,6 +315,55 @@ export class SqliteInventoryExecutionRepository implements InventoryExecutionRep
           WHERE shop = ? AND id = ?
         `,
         ['processing', reason, operationMetadata, timestamp, shop, executionRow.operation_id],
+      );
+    });
+  }
+
+  /**
+   * A config/setup gap (no location, untracked variant, missing scope) is NOT a
+   * delivery failure: keep the assignment recorded and the operation re-runnable
+   * (status 'pending'). The merchant can ship manually; auto-decrement retries
+   * once setup is fixed. `reason` carries a NEEDS_SETUP marker for the UI.
+   */
+  async markDeferred(
+    shop: string,
+    operationId: string,
+    reason: string,
+    operationMetadata: string,
+    assignmentMetadata: string,
+  ): Promise<void> {
+    await this.db.transaction(async (transaction) => {
+      const executionRow = await loadExecutionRow(transaction, shop, operationId);
+      if (!executionRow || !executionRow.assignment_id) {
+        throw new NotFoundError('Inventory operation not found while marking deferred state');
+      }
+
+      const timestamp = nowIsoString();
+
+      await transaction.run(
+        `
+          UPDATE blind_box_assignments
+          SET
+            status = ?,
+            metadata = ?,
+            updated_at = ?
+          WHERE shop = ? AND id = ?
+        `,
+        ['inventory_pending', assignmentMetadata, timestamp, shop, executionRow.assignment_id],
+      );
+
+      await transaction.run(
+        `
+          UPDATE inventory_operations
+          SET
+            status = ?,
+            reason = ?,
+            metadata = ?,
+            last_attempted_at = ?,
+            updated_at = ?
+          WHERE shop = ? AND id = ?
+        `,
+        ['pending', reason, operationMetadata, timestamp, timestamp, shop, executionRow.operation_id],
       );
     });
   }

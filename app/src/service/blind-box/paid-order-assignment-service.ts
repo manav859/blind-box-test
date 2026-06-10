@@ -562,7 +562,13 @@ export class PaidOrderAssignmentService {
     executionResult: InventoryExecutionResult,
     wasExistingAssignment: boolean,
   ): AssignedBlindBoxOrderLine | AssignmentProcessingFailure {
-    if (executionResult.outcome === 'succeeded' || executionResult.outcome === 'noop') {
+    // 'deferred' = config/setup gap (e.g. location not resolvable). The reward is
+    // recorded for manual fulfillment; this is NOT a failure.
+    if (
+      executionResult.outcome === 'succeeded' ||
+      executionResult.outcome === 'noop' ||
+      executionResult.outcome === 'deferred'
+    ) {
       return toAssignedBlindBoxOrderLine({
         blindBoxId: executionResult.assignment.blindBoxId,
         lineItemId: lineItem.id,

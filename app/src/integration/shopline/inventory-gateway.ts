@@ -26,7 +26,7 @@ export interface InventoryAdjustmentResult {
   rawResponse: unknown;
 }
 
-export type InventoryLocationResolution = 'configured' | 'default' | 'single_active';
+export type InventoryLocationResolution = 'configured' | 'variant_stock' | 'default' | 'single_active';
 
 export interface InventoryExecutionIdentifiers {
   assignmentSourceProductId: string | null;
@@ -722,7 +722,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     }
 
     const variantDetails = await this.resolveVariantDetails(request);
-    const locationDetails = await this.resolveLocationId(request);
+    const locationDetails = await this.resolveLocationId(request, [], variantDetails.inventoryItemId);
     const { data, traceId } = await this.request<unknown>(request.shop, request.accessToken, '/inventory_levels/adjust.json', {
       method: 'POST',
       body: JSON.stringify({
@@ -749,7 +749,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     traceIds: string[] = [],
   ): Promise<InventoryExecutionIdentifiers> {
     const variantDetails = await this.resolveVariantDetails(request, traceIds);
-    const locationDetails = await this.resolveLocationId(request, traceIds);
+    const locationDetails = await this.resolveLocationId(request, traceIds, variantDetails.inventoryItemId);
 
     return {
       assignmentSourceProductId: request.sourceProductId || null,
@@ -854,6 +854,14 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     };
   }
 
+  /**
+   * Resolve the location to decrement for THIS shop, with no env required:
+   *   1. Explicit override (preferredLocationId / BLIND_BOX_SHOPLINE_LOCATION_ID) — dev only.
+   *   2. The location where the reward variant actually has stock (per-shop, automatic).
+   *   3. The shop's default/primary active location.
+   *   4. The sole active location if there's exactly one.
+   * Throws SHOPLINE_LOCATION_UNRESOLVED only when none of the above apply.
+   */
   private async resolveLocationId(
     request: {
       shop: string;
@@ -861,6 +869,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       preferredLocationId?: string | null;
     },
     traceIds: string[] = [],
+    inventoryItemId?: string | null,
   ): Promise<{
     locationId: string;
     resolution: InventoryLocationResolution;
@@ -877,6 +886,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     pushTraceId(traceIds, locationResponse.traceId);
     const locationRecords = extractLocationRecords(locationResponse.data).filter(isLocationActive);
 
+    // 1. Explicit override (optional dev convenience).
     if (configuredLocationId) {
       const configuredLocation = locationRecords.find((locationRecord) =>
         readStringField(locationRecord, ['id', 'location_id']) === configuredLocationId,
@@ -901,6 +911,27 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       };
     }
 
+    // 2. Prefer the active location where this variant actually has stock.
+    if (inventoryItemId) {
+      const activeLocationIds = new Set(
+        locationRecords
+          .map((locationRecord) => readStringField(locationRecord, ['id', 'location_id']))
+          .filter((id): id is string => Boolean(id)),
+      );
+      try {
+        const levels = await this.fetchInventoryLevelStates(request, inventoryItemId, traceIds);
+        const stocked = levels
+          .filter((level) => (level.available ?? 0) > 0 && activeLocationIds.has(level.locationId))
+          .sort((left, right) => (right.available ?? 0) - (left.available ?? 0))[0];
+        if (stocked) {
+          return { locationId: stocked.locationId, resolution: 'variant_stock' };
+        }
+      } catch {
+        // Level lookup failed — fall through to default/single-active resolution.
+      }
+    }
+
+    // 3. Default / primary active location.
     const defaultLocation = locationRecords.find((locationRecord) =>
       readBooleanField(locationRecord, ['default', 'is_default', 'primary']) === true,
     );
@@ -914,6 +945,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       }
     }
 
+    // 4. Sole active location.
     if (locationRecords.length === 1) {
       const locationId = readStringField(locationRecords[0], ['id', 'location_id']);
       if (locationId) {
@@ -925,7 +957,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
     }
 
     throw new InventoryGatewayError(
-      'Unable to resolve a unique SHOPLINE location id. Configure BLIND_BOX_SHOPLINE_LOCATION_ID for live inventory execution.',
+      'Unable to resolve a SHOPLINE location for inventory decrement. The reward variant has no stocked active location and the shop has multiple locations with no default.',
       {
         code: 'SHOPLINE_LOCATION_UNRESOLVED',
         disposition: 'definitive',
