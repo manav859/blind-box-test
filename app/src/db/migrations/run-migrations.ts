@@ -3,6 +3,7 @@ import { INITIAL_FOUNDATION_MIGRATION } from '../schema/initial-foundation';
 import { INVENTORY_RECOVERY_HARDENING_MIGRATION } from '../schema/002_inventory_recovery_hardening';
 import { COLLECTION_REWARD_GROUPS_MIGRATION } from '../schema/003_collection_reward_groups';
 import { EXPLICIT_PRODUCT_SELECTION_MIGRATION } from '../schema/004_explicit_product_selection';
+import { FULFILLMENT_AND_UPLOADS_MIGRATION } from '../schema/005_fulfillment_and_uploads';
 import { logger } from '../../lib/logger';
 
 interface AppliedMigrationRow {
@@ -14,6 +15,7 @@ const MIGRATIONS = [
   INVENTORY_RECOVERY_HARDENING_MIGRATION,
   COLLECTION_REWARD_GROUPS_MIGRATION,
   EXPLICIT_PRODUCT_SELECTION_MIGRATION,
+  FULFILLMENT_AND_UPLOADS_MIGRATION,
 ];
 
 async function ensureMigrationTable(db: BlindBoxDatabase): Promise<void> {

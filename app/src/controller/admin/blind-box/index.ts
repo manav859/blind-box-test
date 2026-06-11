@@ -24,6 +24,7 @@ import { getPaidOrderWebhookService } from '../../../service/webhook/paid-order-
 import { ValidationError } from '../../../lib/errors';
 import { getShoplineCatalogService } from '../../../service/shopline/catalog-service';
 import { getBlindBoxDatabase } from '../../../db/client';
+import { getUploadedImageRepository } from '../../../repository/uploaded-image-repository';
 import { logger } from '../../../lib/logger';
 import type { OrderPaidWebhookPayload } from '../../../domain/blind-box/order-paid';
 import type { IncomingHttpHeaders } from 'http';
@@ -465,6 +466,69 @@ export function createBlindBoxAdminRouter(): express.Router {
     }
   });
 
+  // Full edit of the blind box + its backing SHOPLINE product: name, price,
+  // description, image. Updates SHOPLINE first (write_products); only on
+  // success does the local record update, so the two never diverge silently.
+  router.put('/pools/:blindBoxId/product', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop, accessToken } = requireShopSession(res);
+      const blindBoxService = await getBlindBoxService();
+      const catalogService = await getShoplineCatalogService();
+
+      const blindBox = await blindBoxService.getBlindBox(shop, req.params.blindBoxId);
+      if (!blindBox) {
+        throw new ValidationError('Blind-box reference not found');
+      }
+      if (!blindBox.triggerProductId) {
+        throw new ValidationError('This blind box has no backing SHOPLINE product to edit.');
+      }
+
+      const payload = parseJsonBody<{
+        name?: string;
+        price?: string | number;
+        description?: string | null;
+        imageUrl?: string | null;
+      }>(req.body);
+
+      const nextName = (payload.name ?? '').trim();
+      const nextPrice = payload.price != null ? String(payload.price).trim() : '';
+      if (nextPrice && (!Number.isFinite(Number(nextPrice)) || Number(nextPrice) < 0)) {
+        throw new ValidationError('Price must be a valid non-negative number.');
+      }
+
+      const updatedProduct = await catalogService.updateProduct(
+        shop,
+        blindBox.triggerProductId,
+        {
+          title: nextName || null,
+          price: nextPrice || null,
+          description: payload.description,
+          imageUrl: payload.imageUrl ?? null,
+        },
+        { accessToken },
+      );
+
+      const data = await blindBoxService.updateBlindBox(shop, blindBox.id, {
+        name: nextName || blindBox.name,
+        description: payload.description === undefined ? blindBox.description : payload.description,
+        status: blindBox.status,
+        triggerProductId: blindBox.triggerProductId,
+        triggerProductTitleSnapshot: updatedProduct.title ?? blindBox.triggerProductTitleSnapshot,
+        configJson: blindBox.configJson,
+      });
+
+      res.status(200).send({
+        success: true,
+        data,
+        product: { id: updatedProduct.id, title: updatedProduct.title, imageUrl: updatedProduct.imageUrl },
+      });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
   // ── Reward pool management (blind_box_pool_items) ───────────────────────────
   router.get('/pools/:blindBoxId/rewards', async (req, res) => {
     const context = getContext(req, res);
@@ -587,6 +651,65 @@ export function createBlindBoxAdminRouter(): express.Router {
         success: true,
         data,
       });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // Internal fulfillment tracking ONLY (shipped_at flag). This never calls
+  // SHOPLINE's fulfillment API — the merchant fulfills the real order in
+  // SHOPLINE Admin separately.
+  router.post('/assignments/:assignmentId/ship', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop } = requireShopSession(res);
+      const payload = parseJsonBody<{ shipped?: boolean }>(req.body);
+      const assignmentService = await getBlindBoxAssignmentService();
+
+      const existing = await assignmentService.getAssignment(shop, req.params.assignmentId);
+      if (!existing) {
+        res.status(404).send({ success: false, error: 'Assignment not found' });
+        return;
+      }
+
+      const data = await assignmentService.setShipped(shop, existing.id, payload?.shipped !== false);
+      res.status(200).send({ success: true, data });
+    } catch (error) {
+      sendErrorResponse(res, error, context);
+    }
+  });
+
+  // Accepts a small image (base64 JSON), stores it, and returns a PUBLIC URL the
+  // SHOPLINE product media can reference as original_source (SHOPLINE fetches
+  // and rehosts it on its own CDN at product create/update).
+  router.post('/uploads/images', async (req, res) => {
+    const context = getContext(req, res);
+
+    try {
+      const { shop } = requireShopSession(res);
+      const payload = parseJsonBody<{ contentType?: string; dataBase64?: string }>(req.body);
+
+      const contentType = (payload?.contentType ?? '').trim().toLowerCase();
+      const dataBase64 = (payload?.dataBase64 ?? '').trim();
+      if (!/^image\/(png|jpe?g|gif|webp)$/.test(contentType)) {
+        throw new ValidationError('Only PNG, JPEG, GIF, or WebP images are supported.');
+      }
+      if (!dataBase64) {
+        throw new ValidationError('Image data is required.');
+      }
+      // ~4MB binary ≈ 5.4MB base64.
+      if (dataBase64.length > 5_500_000) {
+        throw new ValidationError('Image is too large — keep it under 4MB.');
+      }
+
+      const uploadedImageRepository = await getUploadedImageRepository();
+      const image = await uploadedImageRepository.create(shop, contentType, dataBase64);
+
+      const appUrl = (process.env.SHOPLINE_APP_URL || '').replace(/\/$/, '');
+      const url = `${appUrl}/public/blind-box-images/${image.id}`;
+
+      res.status(200).send({ success: true, data: { id: image.id, url } });
     } catch (error) {
       sendErrorResponse(res, error, context);
     }

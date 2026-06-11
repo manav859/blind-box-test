@@ -44,6 +44,7 @@ export interface BlindBoxAssignment {
   selectionStrategy: string | null;
   idempotencyKey: string;
   metadata: string | null;
+  shippedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -455,6 +456,34 @@ export const api = {
   // Assignments
   listAssignments(): Promise<BlindBoxAssignment[]> {
     return request<BlindBoxAssignment[]>('/assignments');
+  },
+
+  // Internal fulfillment tracking only (no SHOPLINE fulfillment API call).
+  setAssignmentShipped(assignmentId: string, shipped: boolean): Promise<BlindBoxAssignment> {
+    return request<BlindBoxAssignment>(`/assignments/${encodeURIComponent(assignmentId)}/ship`, {
+      method: 'POST',
+      body: JSON.stringify({ shipped }),
+    });
+  },
+
+  // Edits the blind box AND its backing SHOPLINE product (title/price/desc/image).
+  updateBlindBoxProduct(
+    blindBoxId: string,
+    payload: { name?: string; price?: string | number; description?: string | null; imageUrl?: string | null },
+  ): Promise<BlindBox> {
+    return request<BlindBox>(`/pools/${blindBoxId}/product`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Uploads an image (base64) to the app; returns a public URL usable as
+  // SHOPLINE product media original_source.
+  uploadImage(payload: { contentType: string; dataBase64: string }): Promise<{ id: string; url: string }> {
+    return request<{ id: string; url: string }>('/uploads/images', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   // Inventory Operations

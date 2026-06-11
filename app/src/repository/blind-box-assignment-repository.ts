@@ -21,6 +21,7 @@ interface BlindBoxAssignmentRow {
   selection_strategy: BlindBoxAssignment['selectionStrategy'];
   idempotency_key: string;
   metadata: string | null;
+  shipped_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,6 +44,7 @@ function mapBlindBoxAssignmentRow(row: BlindBoxAssignmentRow): BlindBoxAssignmen
     selectionStrategy: normalizeNullableString(row.selection_strategy) as BlindBoxAssignment['selectionStrategy'],
     idempotencyKey: row.idempotency_key,
     metadata: normalizeNullableString(row.metadata),
+    shippedAt: normalizeNullableString(row.shipped_at),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -60,6 +62,7 @@ export interface BlindBoxAssignmentRepository {
     status: BlindBoxAssignment['status'],
     metadata?: string | null,
   ): Promise<BlindBoxAssignment>;
+  setShipped(shop: string, assignmentId: string, shipped: boolean): Promise<BlindBoxAssignment>;
 }
 
 export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRepository {
@@ -150,6 +153,7 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           selection_strategy,
           idempotency_key,
           metadata,
+          shipped_at,
           created_at,
           updated_at
         FROM blind_box_assignments
@@ -182,6 +186,7 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           selection_strategy,
           idempotency_key,
           metadata,
+          shipped_at,
           created_at,
           updated_at
         FROM blind_box_assignments
@@ -213,6 +218,7 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           selection_strategy,
           idempotency_key,
           metadata,
+          shipped_at,
           created_at,
           updated_at
         FROM blind_box_assignments
@@ -246,6 +252,7 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
           selection_strategy,
           idempotency_key,
           metadata,
+          shipped_at,
           created_at,
           updated_at
         FROM blind_box_assignments
@@ -280,6 +287,28 @@ export class SqliteBlindBoxAssignmentRepository implements BlindBoxAssignmentRep
     const assignment = await this.findById(shop, assignmentId);
     if (!assignment) {
       throw new NotFoundError('Blind-box assignment not found after status update');
+    }
+
+    return assignment;
+  }
+
+  async setShipped(shop: string, assignmentId: string, shipped: boolean): Promise<BlindBoxAssignment> {
+    const timestamp = nowIsoString();
+
+    await this.db.run(
+      `
+        UPDATE blind_box_assignments
+        SET
+          shipped_at = ?,
+          updated_at = ?
+        WHERE shop = ? AND id = ?
+      `,
+      [shipped ? timestamp : null, timestamp, shop, assignmentId],
+    );
+
+    const assignment = await this.findById(shop, assignmentId);
+    if (!assignment) {
+      throw new NotFoundError('Blind-box assignment not found while updating shipped state');
     }
 
     return assignment;

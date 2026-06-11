@@ -5,6 +5,8 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { api, BlindBox, SessionExpiredError } from '../lib/api';
+import { ImageUpload } from '../components/ImageUpload';
+import { TableSkeleton } from '../components/Skeleton';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 function formatDate(iso: string): string {
@@ -120,13 +122,8 @@ function CreateBlindBoxDialog({
       </div>
 
       <div className="form-group">
-        <label>Image URL (optional)</label>
-        <input
-          className="input"
-          placeholder="https://…/box.png"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-        />
+        <label>Product image (optional)</label>
+        <ImageUpload value={imageUrl} onChange={setImageUrl} disabled={saving} />
       </div>
 
       <div className="form-group" style={{ marginBottom: 0 }}>
@@ -227,12 +224,7 @@ export function BlindBoxesPage() {
         </button>
       </div>
 
-      {loading && (
-        <div className="loading-overlay">
-          <div className="spinner spinner-lg" />
-          <span>Loading blind boxes…</span>
-        </div>
-      )}
+      {loading && <TableSkeleton rows={4} />}
 
       {error && !loading && (
         error instanceof SessionExpiredError ? (

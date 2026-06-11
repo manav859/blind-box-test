@@ -37,6 +37,15 @@ export class BlindBoxAssignmentService {
   async findAssignmentByOrderId(shop: string, orderId: string): Promise<BlindBoxAssignment | null> {
     return this.assignmentRepository.findByOrderId(shop, orderId);
   }
+
+  async getAssignment(shop: string, assignmentId: string): Promise<BlindBoxAssignment | null> {
+    return this.assignmentRepository.findById(shop, assignmentId);
+  }
+
+  /** Internal fulfillment tracking only — never calls SHOPLINE's fulfillment API. */
+  async setShipped(shop: string, assignmentId: string, shipped: boolean): Promise<BlindBoxAssignment> {
+    return this.assignmentRepository.setShipped(shop, assignmentId, shipped);
+  }
 }
 
 export async function getBlindBoxAssignmentService(): Promise<BlindBoxAssignmentService> {

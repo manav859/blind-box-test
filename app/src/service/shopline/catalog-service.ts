@@ -49,6 +49,25 @@ export class ShoplineCatalogService {
     return product;
   }
 
+  /** Update the backing SHOPLINE product (title / description / price / image). */
+  async updateProduct(
+    shop: string,
+    productId: string,
+    input: { title?: string | null; price?: string | null; description?: string | null; imageUrl?: string | null },
+    options: { accessToken?: string } = {},
+  ): Promise<ShoplineProduct> {
+    const accessToken = await this.resolveAccessToken(shop, options.accessToken);
+    const product = await this.dependencies.catalogGateway.updateProduct(shop, accessToken, productId, input);
+
+    this.dependencies.logger.info('Updated SHOPLINE product for blind box', {
+      shop,
+      productId: product.id,
+      updatedFields: Object.keys(input).filter((key) => (input as Record<string, unknown>)[key] != null),
+    });
+
+    return product;
+  }
+
   /** Archive (not delete) a blind box's backing product so order history survives. */
   async archiveProduct(
     shop: string,

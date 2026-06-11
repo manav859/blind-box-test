@@ -114,6 +114,8 @@ export interface BlindBoxAssignment {
   selectionStrategy: BlindBoxSelectionStrategy | null;
   idempotencyKey: string;
   metadata: string | null;
+  /** Internal fulfillment tracking — when the merchant marked the reward shipped. */
+  shippedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

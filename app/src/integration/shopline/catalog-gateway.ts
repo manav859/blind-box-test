@@ -43,6 +43,13 @@ export interface CreateProductInput {
   imageUrl?: string | null;
 }
 
+export interface UpdateProductInput {
+  title?: string | null;
+  price?: string | null;
+  description?: string | null;
+  imageUrl?: string | null;
+}
+
 export interface CollectionProductsPage {
   products: ShoplineProduct[];
   nextPageInfo: string | null;
@@ -402,6 +409,7 @@ export function collectionMatchesSlug(collection: ShoplineCollection, targetSlug
 export interface CatalogGateway {
   getProduct(shop: string, accessToken: string, productId: string): Promise<ShoplineProduct>;
   createProduct(shop: string, accessToken: string, input: CreateProductInput): Promise<ShoplineProduct>;
+  updateProduct(shop: string, accessToken: string, productId: string, input: UpdateProductInput): Promise<ShoplineProduct>;
   archiveProduct(shop: string, accessToken: string, productId: string): Promise<void>;
   getCollection(shop: string, accessToken: string, collectionId: string): Promise<ShoplineCollection>;
   getCollectionByHandle(shop: string, accessToken: string, handle: string): Promise<ShoplineCollection>;
@@ -516,6 +524,64 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     }
 
     return product;
+  }
+
+  /**
+   * Update the backing product's merchant-editable fields (title, description,
+   * variant price, image). Price lives on the variant, so we fetch the product
+   * first to address its variant id. Image replacement passes a new media entry
+   * (SHOPLINE fetches original_source and rehosts it).
+   */
+  async updateProduct(
+    shop: string,
+    accessToken: string,
+    productId: string,
+    input: UpdateProductInput,
+  ): Promise<ShoplineProduct> {
+    const normalizedProductId = normalizeShoplineResourceId(productId);
+    if (!normalizedProductId) {
+      throw new CatalogGatewayError('A SHOPLINE product id is required', {
+        code: 'SHOPLINE_PRODUCT_ID_REQUIRED',
+        statusCode: 400,
+      });
+    }
+
+    const existing = await this.getProduct(shop, accessToken, normalizedProductId);
+
+    const productBody: Record<string, unknown> = { id: normalizedProductId };
+    if (input.title != null && input.title.trim()) {
+      productBody.title = input.title.trim();
+    }
+    if (input.description !== undefined) {
+      productBody.body_html = input.description ?? '';
+    }
+    if (input.price != null && String(input.price).trim()) {
+      const variantId = existing.variants[0]?.id;
+      if (!variantId) {
+        throw new CatalogGatewayError('The SHOPLINE product has no variant to set a price on', {
+          code: 'SHOPLINE_PRODUCT_VARIANT_MISSING',
+          statusCode: 400,
+        });
+      }
+      productBody.variants = [{ id: variantId, price: String(input.price).trim() }];
+    }
+    if (input.imageUrl != null && input.imageUrl.trim()) {
+      productBody.media = [{ content_type: 'IMAGE', original_source: input.imageUrl.trim() }];
+    }
+
+    const response = await this.mutate<unknown>(
+      shop,
+      accessToken,
+      'PUT',
+      `/products/${encodeURIComponent(normalizedProductId)}.json`,
+      { product: productBody },
+    );
+    const productRecord =
+      asRecord(asRecord(response.data)?.product) || asRecord(asRecord(response.data)?.data) || asRecord(response.data);
+    const product = productRecord ? mapProductRecord(productRecord) : null;
+
+    // Some API versions return a sparse body on update — re-fetch for a full record.
+    return product?.title != null ? product : this.getProduct(shop, accessToken, normalizedProductId);
   }
 
   /** Archive (not delete) a product so past order history stays intact. */
@@ -705,10 +771,10 @@ export class ShoplineCatalogGateway implements CatalogGateway {
     // Server-side tag filter — SHOPLINE returns only products carrying this tag,
     // e.g. /products/products.json?tag=blind-box.
     if (tag) query.set('tag', tag);
-    // The products LIST endpoint omits the tags field by default, which breaks
-    // client-side blind-box detection. Request it explicitly (alongside the
-    // other fields we map) so tags are present in the list response.
-    query.set('fields', 'id,title,status,published,tags,product_type,handle,template_path,variants');
+    // The products LIST endpoint omits tags AND images by default. Request them
+    // explicitly (alongside the other fields we map) — without `image,images,media`
+    // here the picker/reward thumbnails would all be empty.
+    query.set('fields', 'id,title,status,published,tags,product_type,handle,template_path,variants,image,images,media');
 
     // SHOPLINE Admin OpenAPI product list endpoint.
     // Full URL: https://{shop}.myshopline.com/admin/openapi/{version}/products/products.json

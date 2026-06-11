@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
+import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
-import { api, BlindBoxAssignment, InventoryOperation, SessionExpiredError } from '../lib/api';
+import { api, BlindBox, BlindBoxAssignment, InventoryOperation, SessionExpiredError } from '../lib/api';
+import { ProductThumb } from '../components/ProductPicker';
+import { TableSkeleton } from '../components/Skeleton';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
 type Tab = 'assignments' | 'operations';
+type FulfillFilter = 'all' | 'awaiting' | 'shipped';
 
 function formatDate(iso: string): string {
   try {
@@ -75,23 +79,166 @@ function classifyOp(op: InventoryOperation): OpDisplay {
   }
 }
 
+/** Inventory state for an assignment, derived from its commit operation. */
+function inventoryDisplayFor(operation: InventoryOperation | undefined): OpDisplay {
+  if (!operation) {
+    return { label: 'Pending', kind: 'info', note: null, retryable: false };
+  }
+  return classifyOp(operation);
+}
+
+function AssignmentDetailModal({
+  assignment,
+  blindBoxName,
+  operation,
+  onClose,
+  onShippedChange,
+}: {
+  assignment: BlindBoxAssignment;
+  blindBoxName: string | null;
+  operation: InventoryOperation | undefined;
+  onClose(): void;
+  onShippedChange(updated: BlindBoxAssignment): void;
+}) {
+  const { addToast } = useToast();
+  const [rewardImage, setRewardImage] = useState<string | null>(null);
+  const [shipBusy, setShipBusy] = useState(false);
+
+  const meta = parseOrderMeta(assignment.metadata);
+  const invDisplay = inventoryDisplayFor(operation);
+  const shipped = Boolean(assignment.shippedAt);
+
+  useEffect(() => {
+    if (!assignment.selectedRewardProductId) return;
+    api
+      .getCatalogProduct(assignment.selectedRewardProductId)
+      .then((p) => setRewardImage(p.imageUrl))
+      .catch(() => {});
+  }, [assignment.selectedRewardProductId]);
+
+  async function toggleShipped() {
+    setShipBusy(true);
+    try {
+      const updated = await api.setAssignmentShipped(assignment.id, !shipped);
+      onShippedChange(updated);
+      addToast('success', !shipped ? 'Marked as shipped' : 'Marked as not shipped');
+    } catch (e: unknown) {
+      addToast('error', 'Could not update shipped state', e instanceof Error ? e.message : String(e));
+    } finally {
+      setShipBusy(false);
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={meta.orderName ? `Order ${meta.orderName.startsWith('#') ? meta.orderName : `#${meta.orderName}`}` : `Order #${shortId(assignment.orderId)}`}
+      subtitle="Blind-box reward assignment"
+      size="lg"
+      footer={
+        <>
+          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+          <button
+            className={shipped ? 'btn btn-secondary' : 'btn btn-primary'}
+            onClick={toggleShipped}
+            disabled={shipBusy || !assignment.selectedRewardTitleSnapshot}
+          >
+            {shipBusy ? <><span className="spinner spinner-sm" /> Saving…</> : shipped ? 'Mark as not shipped' : '📦 Mark as shipped'}
+          </button>
+        </>
+      }
+    >
+      {/* Reward hero */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+        <ProductThumb src={rewardImage} alt={assignment.selectedRewardTitleSnapshot ?? 'Reward'} size={72} />
+        <div>
+          <div style={{ fontSize: '.78rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '.04em' }}>
+            Reward won
+          </div>
+          <div style={{ fontWeight: 600, fontSize: '1.05rem' }}>
+            {assignment.selectedRewardTitleSnapshot ?? 'Not yet assigned'}
+          </div>
+          {assignment.selectedRewardVariantTitleSnapshot && (
+            <div className="text-sm text-muted">{assignment.selectedRewardVariantTitleSnapshot}</div>
+          )}
+        </div>
+        <div style={{ marginLeft: 'auto' }}>
+          {shipped ? (
+            <span className="badge badge-success">✓ Shipped {assignment.shippedAt ? formatDate(assignment.shippedAt) : ''}</span>
+          ) : (
+            <span className="badge badge-warning">Awaiting fulfillment</span>
+          )}
+        </div>
+      </div>
+
+      <div className="kv-list" style={{ marginBottom: '1.25rem' }}>
+        <div className="kv-row">
+          <span className="kv-label">Order</span>
+          <span className="kv-value code">{meta.orderName ?? assignment.orderId}</span>
+        </div>
+        <div className="kv-row">
+          <span className="kv-label">Date</span>
+          <span className="kv-value">{formatDate(assignment.createdAt)}</span>
+        </div>
+        <div className="kv-row">
+          <span className="kv-label">Customer</span>
+          <span className="kv-value">
+            {meta.customerName ?? <span className="text-muted">See order in SHOPLINE</span>}
+            {meta.customerEmail && <div className="text-xs text-muted">{meta.customerEmail}</div>}
+          </span>
+        </div>
+        <div className="kv-row">
+          <span className="kv-label">Blind box purchased</span>
+          <span className="kv-value">{blindBoxName ?? assignment.blindBoxId}</span>
+        </div>
+        <div className="kv-row">
+          <span className="kv-label">Inventory</span>
+          <span className="kv-value">
+            <span className={`badge badge-${invDisplay.kind === 'danger' ? 'danger' : invDisplay.kind === 'success' ? 'success' : invDisplay.kind === 'warning' ? 'warning' : 'info'}`}>
+              {invDisplay.label}
+            </span>
+            {invDisplay.note && <div className="text-xs text-muted" style={{ marginTop: '.2rem' }}>{invDisplay.note}</div>}
+          </span>
+        </div>
+      </div>
+
+      <div className="alert alert-neutral">
+        <span className="alert-icon">ℹ</span>
+        <div className="alert-body" style={{ fontSize: '.83rem' }}>
+          "Mark as shipped" tracks fulfillment inside this app only. Remember to fulfill the actual
+          order in SHOPLINE Admin (shipping label, tracking, customer notification) separately.
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 export function AssignmentsPage() {
   const { addToast } = useToast();
   const [tab, setTab] = useState<Tab>('assignments');
   const [assignments, setAssignments] = useState<BlindBoxAssignment[]>([]);
   const [operations, setOperations] = useState<InventoryOperation[]>([]);
+  const [blindBoxes, setBlindBoxes] = useState<BlindBox[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [fulfillFilter, setFulfillFilter] = useState<FulfillFilter>('all');
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([api.listAssignments(), api.listInventoryOperations()])
-      .then(([a, o]) => {
+    Promise.all([
+      api.listAssignments(),
+      api.listInventoryOperations(),
+      api.listBlindBoxes().catch(() => [] as BlindBox[]),
+    ])
+      .then(([a, o, boxes]) => {
         setAssignments(a);
         setOperations(o);
+        setBlindBoxes(boxes);
         setError(null);
       })
       .catch((e: Error) => setError(e))
@@ -99,6 +246,8 @@ export function AssignmentsPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const blindBoxNameById = new Map(blindBoxes.map((bb) => [bb.id, bb.name]));
 
   const filteredAssignments = assignments.filter((a) => {
     const meta = parseOrderMeta(a.metadata);
@@ -112,10 +261,14 @@ export function AssignmentsPage() {
       (a.selectedRewardTitleSnapshot ?? '').toLowerCase().includes(q) ||
       (a.selectedRewardVariantTitleSnapshot ?? '').toLowerCase().includes(q);
     const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchFulfill =
+      fulfillFilter === 'all' ||
+      (fulfillFilter === 'shipped' ? Boolean(a.shippedAt) : !a.shippedAt && needsShipping(a));
+    return matchSearch && matchStatus && matchFulfill;
   });
 
-  const toShipCount = assignments.filter(needsShipping).length;
+  const toShipCount = assignments.filter((a) => needsShipping(a) && !a.shippedAt).length;
+  const selectedAssignment = assignments.find((a) => a.id === selectedAssignmentId) ?? null;
 
   const filteredOps = operations.filter((o) => {
     const matchSearch = !search || o.id.includes(search) || (o.rewardTitleSnapshot ?? '').toLowerCase().includes(search.toLowerCase());
@@ -212,14 +365,20 @@ export function AssignmentsPage() {
             </>
           )}
         </select>
+        {tab === 'assignments' && (
+          <select
+            value={fulfillFilter}
+            onChange={(e) => setFulfillFilter(e.target.value as FulfillFilter)}
+            style={{ padding: '.5rem .75rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', fontSize: '.875rem' }}
+          >
+            <option value="all">All fulfillment</option>
+            <option value="awaiting">Awaiting fulfillment{toShipCount > 0 ? ` (${toShipCount})` : ''}</option>
+            <option value="shipped">Shipped</option>
+          </select>
+        )}
       </div>
 
-      {loading && (
-        <div className="loading-overlay">
-          <div className="spinner spinner-lg" />
-          <span>Loading…</span>
-        </div>
-      )}
+      {loading && <TableSkeleton rows={6} />}
 
       {error && !loading && (
         error instanceof SessionExpiredError ? (
@@ -280,8 +439,14 @@ export function AssignmentsPage() {
                   <tbody>
                     {filteredAssignments.map((a) => {
                       const meta = parseOrderMeta(a.metadata);
+                      const shipped = Boolean(a.shippedAt);
                       return (
-                        <tr key={a.id}>
+                        <tr
+                          key={a.id}
+                          className={`row-clickable${shipped ? ' row-shipped' : ''}`}
+                          onClick={() => setSelectedAssignmentId(a.id)}
+                          title="Click to view details"
+                        >
                           <td className="td-primary">
                             {meta.orderName ? (
                               <span>{meta.orderName.startsWith('#') ? meta.orderName : `#${meta.orderName}`}</span>
@@ -315,7 +480,11 @@ export function AssignmentsPage() {
                             <StatusBadge status={a.status} />
                           </td>
                           <td>
-                            {needsShipping(a) ? (
+                            {shipped ? (
+                              <span className="badge badge-success" title={`Shipped ${a.shippedAt ? formatDate(a.shippedAt) : ''}`}>
+                                ✓ Shipped
+                              </span>
+                            ) : needsShipping(a) ? (
                               <span className="badge badge-warning" title="Ship this reward to the customer">
                                 📦 Ship to customer
                               </span>
@@ -413,6 +582,19 @@ export function AssignmentsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Assignment detail (click a row) */}
+      {selectedAssignment && (
+        <AssignmentDetailModal
+          assignment={selectedAssignment}
+          blindBoxName={blindBoxNameById.get(selectedAssignment.blindBoxId) ?? null}
+          operation={operations.find((op) => op.assignmentId === selectedAssignment.id)}
+          onClose={() => setSelectedAssignmentId(null)}
+          onShippedChange={(updated) =>
+            setAssignments((rows) => rows.map((row) => (row.id === updated.id ? updated : row)))
+          }
+        />
       )}
     </Layout>
   );

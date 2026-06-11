@@ -245,13 +245,36 @@ async function start() {
   app.get(shopline.config.auth.callbackPath, shopline.auth.callback(), shopline.redirectToAppHome());
   app.post('/api/webhooks', express.text({ type: '*/*' }), webhooksController());
 
+  // PUBLIC image route — SHOPLINE fetches product media from here (as
+  // media.original_source) with no session, so this must NOT be auth-gated.
+  // Images are content-addressed by random UUID; no shop data is exposed.
+  app.get('/public/blind-box-images/:imageId', async (req: Request, res: Response) => {
+    try {
+      const { getUploadedImageRepository } = await import('./repository/uploaded-image-repository');
+      const repository = await getUploadedImageRepository();
+      const image = await repository.findById(req.params.imageId);
+      if (!image) {
+        res.status(404).send('Not found');
+        return;
+      }
+      res
+        .status(200)
+        .set('Content-Type', image.contentType)
+        .set('Cache-Control', 'public, max-age=31536000, immutable')
+        .send(Buffer.from(image.dataBase64, 'base64'));
+    } catch {
+      res.status(500).send('Image unavailable');
+    }
+  });
+
   // Blind-box admin API — requires authenticated SHOPLINE session.
   // Uses offline-session lookup by handle instead of validateAuthentication()
   // which requires an App Bridge JWT that is unavailable in some SHOPLINE builds.
+  // json limit raised for base64 image uploads (POST /uploads/images, ≤4MB binary).
   app.use(
     '/api/blind-box',
     requireShoplineSession,
-    express.json(),
+    express.json({ limit: '8mb' }),
     createBlindBoxAdminRouter()
   );
 

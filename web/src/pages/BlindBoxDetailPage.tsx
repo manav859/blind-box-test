@@ -4,6 +4,9 @@ import { Layout } from '../components/Layout';
 import { StatusBadge } from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
 import { api, BlindBox, PoolItem, SessionExpiredError, getShopHandle } from '../lib/api';
+import { Modal } from '../components/Modal';
+import { ImageUpload } from '../components/ImageUpload';
+import { TableSkeleton } from '../components/Skeleton';
 import { ProductPicker, ProductThumb, PickedProduct } from '../components/ProductPicker';
 import { SessionExpiredBanner } from '../components/SessionExpiredBanner';
 
@@ -71,6 +74,15 @@ export function BlindBoxDetailPage() {
   const [readiness, setReadiness] = useState<ReadinessReport | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Backing SHOPLINE product (for current price/image shown in the Edit modal).
+  const [productInfo, setProductInfo] = useState<{ imageUrl: string | null; price: string } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+
   const load = useCallback(() => {
     if (!id) return;
     setLoading(true);
@@ -85,10 +97,56 @@ export function BlindBoxDetailPage() {
         // Pull the live reward preview (stock + odds) — non-fatal.
         api.getRewardCandidates(id).then((p) => setPreview(p as CandidatePreview)).catch(() => {});
         api.getReadiness(id).then((r) => setReadiness(r as ReadinessReport)).catch(() => {});
+        // Backing product info (image; price isn't in the catalog list shape, so
+        // it stays blank in the Edit form unless the merchant sets a new one).
+        if (bb.triggerProductId) {
+          api.getCatalogProduct(bb.triggerProductId)
+            .then((p) => setProductInfo({ imageUrl: p.imageUrl, price: '' }))
+            .catch(() => {});
+        }
       })
       .catch((e: Error) => setError(e))
       .finally(() => setLoading(false));
   }, [id]);
+
+  function openEdit() {
+    if (!blindBox) return;
+    setEditName(blindBox.name);
+    setEditPrice('');
+    setEditDescription(blindBox.description ?? '');
+    setEditImageUrl(productInfo?.imageUrl ?? '');
+    setEditOpen(true);
+  }
+
+  async function handleEditSave() {
+    if (!blindBox) return;
+    if (!editName.trim()) {
+      addToast('error', 'Name is required');
+      return;
+    }
+    if (editPrice.trim() && (!Number.isFinite(Number(editPrice)) || Number(editPrice) < 0)) {
+      addToast('error', 'Enter a valid price');
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const updated = await api.updateBlindBoxProduct(blindBox.id, {
+        name: editName.trim(),
+        price: editPrice.trim() || undefined,
+        description: editDescription.trim() || null,
+        // Only send the image when it changed — avoids re-attaching the same media.
+        imageUrl: editImageUrl.trim() && editImageUrl.trim() !== (productInfo?.imageUrl ?? '') ? editImageUrl.trim() : null,
+      });
+      setBlindBox(updated);
+      setEditOpen(false);
+      addToast('success', 'Blind box & SHOPLINE product updated');
+      load();
+    } catch (e: unknown) {
+      addToast('error', 'Update failed', e instanceof Error ? e.message : String(e));
+    } finally {
+      setEditSaving(false);
+    }
+  }
 
   useEffect(() => { load(); }, [load]);
 
@@ -163,7 +221,7 @@ export function BlindBoxDetailPage() {
   if (loading) {
     return (
       <Layout title="Blind Box Detail">
-        <div className="loading-overlay"><div className="spinner spinner-lg" /><span>Loading…</span></div>
+        <TableSkeleton rows={6} />
       </Layout>
     );
   }
@@ -216,6 +274,7 @@ export function BlindBoxDetailPage() {
       actions={
         <>
           <StatusBadge status={blindBox.status} />
+          <button className="btn btn-primary btn-sm" onClick={openEdit}>✏ Edit</button>
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/blind-boxes')}>← Back</button>
         </>
       }
@@ -396,6 +455,59 @@ export function BlindBoxDetailPage() {
           Only <strong>active</strong> blind boxes assign rewards when the trigger product is purchased.
         </div>
       </Section>
+
+      {/* Edit blind box + backing SHOPLINE product */}
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Blind Box"
+        subtitle="Changes update the SHOPLINE product too (name, price, image, description)"
+        size="lg"
+        footer={
+          <>
+            <button className="btn btn-secondary" onClick={() => setEditOpen(false)} disabled={editSaving}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleEditSave} disabled={editSaving}>
+              {editSaving ? <><span className="spinner spinner-sm" /> Saving…</> : 'Save changes'}
+            </button>
+          </>
+        }
+      >
+        <div className="form-row">
+          <div className="form-group">
+            <label>Name *</label>
+            <input className="input" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>Price</label>
+            <input
+              className="input"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="leave blank to keep current price"
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Product image</label>
+          <ImageUpload value={editImageUrl} onChange={setEditImageUrl} disabled={editSaving} />
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>Description</label>
+          <textarea
+            className="input"
+            rows={3}
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+          />
+        </div>
+      </Modal>
     </Layout>
   );
 }
