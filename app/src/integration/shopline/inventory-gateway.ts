@@ -721,16 +721,31 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       });
     }
 
-    const variantDetails = await this.resolveVariantDetails(request);
-    const locationDetails = await this.resolveLocationId(request, [], variantDetails.inventoryItemId);
-    const { data, traceId } = await this.request<unknown>(request.shop, request.accessToken, '/inventory_levels/adjust.json', {
+    const traceIds: string[] = [];
+    const variantDetails = await this.resolveVariantDetails(request, traceIds);
+    const locationDetails = await this.resolveLocationId(request, traceIds, variantDetails.inventoryItemId);
+
+    // SHOPLINE's inventory endpoint is `inventory_levels/set.json` with a FLAT
+    // body and an ABSOLUTE `available` (string ids). There is no Shopify-style
+    // `adjust.json`/`available_adjustment`/`{inventory_level:{…}}` wrapper — that
+    // shape is what was returning 400. So read the current level and set the new
+    // absolute value (clamped at 0). Idempotency on shop:order:line prevents a
+    // double decrement on webhook replay.
+    const currentLevel = await this.fetchInventoryLevelState(
+      request,
+      variantDetails.inventoryItemId,
+      locationDetails.locationId,
+      traceIds,
+    );
+    const currentAvailable = currentLevel.available ?? 0;
+    const newAvailable = Math.max(0, currentAvailable + adjustedDelta);
+
+    const { data, traceId } = await this.request<unknown>(request.shop, request.accessToken, '/inventory_levels/set.json', {
       method: 'POST',
       body: JSON.stringify({
-        inventory_level: {
-          inventory_item_id: variantDetails.inventoryItemId,
-          location_id: locationDetails.locationId,
-          available_adjustment: adjustedDelta,
-        },
+        available: newAvailable,
+        inventory_item_id: variantDetails.inventoryItemId,
+        location_id: locationDetails.locationId,
       }),
     });
 
@@ -739,7 +754,7 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
       locationId: locationDetails.locationId,
       variantId: variantDetails.variantId,
       adjustedDelta,
-      traceId,
+      traceId: traceId || traceIds[0] || null,
       rawResponse: data,
     };
   }
@@ -1184,13 +1199,24 @@ export class ShoplineInventoryGateway implements InventoryGateway, InventoryDebu
           ? 'SHOPLINE_INVENTORY_SERVER_ERROR'
           : 'SHOPLINE_INVENTORY_HTTP_ERROR';
 
+      // Surface the SHOPLINE error body in the message (not just in details) so
+      // it reaches logs and the assignment "reason" — a bare "400 Bad Request"
+      // is undiagnosable. Include the request path for context.
+      const bodyPreview = responseText ? ` — ${responseText.slice(0, 500)}` : '';
+      logger.warn('SHOPLINE inventory request failed', {
+        status,
+        path,
+        traceId,
+        responsePreview: responseText.slice(0, 800),
+      });
       throw new InventoryGatewayError(
-        `SHOPLINE inventory request failed with ${status} ${response.statusText}`,
+        `SHOPLINE inventory request failed with ${status} ${response.statusText} at ${path}${bodyPreview}`,
         {
           code,
           disposition,
           details: {
             status,
+            path,
             responseText,
             traceId,
           },
